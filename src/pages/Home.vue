@@ -208,9 +208,9 @@
 <script lang="ts" setup>
 
 import { ref } from 'vue';
-import useSmsCode from "@/util/CodeGenerator/utilForCode/useSmsCode";
+/*import useSmsCode from "@/util/CodeGenerator/utilForCode/useSmsCode";
 import request from "@/util/postreq";
-import {mixin} from "../../mixins/index";
+import {mixin} from "../../mixins/index";*/
 
 let {label, isCounting, loading: smsLoading, getSmsCode} = useSmsCode();
 
