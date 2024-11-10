@@ -1,7 +1,7 @@
 import { computed } from 'vue';
-import { useLoading } from '../common';
+import useLoading from '../common';
 import useCountDown from './useCountDown';
-import {REGEXP_EMAIL} from '../config/regex';
+//import {REGEXP_EMAIL} from '../config/regex';
 import {HttpManager} from "@/api";
 import {ElMessage} from "element-plus";
 
