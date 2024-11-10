@@ -4,15 +4,15 @@
             <el-header class="fixed-header">
                 <div class="header-title">初中语文综合素养提升平台</div>
                 <div class="header-buttons">
-                    <el-button color="#626aef" :dark="isDark">登录</el-button>
+
+
+                    <el-button color="#626aef" :dark="isDark" @click="loginDialogVisible = true">登录</el-button>
                     <el-button color="#626aef" :dark="isDark" plain>注册</el-button>
                 </div>
             </el-header>
 
             <el-main>
                 <el-scrollbar>
-
-
                     <el-carousel height="400px"><!--  走马灯部分-->
                         <el-carousel-item v-for="item in 4" :key="item">
                             <img class="carousel-image" src="../static/1.jpg" v-if="item === 1" >
@@ -24,14 +24,49 @@
                     <!-- 内容 -->
                 </el-scrollbar>
             </el-main>
+
+            <!-- 登录浮窗 -->
+            <el-dialog v-model="loginDialogVisible" title="登录" width="500" align-center>
+                <el-form>
+                    <el-radio-group  v-model="selectedCity" style="margin-bottom: 30px">
+                    <el-radio-button value="1">top</el-radio-button>
+                    <el-radio-button value="right">right</el-radio-button>
+                    <el-radio-button value="bottom">bottom</el-radio-button>
+                    <el-radio-button value="left">left</el-radio-button>
+                </el-radio-group>
+
+                    <el-form-item>
+                        <el-input placeholder="登录邮箱"></el-input>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-input type="password" placeholder="登录密码"></el-input>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-checkbox>记住密码</el-checkbox>
+                        <a href="#">忘记密码</a>
+                    </el-form-item>
+                </el-form>
+                <div slot="footer" class="dialog-footer">
+                    <el-button @click="loginDialogVisible = false">取 消</el-button>
+                    <el-button type="primary" >登 录</el-button>
+                </div>
+
+            </el-dialog>
+
+
+
         </el-container>
     </div>
 </template>
 
-<script>
-export default {
-    name: "Home"
-}
+<script lang="ts" setup>
+
+import { ref } from 'vue'
+
+const loginDialogVisible = ref(false)
+const userType = ref<'student' | 'teacher' | 'admin' | 'sysadmin'>('student');
+const selectedCity = ref('1') // 默认选中的城市
+
 </script>
 
 <style scoped>
