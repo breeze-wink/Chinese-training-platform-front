@@ -58,16 +58,16 @@
                        align-center>
 
                 <el-form label-position="top" class="login-form">
-                    <el-radio-group v-model="selectedCity" style="margin-bottom: 30px">
-                        <el-radio-button value="1">学生</el-radio-button>
-                        <el-radio-button value="right">教师</el-radio-button>
-                        <el-radio-button value="bottom">学校管理员</el-radio-button>
-                        <el-radio-button value="left">系统管理员</el-radio-button>
+                    <el-radio-group v-model="Identity" style="margin-bottom: 30px">
+                        <el-radio-button value="student">学生</el-radio-button>
+                        <el-radio-button value="teacher">教师</el-radio-button>
+                        <el-radio-button value="sch-adm">学校管理员</el-radio-button>
+                        <el-radio-button value="sys-adm">系统管理员</el-radio-button>
                     </el-radio-group>
 
                     <el-form-item  class="form-item">
                         <el-input
-                            v-model="input1"
+                            v-model="account"
                             style="width: 280px"
                             placeholder="输入邮箱/用户名"
                             :prefix-icon="User">
@@ -75,7 +75,7 @@
                     </el-form-item>
                     <el-form-item  class="form-item">
                         <el-input
-                            v-model="input2"
+                            v-model="password"
                             style="width: 280px"
                             type="password"
                             placeholder="输入密码"
@@ -85,26 +85,26 @@
                     </el-form-item>
                     <el-form-item class="form-item">
                         <el-checkbox>记住密码</el-checkbox>
-                        <a href="#" style="float: right;" @click="forgotPasswordDialogVisible = true">忘记密码</a>
+                        <a href="#" style="float: right;"@click="forgotPasswordDialogVisible = true">忘记密码</a>
                     </el-form-item>
                 </el-form>
                 <div slot="footer" class="dialog-footer">
-                    <el-button type="primary" class="custom-button">登 录</el-button>
+                    <el-button type="primary" class="custom-button" @click="login">登 录</el-button>
                 </div>
             </el-dialog>
 
 <!--            找回密码-->
             <el-dialog v-model="forgotPasswordDialogVisible"
                        title="找回密码"
-                       width="500px"
+                       width="510px"
                        align-center
                        >
 
-                <el-steps style="max-width: 600px; margin-bottom: 60px" :active="active"
+                <el-steps style="max-width: 500px; margin-bottom: 60px" :active="active"
                           finish-status="success" simple>
-                    <el-step title="Step 1" />
-                    <el-step title="Step 2" />
-                    <el-step title="Step 3" />
+                    <el-step title="验证邮箱" />
+                    <el-step title="重置密码" />
+                    <el-step title="重置成功" />
                 </el-steps>
 
 
@@ -112,7 +112,7 @@
                     <!-- Step1 -->
                     <div v-if="active === 1">
                         <el-form-item label="邮箱" class="form-item">
-                            <el-input v-model="mail" placeholder="请输入您的邮箱" style="width: 250px"></el-input>
+                            <el-input v-model="email" placeholder="请输入您的邮箱" style="width: 250px"></el-input>
                         </el-form-item>
 
                         <el-form-item label="验证码" class="form-item">
@@ -123,7 +123,7 @@
                     <!-- Step2 -->
                     <div v-if="active === 2">
                         <el-form-item label="新密码" class="form-item">
-                            <el-input v-model="mail" placeholder="请输入新密码" style="width: 250px"></el-input>
+                            <el-input v-model="email" placeholder="请输入新密码" style="width: 250px"></el-input>
                         </el-form-item>
 
                         <el-form-item label="确认新密码" class="form-item">
@@ -140,7 +140,7 @@
                 <div slot="footer" class="dialog-footer1">
                     <el-button v-if="active > 1 && active < 3" @click="front">frontStep</el-button>
                     <el-button v-if="active < 3" @click="next">nextStep</el-button>
-                    <el-button v-if="active == 3" @click="goToOwnPage" type="primary" class="custom-button">进入平台</el-button>
+                    <el-button v-if="active === 3" @click="goToOwnPage" type="primary" class="custom-button">进入平台</el-button>
 
 
                 </div>
@@ -152,20 +152,29 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup>
 
-import { ref } from 'vue'
-import {User,Lock} from "@element-plus/icons-vue";
+import { ref , onMounted} from 'vue'
+import axios from 'axios'
+import {User} from "@element-plus/icons-vue";
 
 const loginDialogVisible = ref(false)
 const forgotPasswordDialogVisible = ref(false)
-const userType = ref<'student' | 'teacher' | 'admin' | 'sysadmin'>('student');
-const selectedCity = ref('1') // 默认选中的城市
-const input1 = ref('')
-const input2 = ref('')
-const mail = ref('')
+
+
+const Identity = ref('student')
+const account = ref('')
+const password = ref('')
+const email = ref('')
 const verifyCode = ref('')
+const realVerifyCode =ref('')
 const active = ref(1)
+const urls = {
+    'student': '/api/student/login',
+    'teacher': '/api/teacher/login',
+    'sch-adm': '/api/school-admin/login',
+    'sys-adm': '/api/system-admin/login',
+}
 
 const next = () => {
     if (active.value++ > 2) active.value = 0
@@ -173,6 +182,76 @@ const next = () => {
 const front = () => {
     if (active.value-- < 1) active.value = 0
 }
+
+const login = async () => {
+    const url =urls[Identity.value];
+
+    try {
+        const response = await axios.post('/api/student/login', {
+            account: account.value,
+            password: password.value
+        });
+        // 检查响应状态码和消息
+        if (response.status === 200 && response.data.message === "success") {
+            console.log("登录成功:", response.data.id);
+            loginDialogVisible.value = false; // 登录成功后关闭对话框
+            // 这里可以添加更多的登录成功后的操作，比如保存用户信息等
+        } else {
+            // 处理非200状态码的情况
+            console.error("登录失败:", response.data.message);
+        }
+    } catch (error) {
+        // 处理错误
+        console.error('登录请求失败:', error.message);
+        // 这里可以添加更多的错误处理逻辑，比如显示错误信息等
+    }
+}
+const sendVerification = async () => {
+
+
+    try {
+        const response = await axios.post('/api/student/send-verification', {
+            email:email.value
+        });
+        // 检查响应状态码和消息
+        if (response.status === 200) {
+            realVerifyCode.value =response.data.verificationCode;
+            console.log(realVerifyCode.value);
+            // 这里可以添加更多的登录成功后的操作，比如保存用户信息等
+        } else {
+            // 处理非200状态码的情况
+            console.error("发送失败:", response.data.message);
+        }
+    } catch (error) {
+        // 处理错误
+        console.error('登录请求失败:', error.message);
+        // 这里可以添加更多的错误处理逻辑，比如显示错误信息等
+    }
+}
+const verifyIdentity = async () => {
+    const url =urls[Identity.value];
+
+    try {
+        const response = await axios.post('/api/student/login', {
+            account: account.value,
+            password: password.value
+        });
+        // 检查响应状态码和消息
+        if (response.status === 200 && response.data.message === "success") {
+            console.log("登录成功:", response.data.id);
+            loginDialogVisible.value = false; // 登录成功后关闭对话框
+            // 这里可以添加更多的登录成功后的操作，比如保存用户信息等
+        } else {
+            // 处理非200状态码的情况
+            console.error("登录失败:", response.data.message);
+        }
+    } catch (error) {
+        // 处理错误
+        console.error('登录请求失败:', error.message);
+        // 这里可以添加更多的错误处理逻辑，比如显示错误信息等
+    }
+}
+
 const goToOwnPage = () => {
 
 }
