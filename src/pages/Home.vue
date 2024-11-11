@@ -160,9 +160,9 @@
                 <div class="w-18px"></div>
                 <el-button size="large" :disabled="isCounting" :loading="smsLoading" @click="sendVerificationCode('student')">获取验证码</el-button>
               </div>
-                <el-form-item prop="username" label="用户名">
-                    <el-input  v-model="registerForm.student.username" placeholder="用户名" size="large"></el-input>
-                </el-form-item>
+              <el-form-item prop="username" label="用户名">
+                  <el-input v-model="registerForm.student.username" placeholder="用户名" size="large"></el-input>
+              </el-form-item>
               <el-form-item prop="password" label="密码">
                 <el-input type="password" v-model="registerForm.student.password" placeholder="密码" size="large"></el-input>
               </el-form-item>
@@ -240,7 +240,7 @@ const registerForm = ref({
     code: '',
     password: '',
     checkPass: '',
-      username:''
+    username:''
   },
   teacher: {
     AuthorizationCode: '',
@@ -255,6 +255,9 @@ const registerForm = ref({
 const rules = ref({
   AuthorizationCode: [
     {required: true, message: '请输入授权码', trigger: 'blur'}
+  ],
+  username:[
+    {required:true, message: '请输入用户名', trigger: 'blur'}
   ],
   password: [
     {required: true, message: '请输入密码', trigger: 'blur'},
@@ -403,8 +406,8 @@ async function sendVerificationCode(userType) {
     if (response.status === 200) {
 
       verificationCode.value = response.data.verificationCode; // 存储验证码
-        console.log(verificationCode.value);
-      alert(`验证码已发送: ${verificationCode.value}`);
+        // console.log(verificationCode.value);
+        // alert(`验证码已发送: ${verificationCode.value}`);
       startCountdown();
     } else {
       const errorMessage = response.data.message || '验证码发送失败，请稍后再试';
@@ -451,7 +454,7 @@ async function submitForm(formName, userType) {
         let url = '/api/student/register';
         let payload = {
           email: form.email,
-            username: form.username,
+          username: form.username,
           password: form.password,
           confirmPassword: form.checkPass
         };
