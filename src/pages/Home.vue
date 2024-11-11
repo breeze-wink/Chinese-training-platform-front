@@ -526,5 +526,22 @@ function goToOwnPage() {
     font-size: 24px; /* 你可以根据需要调整字体大小 */
 }
 
+.sign-up-btn {
+  text-align: center; /* 使按钮居中 */
+  margin-top: 1em; /* 添加一些顶部间距 */
+}
+
+.sign-up-btn .el-button {
+  padding: 12px 32px; /* 增加内边距，使按钮更大 */
+  font-size: 18px; /* 增加字体大小 */
+  border-radius: 8px; /* 圆角 */
+  transition: all 0.3s ease; /* 平滑过渡效果 */
+}
+
+.sign-up-btn .el-button:hover {
+  background-color: #4d5aff; /* 鼠标悬停时改变背景颜色 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
+}
+
 
 </style>
