@@ -2,7 +2,7 @@
   <div class="common-layout">
     <el-container class="common-layout">
       <el-header class="fixed-header">
-        <div class="header-title">初中语文综合素养提升平台</div>
+        <div class="header-title">初中语文维业运输平台</div>
         <div class="header-buttons">
           <el-button color="#626aef" :dark="isDark" @click="loginDialogVisible = true">登录</el-button>
           <el-button color="#626aef" :dark="isDark" plain @click="registerDialogVisible = true">注册</el-button>
@@ -143,7 +143,7 @@
                 <el-input v-model="registerForm.student.code" placeholder="验证码" size="large" class="input-wid"></el-input>
               </el-form-item>
               <div class="w-18px"></div>
-              <el-button size="large" :disabled="isCounting" :loading="smsLoading" @click="sendVerificationCode('student')">获取验证码</el-button>
+              <el-button size="large" :disabled="sendingCode" :loading="smsLoading" @click="sendVerificationCode('student')">获取验证码</el-button>
             </div>
             <el-form-item prop="password" label="密码">
               <el-input type="password" v-model="registerForm.student.password" placeholder="密码" size="large"></el-input>
@@ -169,7 +169,7 @@
                 <el-input v-model="registerForm.teacher.code" placeholder="验证码" size="large" class="input-wid"></el-input>
               </el-form-item>
               <div class="w-18px"></div>
-              <el-button size="large" :disabled="isCounting" :loading="smsLoading" @click="sendVerificationCode('teacher')">获取验证码</el-button>
+              <el-button size="large" :disabled="sendingCode" :loading="smsLoading" @click="sendVerificationCode('teacher')">获取验证码</el-button>
             </div>
             <el-form-item prop="password" label="密码">
               <el-input type="password" v-model="registerForm.teacher.password" placeholder="密码" size="large"></el-input>
@@ -251,7 +251,8 @@ const codeButtonText = ref('获取验证码')
 const smsLoading = ref(false)
 
 function validatePassword(rule, value, callback) {
-  if (value !== (activeTab.value === 'student' ? registerForm.value.student.password : registerForm.value.teacher.password)) {
+  const form = activeTab.value === 'student' ? registerForm.value.student : registerForm.value.teacher
+  if (value !== form.password) {
     callback(new Error('两次输入密码不一致!'))
   } else {
     callback()
@@ -265,8 +266,8 @@ async function sendVerificationCode(userType) {
   countdown.value = 60
 
   const form = activeTab.value === 'student' ? registerForm.value.student : registerForm.value.teacher
-
-  if (!rules.value.email[1].validator({ type: 'email' }, form.email, () => {})) {
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailPattern.test(form.email)) {
     alert('请输入正确的邮箱地址')
     sendingCode.value = false
     smsLoading.value = false
@@ -311,10 +312,10 @@ function startCountdown() {
 }
 
 async function submitForm(formName, userType) {
-  this.$refs[formName].validate(async (valid) => {
+  const formRef = formName === 'registerFormStudent' ? 'registerFormStudent' : 'registerFormTeacher'
+  const form = registerForm.value[userType]
+  this.$refs[formRef].validate(async (valid) => {
     if (valid) {
-      const form = activeTab.value === 'student' ? registerForm.value.student : registerForm.value.teacher
-
       try {
         let url = '/api/student/register'
         let payload = {
@@ -378,7 +379,8 @@ async function sendResetVerificationCode() {
   smsLoading.value = true
   countdown.value = 60
 
-  if (!rules.value.email[1].validator({ type: 'email' }, resetEmail.value, () => {})) {
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailPattern.test(resetEmail.value)) {
     alert('请输入正确的邮箱地址')
     sendingCode.value = false
     smsLoading.value = false
@@ -421,109 +423,106 @@ function goToOwnPage() {
 
 <style scoped>
 .common-layout .el-container {
-    width: 100%;
+  width: 100%;
 }
 .common-layout .el-header.fixed-header {
-    position: fixed;
-    top: 0;
-    width: 100%; /* 确保header宽度与容器相同 */
-    background-color: var(--el-color-primary-light-7);
-    color: var(--el-text-color-primary);
-    z-index: 1000;
-    display: flex;
-    justify-content: space-between;;
-    align-items: center;
-    padding: 0 80px; /* 根据需要调整padding */
+  position: fixed;
+  top: 0;
+  width: 100%; /* 确保header宽度与容器相同 */
+  background-color: var(--el-color-primary-light-7);
+  color: var(--el-text-color-primary);
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;;
+  align-items: center;
+  padding: 0 80px; /* 根据需要调整padding */
 }
 .header-content {
-    display: flex;
-    justify-content: flex-end; /* 按钮靠右 */
-    align-items: center;
+  display: flex;
+  justify-content: flex-end; /* 按钮靠右 */
+  align-items: center;
 }
 .header-title {
-    font-size: 16px; /* 根据需要调整字体大小 */
-    font-weight: bold; /* 使文字加粗 */
+  font-size: 16px; /* 根据需要调整字体大小 */
+  font-weight: bold; /* 使文字加粗 */
 }
 .header-buttons {
-    display: flex;
-    gap: 10px; /* 根据需要调整按钮之间的间距 */
+  display: flex;
+  gap: 10px; /* 根据需要调整按钮之间的间距 */
 }
 .common-layout .el-main {
-    padding-top: 60px; /* 为header的高度留出空间 */
-    width: 100%;
-    background-color: #ffffff;
-    height: 2600px;
+  padding-top: 60px; /* 为header的高度留出空间 */
+  width: 100%;
+  background-color: #ffffff;
+  height: 2600px;
 }
 .common-layout .el-scrollbar {
-    width: 100%; /* 确保scrollbar宽度与main相同 */
+  width: 100%; /* 确保scrollbar宽度与main相同 */
 }
 .common-layout .el-container {
-    width: 100%;
+  width: 100%;
 }
 .carousel-image {
-    width: 100%; /* 使图片宽度填满carousel-item */
-    height: 100%; /* 使图片高度填满carousel-item */
-    object-fit: fill; /* 确保图片按比例填充 */
+  width: 100%; /* 使图片宽度填满carousel-item */
+  height: 100%; /* 使图片高度填满carousel-item */
+  object-fit: fill; /* 确保图片按比例填充 */
 }
 
 .login-form {
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* 垂直居中 */
-    align-items: center; /* 水平居中 */
-    height: 100%; /* 使表单占满整个对话框的高度 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 垂直居中 */
+  align-items: center; /* 水平居中 */
+  height: 100%; /* 使表单占满整个对话框的高度 */
 }
 
-
-
 .dialog-footer .el-button {
-    margin-left: 10px;
+  margin-left: 10px;
 }
 
 .form-item {
-    margin-bottom: 30px;
+  margin-bottom: 30px;
 }
 
 .dialog-footer {
-    display: flex;
-    justify-content: center;
+  display: flex;
+  justify-content: center;
 }
 .dialog-footer1 {
-    margin-top: 50px;
-    display: flex;
-    justify-content: center;
+  margin-top: 50px;
+  display: flex;
+  justify-content: center;
 }
 
 .dialog-footer .el-button {
-    margin-left: 10px;
+  margin-left: 10px;
 }
 
 /* 使忘记密码链接对齐到右侧 */
 .el-form-item__content a {
-    margin-left: 80px; /* 为忘记密码链接添加左边距 */
+  margin-left: 80px; /* 为忘记密码链接添加左边距 */
 }
 
 .custom-button {
-    height: 40px; /* 设置按钮的高度 */
-    line-height: 40px; /* 设置按钮文本的垂直居中 */
-    width: 300px; /* 设置按钮的宽度 */
-    padding: 0; /* 去除默认的内边距 */
+  height: 40px; /* 设置按钮的高度 */
+  line-height: 40px; /* 设置按钮文本的垂直居中 */
+  width: 300px; /* 设置按钮的宽度 */
+  padding: 0; /* 去除默认的内边距 */
 }
-
 
 .centered-form .el-form-item {
-    display: flex;
-    align-items: center; /* 垂直居中 */
-    justify-content: center; /* 水平居中 */
-    width: 90%; /* 使表单项宽度填满父容器 */
-    margin-top: 20px; /* 增加表单项之间的间距 */
-    margin-bottom: 0px; /* 增加表单项之间的间距 */
+  display: flex;
+  align-items: center; /* 垂直居中 */
+  justify-content: center; /* 水平居中 */
+  width: 90%; /* 使表单项宽度填满父容器 */
+  margin-top: 20px; /* 增加表单项之间的间距 */
+  margin-bottom: 0px; /* 增加表单项之间的间距 */
 }
 .center-text {
-    margin-top: 100px;
-    margin-bottom: 100px;
-    text-align: center;
-    font-size: 24px; /* 你可以根据需要调整字体大小 */
+  margin-top: 100px;
+  margin-bottom: 100px;
+  text-align: center;
+  font-size: 24px; /* 你可以根据需要调整字体大小 */
 }
 
 .sign-up-btn {
@@ -542,6 +541,5 @@ function goToOwnPage() {
   background-color: #4d5aff; /* 鼠标悬停时改变背景颜色 */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
 }
-
 
 </style>
