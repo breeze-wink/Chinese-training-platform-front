@@ -248,9 +248,9 @@ const registerForm = ref({
     code: '',
     password: '',
     checkPass: '',
-    schoolId: null
+    schoolId: ''
   }
-})
+});
 
 const rules = ref({
   AuthorizationCode: [
@@ -406,6 +406,9 @@ async function sendVerificationCode(userType) {
     if (response.status === 200) {
 
       verificationCode.value = response.data.verificationCode; // 存储验证码
+      if (userType === 'teacher' && response.data.schoolId) {
+          registerForm.value.teacher.schoolId = response.data.schoolId;
+      }
         // console.log(verificationCode.value);
         // alert(`验证码已发送: ${verificationCode.value}`);
       startCountdown();
@@ -436,66 +439,81 @@ function startCountdown() {
 }
 
 async function submitForm(formName, userType) {
-  if (!proxy.$refs[formName]) {
-    console.error(`表单引用 ${formName} 未找到`);
-    return;
-  }
-
-  proxy.$refs[formName].validate(async (valid) => {
-    if (valid) {
-      const form = activeTab.value === 'student' ? registerForm.value.student : registerForm.value.teacher
-
-      if (form.code !== verificationCode.value) {
-        alert('验证码不正确，请重新输入');
+    if (!proxy.$refs[formName]) {
+        console.error(`表单引用 ${formName} 未找到`);
         return;
-      }
-
-      try {
-        let url = '/api/student/register';
-        let payload = {
-          email: form.email,
-          username: form.username,
-          password: form.password,
-          confirmPassword: form.checkPass
-        };
-
-        if (userType === 'teacher') {
-          url = '/api/teacher/register';
-          payload = {
-            email: form.email,
-            password: form.password,
-            confirmPassword: form.checkPass,
-            schoolId: form.schoolId
-          };
-        }
-
-        console.log('提交的数据:', payload); // 打印请求体数据
-
-        const response = await axios.post(url, payload, {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.status === 200 && response.data.message === "注册成功") {
-          alert('注册成功！');
-          registerDialogVisible.value = false;
-        } else {
-          const errorMessage = response.data.message || '注册失败，请检查信息';
-          console.error('注册失败:', errorMessage);
-          alert(errorMessage);
-        }
-      } catch (error) {
-        console.error('注册请求失败:', error.response ? error.response.data : error.message);
-        alert('网络错误，请稍后再试');
-      }
-    } else {
-      console.log('error submit!!');
-      return false;
     }
-  });
-}
 
+    proxy.$refs[formName].validate(async (valid) => {
+        if (valid) {
+            const form = activeTab.value === 'student' ? registerForm.value.student : registerForm.value.teacher;
+
+            if (form.code !== verificationCode.value) {
+                alert('验证码不正确，请重新输入');
+                return;
+            }
+
+            try {
+                let url = '/api/student/register';
+                let payload = {
+                    email: form.email,
+                    username: form.username,
+                    password: form.password,
+                    confirmPassword: form.checkPass
+                };
+
+                if (userType === 'teacher') {
+                    url = '/api/teacher/register';
+                    payload = {
+                        email: form.email,
+                        password: form.password,
+                        confirmPassword: form.checkPass,
+                        schoolId: form.schoolId
+                    };
+                }
+
+                console.log('提交的数据:', payload); // 打印请求体数据
+
+                const response = await axios.post(url, payload, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                // 打印完整的响应对象
+                console.log('后端响应:', response);
+
+                // 检查响应状态码和消息
+                if (response.status === 200) {
+                    if (response.data.message === "注册成功") {
+                        alert('注册成功！');
+                        registerDialogVisible.value = false;
+                    } else if (response.data.message === null) {
+                        // 处理后端返回 message 为 null 的情况
+                        alert('注册成功！（但后端返回的消息为 null，请检查后端逻辑）');
+                        registerDialogVisible.value = false;
+                    } else {
+                        console.error('后端返回的消息不是 "注册成功"', response.data);
+                        alert('注册失败，请检查信息');
+                    }
+                } else if (response.status === 400) {
+                    const errorMessage = response.data.message || '注册失败，请检查信息';
+                    console.error('注册失败:', errorMessage);
+                    alert(errorMessage);
+                } else {
+                    console.error('未知错误:', response);
+                    alert('未知错误，请稍后再试');
+                }
+            } catch (error) {
+                console.error('注册请求失败:', error.response ? error.response.data : error.message);
+                alert('网络错误，请稍后再试');
+            }
+        } else {
+            console.log('error submit!!');
+            return false;
+        }
+    });
+}
 </script>
 
 <style scoped>
