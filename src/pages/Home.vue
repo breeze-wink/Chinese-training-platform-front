@@ -250,7 +250,7 @@ const registerForm = ref({
     checkPass: '',
     schoolId: null
   }
-})
+});
 
 const rules = ref({
   AuthorizationCode: [
@@ -406,6 +406,9 @@ async function sendVerificationCode(userType) {
     if (response.status === 200) {
 
       verificationCode.value = response.data.verificationCode; // 存储验证码
+      if (userType === 'teacher' && response.data.schoolId) {
+          registerForm.value.teacher.schoolId = response.data.schoolId;
+      }
         // console.log(verificationCode.value);
         // alert(`验证码已发送: ${verificationCode.value}`);
       startCountdown();
