@@ -1,3 +1,4 @@
+
 <template>
     <header class="header">
         <!-- 网站标题，靠左 -->
@@ -32,13 +33,15 @@ import { Message, User } from '@element-plus/icons-vue';
     justify-content: space-between; /* 使文字和图标分开，并分别靠左和靠右 */
     align-items: center;
     padding: 10px 20px;
-    background-color: #f5f5f5;
+    background-color: #24292e; /* 深灰色背景，借鉴 GitHub 顶部导航栏的颜色 */
+    margin-bottom: 30px;
 }
 
 .title {
     font-size: 24px;
     font-weight: bold;
     text-align: left; /* 确保文字靠左 */
+    color: #fff; /* 文本改为浅色 */
 }
 
 .icons {
@@ -50,5 +53,7 @@ import { Message, User } from '@element-plus/icons-vue';
 .el-icon {
     font-size: 24px;
     cursor: pointer;
+    color: #fff; /* 图标改为浅色 */
 }
 </style>
+
