@@ -36,8 +36,9 @@
 </template>
 
 <script setup>
-import Header from '../../components/Header.vue';
-import Sidebar from '../../components/Sidebar.vue';
+
+import Header from '@/components/Header.vue';
+import Sidebar from '@/components/Sidebar.vue';
 
 import { ElButton } from 'element-plus';
 
@@ -52,6 +53,7 @@ function editInfo() {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    background-color: #f0f0f0; /* 背景改为浅灰色 */
 }
 
 .main-container {
@@ -64,6 +66,7 @@ function editInfo() {
     padding: 20px;
     background-color: #fff;
     overflow-y: auto;
+    margin-right: 50px; /* 右侧留空隙 */
 }
 
 .info-container {
