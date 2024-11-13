@@ -36,8 +36,8 @@
 </template>
 
 <script setup>
-import Header from '../../conponents/Header.vue';
-import Sidebar from '../../conponents/Sidebar.vue';
+import Header from '../../components/Header.vue';
+import Sidebar from '../../components/Sidebar.vue';
 
 import { ElButton } from 'element-plus';
 
