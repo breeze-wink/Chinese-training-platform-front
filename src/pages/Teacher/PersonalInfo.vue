@@ -16,7 +16,7 @@
                     <div class="info-item">
                         <label>昵称：</label>
                         <span v-if="!editNickname">{{ nickname }}</span>
-                        <el-input v-else v-model="nickname" size="small" @blur="toggleEdit('nickname')" />
+                        <el-input v-else v-model="nickname" size="small" class="edit-input" @blur="toggleEdit('nickname')" />
                         <el-icon @click="toggleEdit('nickname')">
                             <Edit />
                         </el-icon>
@@ -28,7 +28,7 @@
                     <div class="info-item">
                         <label>电话号码：</label>
                         <span v-if="!editPhone">{{ phone }}</span>
-                        <el-input v-else v-model="phone" size="small" @blur="toggleEdit('phone')" />
+                        <el-input v-else v-model="phone" size="small" class="edit-input" @blur="toggleEdit('phone')" />
                         <el-icon @click="toggleEdit('phone')">
                             <Edit />
                         </el-icon>
@@ -40,8 +40,8 @@
                 </el-card>
 
                 <!-- 账号信息卡片 -->
+                <h2>账号信息</h2>
                 <el-card class="info-card" style="margin-top: 20px;">
-                    <h3>账号信息</h3>
                     <div class="info-item">
                         <label>账号ID：</label>
                         <span>{{ accountId }}</span>
@@ -112,12 +112,14 @@ function editPassword() {
 }
 
 .content {
-    flex: 1;
+    max-width: 1000px; /* 最大宽度为 1000px */
+    width: 100%; /* 宽度在正常情况下可以随着窗口大小缩放 */
     padding: 20px;
     background-color: #fff;
     overflow-y: auto;
-    margin-right: 50px; /* 右侧留空隙 */
+    margin-right: 50px; /* 如果需要右侧留空隙，可以保留这行，或者可以根据实际情况调整 */
 }
+
 .info-card {
     padding: 20px;
     background-color: #ffffff;
@@ -147,4 +149,10 @@ function editPassword() {
     cursor: pointer;
     color: #409EFF; /* 图标颜色设置为蓝色，确保更醒目 */
 }
+
+.edit-input {
+    width: 200px; /* 限制输入框的宽度，避免太长 */
+}
+
+
 </style>
