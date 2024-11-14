@@ -7,137 +7,127 @@
             <!-- 引入侧边栏通用组件 -->
             <Sidebar />
 
-            <main class="content">
-                <section class="profile-info">
-                    <!-- 图片 -->
-<!--                    <img :src="require('@/assets/path-to-your-image.jpg')" alt="User Profile Picture" />-->
-                    <div class="info-section">
-                        <h2>个人信息管理</h2>
-                        <button @click="editUserInfo">编辑</button>
-                        <table>
-                            <tr>
-                                <td>姓名:</td>
-                                <td v-if="!isEditing">{{ userInfo.name }}</td>
-                                <td v-else><input type="text" v-model="editedUserInfo.name" /></td>
-                            </tr>
-                            <tr>
-                                <td>班级:</td>
-                                <td>{{ accountInfo.class }}</td>
-                            </tr>
-                            <tr>
-                                <td>学校:</td>
-                                <td>{{ userInfo.school }}</td>
-                            </tr>
-                            <tr>
-                                <td>年级:</td>
-                                <td v-if="!isEditing">{{ userInfo.grade }}</td>
-                                <td v-else><input type="number" v-model="editedUserInfo.grade" /></td>
-                            </tr>
-                        </table>
-                        <button v-if="isEditing" @click="saveEditedUserInfo">保存</button>
-                        <button v-if="isEditing" @click="cancelEdit">取消</button>
-                    </div>
-                </section>
+            <!-- 内容区 -->
+            <div class="content">
+                <h2>个人信息</h2>
 
-                <section class="account-info">
-                    <h2>账号信息管理</h2>
-                    <table>
-                        <tr>
-                            <td>账号ID:</td>
-                            <td>{{ accountInfo.accountId }}</td>
-                            <td>绑定邮箱:</td>
-                            <td>{{ accountInfo.email }}</td>
-                            <td><button @click="showChangeEmailModal">更换</button></td>
-                        </tr>
-                        <tr>
-                            <td>密码:</td>
-                            <td>{{ accountInfo.password }}</td>
-                            <td><button @click="showChangePasswordModal">修改</button></td>
-                            <td>实名认证:</td>
-                            <td>{{ accountInfo.realNameStatus }}</td>
-                            <td><button>去认证</button></td>
-                        </tr>
-                        <tr>
-                            <td>账号注销:</td>
-                            <td>
-                                <button @click="requestAccountDeactivation">申请注销</button>
-                                <p v-if="isAccountDeletionInProgress">正在注销...</p>
-                                <p v-if="deletionResultMessage" class="result-message">{{ deletionResultMessage }}</p>
-                            </td>
-                            <td>班级:</td>
-                            <td>{{ accountInfo.class }}</td>
-                            <td><button @click="showJoinClassModal">加入班级</button></td>
-                        </tr>
-                    </table>
-                </section>
-            </main>
+                <!-- 个人信息卡片 -->
+                <el-card class="info-card">
+                    <div class="info-item">
+                        <label>昵称：</label>
+                        <span v-if="!Editusername">{{ userInfo.username }}</span>
+                        <el-input v-else v-model="editedUserInfo.username" size="small" class="edit-input" @blur="saveEditedUserInfo" />
+                        <el-icon v-if="!Editusername" @click="toggleEdit('username')"><Edit /></el-icon>
+                    </div>
+                    <div class="info-item">
+                        <label>实名：</label>
+                        <span>{{ userInfo.name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>班级：</label>
+                        <span>{{ accountInfo.class }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>学校：</label>
+                        <span>{{ userInfo.schoolName }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>年级：</label>
+                        <span v-if="!Editgrade">{{ userInfo.grade }}</span>
+                        <el-input v-else v-model="editedUserInfo.grade" size="small" class="edit-input" @blur="saveEditedUserInfo" />
+                        <el-icon v-if="!Editgrade" @click="toggleEdit('grade')"><Edit /></el-icon>
+                    </div>
+                </el-card>
+
+                <!-- 账号信息卡片 -->
+                <h2>账号信息</h2>
+                <el-card class="info-card" style="margin-top: 20px;">
+                    <div class="info-item">
+                        <label>账号ID：</label>
+                        <span>{{ accountInfo.accountId }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>密码：</label>
+                        <span>******</span>
+                        <el-icon @click="showChangePasswordModal">
+                            <Edit />
+                        </el-icon>
+                    </div>
+                    <div class="info-item">
+                        <label>绑定邮箱：</label>
+                        <span>{{ accountInfo.email }}</span>
+                        <el-icon @click="showChangeEmailModal">
+                            <Edit />
+                        </el-icon>
+                    </div>
+                    <div class="info-item">
+                        <label>实名认证：</label>
+                        <span>{{ accountInfo.realNameStatus }}</span>
+                        <el-button @click="requestRealNameVerification">去认证</el-button>
+                    </div>
+                    <div class="info-item">
+                        <label>账号注销：</label>
+                        <el-button @click="requestAccountDeactivation" :loading="isAccountDeletionInProgress">申请注销</el-button>
+                        <p v-if="deletionResultMessage" class="result-message">{{ deletionResultMessage }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>加入班级：</label>
+                        <el-button @click="showJoinClassModal">加入班级</el-button>
+                    </div>
+                </el-card>
+            </div>
         </div>
 
         <!-- 更换邮箱模态窗口 -->
-        <div v-if="isChangeEmailModalVisible" class="modal-overlay" @click="hideChangeEmailModal">
-            <div class="modal" @click.stop>
-                <h2>更换绑定邮箱</h2>
-                <form @submit.prevent="handleChangeEmail">
-                    <div>
-                        <label for="newEmail">新邮箱地址:</label>
-                        <input type="email" id="newEmail" v-model="newEmail" required />
-                    </div>
-                    <div>
-                        <label for="verificationCode">验证码:</label>
-                        <input type="text" id="verificationCode" v-model="verificationCode" required />
-                        <button @click.prevent="sendVerificationCode">发送验证码</button>
-                    </div>
-                    <div>
-                        <button type="submit">确认修改</button>
-                    </div>
-                </form>
-                <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-                <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
-            </div>
-        </div>
+        <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal">
+            <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef">
+                <el-form-item prop="newEmail">
+                    <el-input v-model="newEmail" placeholder="请输入新邮箱地址"></el-input>
+                </el-form-item>
+                <el-form-item prop="verificationCode">
+                    <el-input v-model="verificationCode" placeholder="请输入验证码"></el-input>
+                    <el-button @click="sendVerificationCode">发送验证码</el-button>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="handleChangeEmail">确认修改</el-button>
+                </el-form-item>
+            </el-form>
+            <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+            <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
+        </el-dialog>
 
         <!-- 修改密码窗口 -->
-        <div v-if="isChangePasswordModalVisible" class="modal-overlay" @click="hideChangePasswordModal">
-            <div class="modal" @click.stop>
-                <h2>更改密码</h2>
-                <form @submit.prevent="handlePasswordChange">
-                    <div>
-                        <label for="oldPassword">旧密码:</label>
-                        <input type="password" id="oldPassword" v-model="oldPassword" required />
-                    </div>
-                    <div>
-                        <label for="newPassword">新密码:</label>
-                        <input type="password" id="newPassword" v-model="newPassword" required />
-                    </div>
-                    <div>
-                        <label for="confirmNewPassword">确认新密码:</label>
-                        <input type="password" id="confirmNewPassword" v-model="confirmNewPassword" required />
-                    </div>
-                    <div>
-                        <button type="submit">确认修改</button>
-                    </div>
-                </form>
-                <p v-if="passwordErrorMessage" class="error-message">{{ passwordErrorMessage }}</p>
-                <p v-if="passwordSuccessMessage" class="success-message">{{ passwordSuccessMessage }}</p>
-            </div>
-        </div>
+        <el-dialog v-model="isChangePasswordModalVisible" title="更改密码" @close="hideChangePasswordModal">
+            <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef">
+                <el-form-item prop="oldPassword">
+                    <el-input v-model="oldPassword" type="password" placeholder="请输入旧密码"></el-input>
+                </el-form-item>
+                <el-form-item prop="newPassword">
+                    <el-input v-model="newPassword" type="password" placeholder="请输入新密码"></el-input>
+                </el-form-item>
+                <el-form-item prop="confirmNewPassword">
+                    <el-input v-model="confirmNewPassword" type="password" placeholder="请再次输入新密码"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="handlePasswordChange">确认修改</el-button>
+                </el-form-item>
+            </el-form>
+            <p v-if="passwordErrorMessage" class="error-message">{{ passwordErrorMessage }}</p>
+            <p v-if="passwordSuccessMessage" class="success-message">{{ passwordSuccessMessage }}</p>
+        </el-dialog>
 
         <!-- 加入班级模态窗口 -->
-        <div v-if="isJoinClassModalVisible" class="modal-overlay" @click="hideJoinClassModal">
-            <div class="modal" @click.stop>
-                <h2>加入班级</h2>
-                <form @submit.prevent="joinClass">
-                    <div>
-                        <label for="inviteCode">班级邀请码:</label>
-                        <input type="text" id="inviteCode" v-model="inviteCode" required />
-                    </div>
-                    <div>
-                        <button type="submit">确认加入</button>
-                    </div>
-                </form>
-                <p v-if="joinClassResultMessage" class="result-message">{{ joinClassResultMessage }}</p>
-            </div>
-        </div>
+        <el-dialog v-model="isJoinClassModalVisible" title="加入班级" @close="hideJoinClassModal">
+            <el-form :model="joinClassForm" :rules="joinClassRules" ref="joinClassFormRef">
+                <el-form-item prop="inviteCode">
+                    <el-input v-model="inviteCode" placeholder="请输入班级邀请码"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="joinClass">确认加入</el-button>
+                </el-form-item>
+            </el-form>
+            <p v-if="joinClassResultMessage" class="result-message">{{ joinClassResultMessage }}</p>
+        </el-dialog>
     </div>
 </template>
 
@@ -145,9 +135,12 @@
 import Header from '@/components/Header.vue'; // 确保路径正确
 import Sidebar from '@/components/Sidebar.vue';
 import axios from 'axios';
+import {Edit} from "@element-plus/icons-vue";
+import {ref} from "vue";
 
 export default {
     components: {
+        Edit,
         Header,
         Sidebar
     },
@@ -168,6 +161,8 @@ export default {
             },
             isEditing: false, // 用于控制是否处于编辑模式
             editedUserInfo: {}, // 用于存储编辑中的用户信息
+            Editusername: false, // 控制用户名编辑状态
+            Editgrade: false, // 控制年级编辑状态
 
             isChangeEmailModalVisible: false,
             newEmail: '',
@@ -203,30 +198,23 @@ export default {
             }
         },
 
-        editUserInfo() {
-            // 进入编辑模式，复制 userInfo 到 editedUserInfo
-            this.isEditing = true;
-            this.editedUserInfo = JSON.parse(JSON.stringify(this.userInfo));
-        },
-
-        cancelEdit() {
-            // 取消编辑，清除编辑中的用户信息，并退出编辑模式
-            this.isEditing = false;
-            this.editedUserInfo = {}; // 清除编辑中的用户信息
+        toggleEdit(field) {
+            if (field === 'username') {
+                this.Editusername = !this.Editusername;
+            } else if (field === 'grade') {
+                this.Editgrade = !this.Editgrade;
+            }
         },
 
         async saveEditedUserInfo() {
             try {
-                // 获取用户的唯一标识符，这里是使用 username
                 const userId = this.userInfo.username;
-                // 准备要发送的数据
                 const updatedData = {
-                    username: this.editedUserInfo.username,
-                    name: this.editedUserInfo.name,
-                    grade: parseInt(this.editedUserInfo.grade)
+                    username: this.editedUserInfo.username || this.userInfo.username,
+                    name: this.editedUserInfo.name || this.userInfo.name,
+                    grade: parseInt(this.editedUserInfo.grade || this.userInfo.grade)
                 };
 
-                // 发送更新请求
                 const response = await axios.post(`/api/student/${userId}/edit-information`, updatedData, {
                     headers: {
                         'Content-Type': 'application/json'
@@ -234,17 +222,16 @@ export default {
                 });
 
                 if (response.status === 200) {
-                    // 更新成功，更新本地 userInfo 并退出编辑模式
                     this.userInfo = response.data.data;
                     this.isEditing = false;
                     this.editedUserInfo = {};
+                    this.Editusername = false; // 保存后重置编辑状态
+                    this.Editgrade = false; // 保存后重置编辑状态
                     alert("个人信息更新成功");
                 } else {
-                    // 更新失败
                     alert("个人信息更新失败");
                 }
             } catch (error) {
-                // 错误处理
                 console.error("个人信息更新出错:", error);
                 alert("个人信息更新过程中出现错误，请稍后再试");
             }
@@ -430,104 +417,63 @@ export default {
 }
 
 .content {
-    flex: 1;
+    max-width: 1000px; /* 最大宽度为 1000px */
+    width: 100%; /* 宽度在正常情况下可以随着窗口大小缩放 */
     padding: 20px;
     background-color: #fff;
     overflow-y: auto;
-    margin-right: 50px; /* 右侧留空隙 */
+    margin-right: 50px; /* 如果需要右侧留空隙，可以保留这行，或者可以根据实际情况调整 */
 }
 
-.info-section {
+.info-card {
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.info-item {
     display: flex;
-    flex-direction: column;
-    gap: ½em;
-}
-
-.info-section h2 {
-    margin-bottom: 10px;
-}
-
-.info-section table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.info-section table tr td {
-    padding: 5px;
-    border: 1px solid #ccc;
-}
-
-.info-section table tr td button {
-    padding: 5px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-}
-
-.info-section table tr td button:hover {
-    background-color: #0056b3;
-}
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
     align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
 }
 
-.modal {
-    background: #fff;
-    padding: 8px;
-    border-radius: 7px;
-    box-shadow: 0 9px 9px rgba(0, 0, 0, 0.6);
-    max-width: 300px;
-    text-align: center;
+.info-item label {
+    font-weight: bold;
+    width: 100px;
 }
 
-.modal form {
-    display: flex;
-    flex-direction: column;
+.info-item span {
+    font-size: 16px;
+    color: #333;
 }
 
-.modal form div {
-    margin-bottom: 10px;
-}
-
-.modal form label {
-    margin-bottom: 5px;
-}
-
-.modal form input {
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-}
-
-.modal form button {
-    padding: 5px;
-    background-color: #007bff;
-    color: white;
-    border: none;
+.el-icon {
+    font-size: 20px;
     cursor: pointer;
+    color: #409EFF; /* 图标颜色设置为蓝色，确保更醒目 */
 }
 
-.modal form button:hover {
-    background-color: #0056b3;
+.edit-input {
+    width: 200px; /* 限制输入框的宽度，避免太长 */
+}
+
+
+.error-message, .success-message, .result-message {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
 }
 
 .error-message {
-    color: red;
-    margin-top: 10px;
+    background: #fdd;
+    color: #c00;
 }
 
-.success-message {
-    color: green;
-    margin-top: 10px;
+.success-message, .result-message {
+    background: #dfd;
+    color: #0c0;
 }
+
 </style>
