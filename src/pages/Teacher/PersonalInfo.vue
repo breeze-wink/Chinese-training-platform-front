@@ -15,27 +15,34 @@
                 <el-card class="info-card">
                     <div class="info-item">
                         <label>昵称：</label>
-                        <span v-if="!editNickname">{{ nickname }}</span>
-                        <el-input v-else v-model="nickname" size="small" class="edit-input" @blur="toggleEdit('nickname')" />
+                        <span v-if="!editNickname">{{ teacherInfo.userName }}</span>
+                        <el-input
+                            v-else
+                            v-model="teacherInfo.userName"
+                            size="small"
+                            class="edit-input"
+                            @blur="toggleEdit('nickname'); updateUsername()"/>
                         <el-icon @click="toggleEdit('nickname')">
                             <Edit />
                         </el-icon>
                     </div>
                     <div class="info-item">
                         <label>所属学校：</label>
-                        <span>{{ school }}</span>
+                        <span>{{ teacherInfo.schoolName }}</span>
                     </div>
                     <div class="info-item">
                         <label>电话号码：</label>
-                        <span v-if="!editPhone">{{ phone }}</span>
-                        <el-input v-else v-model="phone" size="small" class="edit-input" @blur="toggleEdit('phone')" />
+                        <span v-if="!editPhone">{{ teacherInfo.phoneNumber }}</span>
+                        <el-input
+                            v-else
+                            v-model="teacherInfo.phoneNumber" size="small" class="edit-input" @blur="toggleEdit('phone')" />
                         <el-icon @click="toggleEdit('phone')">
                             <Edit />
                         </el-icon>
                     </div>
                     <div class="info-item">
                         <label>实名：</label>
-                        <span>{{ realName }}</span>
+                        <span>{{ teacherInfo.name}}</span>
                     </div>
                 </el-card>
 
@@ -44,7 +51,7 @@
                 <el-card class="info-card" style="margin-top: 20px;">
                     <div class="info-item">
                         <label>账号ID：</label>
-                        <span>{{ accountId }}</span>
+                        <span>{{ teacherId }}</span>
                     </div>
                     <div class="info-item">
                         <label>密码：</label>
@@ -55,7 +62,7 @@
                     </div>
                     <div class="info-item">
                         <label>绑定邮箱：</label>
-                        <span>{{ email }}</span>
+                        <span>{{ teacherInfo.email }}</span>
                     </div>
                 </el-card>
             </div>
@@ -63,27 +70,59 @@
     </div></template>
 
 <script setup>
-
+//公共组件引入
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import { ref } from 'vue';
+import {computed, ref,onMounted} from 'vue';
+//图标引入
 import { ElIcon, ElCard, ElInput } from 'element-plus';
 import { Edit } from '@element-plus/icons-vue';
+import {useStore} from "vuex";
+import axios from "axios";
 
-// 个人信息
-const nickname = ref('张老师');
-const school = ref('某某学校');
-const phone = ref('123456789');
-const realName = ref('张三');
+//从全局中ID信息
+const store = useStore();
+const teacherId = computed(() => store.state.user.id);
+const teacherInfo = ref({
+    name: '',
+    userName: '',
+    email: '',
+    phoneNumber: '',
+    schoolName: ''
 
-// 账号信息
-const accountId = ref('teacher123');
-const email = ref('zhangsan@example.com');
+});
 
 // 控制编辑状态
 const editNickname = ref(false);
 const editPhone = ref(false);
-// 编辑按钮的逻辑
+
+// 错误消息
+const errorMessage = ref('');
+
+// 获取教师信息
+const getTeacherInfo = async () => {
+    try {
+        const response = await axios.get(`/api/teacher/${teacherId.value}`);
+        if (response.status === 200 && response.data.message === 'success') {
+            // 更新教师信息
+            teacherInfo.value = response.data.data;
+        } else {
+            errorMessage.value = '获取教师信息失败：' + response.data.message;
+            console.error(errorMessage.value);
+        }
+    } catch (error) {
+        errorMessage.value = '获取教师信息时发生错误：' + error.message;
+        console.error(errorMessage.value);
+    }
+};
+
+// 在组件挂载时获取教师信息
+onMounted(() => {
+    getTeacherInfo();
+});
+
+
+
 // 切换编辑状态
 function toggleEdit(field) {
     if (field === 'nickname') {
@@ -92,6 +131,29 @@ function toggleEdit(field) {
         editPhone.value = !editPhone.value;
     }
 }
+
+const updateUsername = async () => {
+    try {
+        const url = `/api/teacher/${teacherId.value}/update-username`;
+
+        // 发送 POST 请求
+        const response = await axios.post(url, {
+            username: teacherInfo.value.userName
+        });
+
+        // 处理响应
+        if (response.status === 200 && response.data.message === '用户名修改成功') {
+            console.log(response.data.message);
+        } else {
+            console.error(response.data.message);
+        }
+    } catch (error) {
+        // 处理错误
+        console.error('请求失败' + error.message);
+    }
+};
+
+
 // 编辑密码的逻辑（可以弹出对话框等）
 function editPassword() {
     console.log('编辑密码');
