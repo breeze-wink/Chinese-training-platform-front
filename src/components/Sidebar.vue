@@ -78,8 +78,8 @@ const handleClose = (key, keyPath) => {
     flex-direction: column;
     align-items: flex-start;
     width: 200px;
-    margin-left: 50px; /* 左侧留空隙 */
-    margin-right: 10px;
+    margin-left: 100px; /* 左侧留空隙 */
+    margin-right: 100px;
 }
 
 
