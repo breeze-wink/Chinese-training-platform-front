@@ -6,6 +6,11 @@ import ViewCurriculumStandard from "@/pages/Teacher/ViewCurriculumStandard.vue";
 
 import KnowledgePoint from '../pages/system-admin/KnowledgePoint.vue';
 
+// 学生
+import StudentPersonalInfo from '../pages/Student/PersonalInfo.vue';
+import PoetryList from "@/pages/Student/PoetryList.vue";
+import PoemDetail from '@/pages/Student/PoemDetail.vue'; // 新增诗词详情页
+import EssayDetail from '@/pages/Student/EssayDetail.vue'; // 新增作文详情页
 
 const routes = [
     //首页
@@ -15,7 +20,13 @@ const routes = [
     { path: '/teacher/view-curriculum-standard', component: ViewCurriculumStandard},
     //系统管理员
     { path: '/system-admin/KnowledgePoint', component: KnowledgePoint },
-
+    // 学生的个人页面
+    { path: '/student/personal-info', component: StudentPersonalInfo},
+    { path: '/student/poetry-list', component: PoetryList},
+    // 诗词详情路由
+    { path: '/student/poem-detail/:id', name: 'PoemDetail', component: PoemDetail, props: true },
+    // 作文详情路由
+    { path: '/student/essay-detail/:id', name: 'EssayDetail', component: EssayDetail, props: true },
 ];
 
 

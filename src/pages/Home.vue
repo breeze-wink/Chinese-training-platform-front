@@ -499,10 +499,6 @@ async function submitForm(formName, userType) {
                     if (response.data.message === "注册成功") {
                         alert('注册成功！');
                         registerDialogVisible.value = false;
-                    } else if (response.data.message === null) {
-                        // 处理后端返回 message 为 null 的情况
-                        alert('注册成功！（但后端返回的消息为 null，请检查后端逻辑）');
-                        registerDialogVisible.value = false;
                     } else {
                         console.error('后端返回的消息不是 "注册成功"', response.data);
                         alert('注册失败，请检查信息');
