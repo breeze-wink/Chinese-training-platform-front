@@ -211,6 +211,9 @@
 import {ref, onMounted, reactive, getCurrentInstance} from 'vue'
 import axios from 'axios'
 import {User} from "@element-plus/icons-vue";
+import { useStore } from 'vuex'; // 引入 useStore 来使用 Vuex
+const store = useStore(); // 获取 Vuex Store 实例
+
 
 const { proxy } = getCurrentInstance(); // 获取组件实例
 const isDark = ref(false)
@@ -300,7 +303,15 @@ const login = async () => {
     // 检查响应状态码和消息
     if (response.status === 200 && response.data.message === "success") {
       console.log("登录成功:", response.data.id);
+      //使用vuex更新用户信息
+
+        store.commit('setUser', {
+            id: response.data.id,
+            role: Identity.value
+        });
+
       loginDialogVisible.value = false; // 登录成功后关闭对话框
+
       // 这里可以添加更多的登录成功后的操作，比如保存用户信息等
     } else {
       // 处理非200状态码的情况
