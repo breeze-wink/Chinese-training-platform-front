@@ -19,9 +19,12 @@
         <el-table :data="filteredData" style="width: 100%; margin-top: 20px;">
           <el-table-column prop="id" label="序号" width="80"></el-table-column>
           <el-table-column prop="name" label="姓名"></el-table-column>
-          <el-table-column prop="contact" label="联系方式"></el-table-column>
           <el-table-column prop="email" label="邮箱"></el-table-column>
-          <el-table-column prop="createdTime" label="创建时间"></el-table-column>
+          <el-table-column prop="username" label="用户名"></el-table-column>
+          <el-table-column prop="grade" label="年级"></el-table-column>
+          <el-table-column prop="schoolId" label="学校ID"></el-table-column>
+
+
           <el-table-column label="操作">
             <template #default="{ row }">
               <el-button size="small" type="danger" @click="deleteStudent(row)">删除</el-button>
@@ -43,10 +46,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import {ref, computed, onMounted} from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination } from 'element-plus';
+import {ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination} from 'element-plus';
 import axios from 'axios';
 
 // 定义变量
@@ -59,50 +62,51 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const totalItems = ref(0);
 const students = ref([]);
-
-
-
-
-// 过滤搜索结果
 const adminId = 9; // 默认管理员ID为9
+
+
 
 // 获取学生数据
 const getStudents = async () => {
   try {
     const response = await axios.get(`/api/school-admin/${adminId}/query-all-students`);
-    if (response.status === 200 && response.data.message === '学生账号信息查询成功') {
+    if (response.status === 200 && response.data.message === '全校学生信息查询成功') {
+      // 更新学生列表和总数
       students.value = response.data.data;
       totalItems.value = response.data.data.length;
     } else {
-      throw new Error('学生账号信息查询失败：' + response.data.message);
+      // 如果响应不符合预期，提示用户
+      ElMessage({message: '学生账号信息查询失败：' + response.data.message, type: 'error'});
     }
   } catch (error) {
+    // 捕获错误并显示提示
     console.error(error);
-    ElMessage({ message: error.message, type: 'error' });
+    ElMessage({message: '获取学生信息失败，请稍后再试', type: 'error'});
   }
 };
 
+
 const filteredData = computed(() => {
   return students.value.filter(student =>
-      student.name.includes(search.value)
+      student.name && student.name.includes(search.value)
   );
 });
 
 // 查询学生
 const searchStudent = () => {
-  ElMessage({ message: '查询成功', type: 'success' });
+  ElMessage({message: '查询成功', type: 'success'});
 };
 
 // 重置搜索
 const resetSearch = () => {
   search.value = '';
-  ElMessage({ message: '重置成功', type: 'success' });
+  ElMessage({message: '重置成功', type: 'success'});
 };
 
 // 删除学生
 const deleteStudent = (student) => {
   students.value = students.value.filter(s => s.id !== student.id);
-  ElMessage({ message: '删除成功', type: 'success' });
+  ElMessage({message: '删除成功', type: 'success'});
 };
 
 // 处理分页变化

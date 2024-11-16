@@ -9,22 +9,23 @@
 
       <!-- 内容区 -->
       <div class="content">
-        <h2>学生管理</h2>
+        <h2>教师管理</h2>
         <div class="input-button-group">
-          <el-input v-model="search" placeholder="输入学生姓名" style="width: 300px;"></el-input>
-          <el-button type="primary" @click="searchStudent">查询</el-button>
+          <el-input v-model="search" placeholder="输入教师姓名" style="width: 300px;"></el-input>
+          <el-button type="primary" @click="searchTeacher">查询</el-button>
           <el-button type="warning" @click="resetSearch">重置</el-button>
         </div>
 
         <el-table :data="filteredData" style="width: 100%; margin-top: 20px;">
           <el-table-column prop="id" label="序号" width="80"></el-table-column>
           <el-table-column prop="name" label="姓名"></el-table-column>
-          <el-table-column prop="contact" label="联系方式"></el-table-column>
           <el-table-column prop="email" label="邮箱"></el-table-column>
-          <el-table-column prop="createdTime" label="创建时间"></el-table-column>
+          <el-table-column prop="phoneNumber" label="联系方式"></el-table-column>
+          <el-table-column prop="schoolId" label="学校ID"></el-table-column>
+
           <el-table-column label="操作">
             <template #default="{ row }">
-              <el-button size="small" type="danger" @click="deleteStudent(row)">删除</el-button>
+              <el-button size="small" type="danger" @click="deleteTeacher(row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -50,46 +51,43 @@ import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination } fr
 import axios from 'axios';
 
 // 定义变量
-
 onMounted(async () => {
-  await getStudents();
+  await getTeachers();
 });
 const search = ref('');
 const currentPage = ref(1);
 const pageSize = ref(10);
 const totalItems = ref(0);
-const students = ref([]);
+const teachers = ref([]);
+const adminId = 9; // 默认管理员ID
 
-
-
-
-// 过滤搜索结果
-const adminId = 9; // 默认管理员ID为9
-
-// 获取学生数据
-const getStudents = async () => {
+// 获取教师数据
+const getTeachers = async () => {
   try {
-    const response = await axios.get(`/api/school-admin/${adminId}/query-all-students`);
-    if (response.status === 200 && response.data.message === '学生账号信息查询成功') {
-      students.value = response.data.data;
+    const response = await axios.get(`/api/school-admin/${adminId}/query-all-teachers`);
+    if (response.status === 200) {
+      teachers.value = response.data.data;
       totalItems.value = response.data.data.length;
     } else {
-      throw new Error('学生账号信息查询失败：' + response.data.message);
+      ElMessage({ message: '教师账号信息查询失败：' + response.data.message, type: 'error' });
     }
+
   } catch (error) {
+    // 捕获错误并显示提示
     console.error(error);
-    ElMessage({ message: error.message, type: 'error' });
+    ElMessage({message: '获取教师信息失败，请稍后再试', type: 'error'});
   }
 };
 
+// 过滤搜索结果
 const filteredData = computed(() => {
-  return students.value.filter(student =>
-      student.name.includes(search.value)
+  return teachers.value.filter(teacher =>
+      teacher.name.includes(search.value)
   );
 });
 
-// 查询学生
-const searchStudent = () => {
+// 查询教师
+const searchTeacher = () => {
   ElMessage({ message: '查询成功', type: 'success' });
 };
 
@@ -99,9 +97,9 @@ const resetSearch = () => {
   ElMessage({ message: '重置成功', type: 'success' });
 };
 
-// 删除学生
-const deleteStudent = (student) => {
-  students.value = students.value.filter(s => s.id !== student.id);
+// 删除教师
+const deleteTeacher = (teacher) => {
+  teachers.value = teachers.value.filter(t => t.id !== teacher.id);
   ElMessage({ message: '删除成功', type: 'success' });
 };
 
@@ -109,6 +107,8 @@ const deleteStudent = (student) => {
 const handlePageChange = (page) => {
   currentPage.value = page;
 };
+
+
 </script>
 
 <style scoped>
@@ -146,3 +146,4 @@ const handlePageChange = (page) => {
   -moz-appearance: auto;
 }
 </style>
+

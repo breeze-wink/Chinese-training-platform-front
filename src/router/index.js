@@ -5,6 +5,10 @@ import TeacherPersonalInfo from '../pages/Teacher/PersonalInfo.vue';// 老师个
 import ViewCurriculumStandard from "@/pages/Teacher/ViewCurriculumStandard.vue";
 
 import KnowledgePoint from '../pages/system-admin/KnowledgePoint.vue';
+import CourseStandard from '../pages/system-admin/CourseStandard.vue';
+import ManageTeacher from '../pages/school-admin/ManageTeacher.vue';
+import ManageStudent from '../pages/school-admin/ManageStudent.vue';
+import AuthorizationCode from '../pages/school-admin/AuthorizationCode.vue';
 
 // 学生
 import StudentPersonalInfo from '../pages/Student/PersonalInfo.vue';
@@ -20,6 +24,11 @@ const routes = [
     { path: '/teacher/view-curriculum-standard', component: ViewCurriculumStandard},
     //系统管理员
     { path: '/system-admin/KnowledgePoint', component: KnowledgePoint },
+    { path: '/system-admin/CourseStandard', component: CourseStandard },
+    //学校管理员
+     { path: '/school-admin/ManageTeacher', component: ManageTeacher},
+    { path: '/school-admin/ManageStudent', component: ManageStudent},
+    { path: '/school-admin/AuthorizationCode', component: AuthorizationCode},
     // 学生的个人页面
     { path: '/student/personal-info', component: StudentPersonalInfo},
     { path: '/student/poetry-list', component: PoetryList},
