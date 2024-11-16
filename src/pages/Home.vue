@@ -83,7 +83,7 @@
           </el-form-item>
           <el-form-item class="form-item">
             <el-checkbox>记住密码</el-checkbox>
-            <a href="#" style="float: right;"@click="forgotPasswordDialogVisible = true">忘记密码</a>
+            <a href="#" style="float: right;" @click="forgotPasswordDialogVisible = true">忘记密码</a>
           </el-form-item>
         </el-form>
         <div slot="footer" class="dialog-footer">
@@ -296,7 +296,7 @@ const login = async () => {
   const url = urls[Identity.value];
 
   try {
-    const response = await axios.post('/api/student/login', {
+    const response = await axios.post(url, {
       account: account.value,
       password: password.value
     });
@@ -619,9 +619,25 @@ async function submitForm(formName, userType) {
   height: 40px; /* 设置按钮的高度 */
   line-height: 40px; /* 设置按钮文本的垂直居中 */
   width: 300px; /* 设置按钮的宽度 */
-  padding: 0; /* 去除默认的内边距 */
+  border-radius: 16px; /* 设置圆角 */
+  font-size: 16px; /* 调整字体大小 */
+  padding: 10px 20px; /* 调整按钮内边距 */
+  font-weight: bold; /* 使字体加粗 */
+}
+.view-members-button {
+    background-color: #c8f0c8; /* 绿色背景 */
+    color: #2f8f2f; /* 绿色字体 */
+}
+.view-stats-button {
+    background-color: #c8e1ff; /* 浅蓝色背景 */
+    color: #2f5f8f; /* 深蓝色字体 */
 }
 
+
+.disband-button {
+    background-color: #f8c8c8; /* 红色背景 */
+    color: #8f2f2f; /* 红色字体 */
+}
 
 .centered-form .el-form-item {
   display: flex;
