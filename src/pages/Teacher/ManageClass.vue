@@ -21,10 +21,10 @@
                 </el-button>
 
                 <el-table :data="classList" border style="width: 100%">
-                    <el-table-column prop="classCode" label="班级码" width="150"></el-table-column>
+                    <el-table-column prop="classCode" label="班级码" width="80"></el-table-column>
                     <el-table-column prop="className" label="班级名称" width="200"></el-table-column>
                     <el-table-column prop="classDescription" label="班级描述"></el-table-column>
-                    <el-table-column label="操作" width="300">
+                    <el-table-column label="操作" width="320">
                         <template #default="scope">
                             <el-button type="primary" class="custom-button view-members-button" @click="viewMembers(scope.row)">查看成员</el-button>
                             <el-button type="success" class="custom-button view-stats-button" @click="viewStats(scope.row)">统计概况</el-button>
