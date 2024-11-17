@@ -16,10 +16,26 @@ import EssayDetail from '@/pages/Student/EssayDetail.vue'; // 新增作文详情
 const routes = [
     //首页
     { path: '/', component: Home },
+
     //老师页面
-    { path: '/teacher/personal-info', component: TeacherPersonalInfo },//个人信息
-    { path: '/teacher/view-curriculum-standard', component: ViewCurriculumStandard},//课标查看
-    { path: '/teacher/manage-class', component: ManageClass},//管理班级
+    //个人信息
+    {
+        path: '/teacher/personal-info',
+        name: 'TeacherPersonalInfo',
+        component: TeacherPersonalInfo
+    },
+    //课标查看
+    {
+        path: '/teacher/view-curriculum-standard',
+        name: 'ViewCurriculumStandard',
+        component: ViewCurriculumStandard
+    },
+    //管理班级
+    {
+        path: '/teacher/manage-class',
+        name: 'ManageClass',
+        component: ManageClass
+    },
 
     //系统管理员
     { path: '/system-admin/KnowledgePoint', component: KnowledgePoint },
