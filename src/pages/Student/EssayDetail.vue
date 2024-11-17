@@ -6,16 +6,23 @@
             <Sidebar />
 
             <div class="essay-detail">
-                <div v-if="essay && essay.title" class="essay-content">
-                    <h1 class="essay-title">{{ essay.title }}</h1>
-                    <p class="essay-annotation">{{ essay.annotation }}</p>
-                    <div class="essay-text-container">
-<!--                        <pre class="essay-text">{{ essay.content }}</pre>-->
-                        <div class="essay-text" v-html="formattedContent"></div>
-                    </div>
-                </div>
-                <div v-else class="loading">
+                <div v-if="loading" class="loading">
                     <p>Loading...</p>
+                </div>
+                <div v-else-if="error" class="error">
+                    <p>Error: {{ error.message }}</p>
+                </div>
+                <div v-else-if="pdfUrl" class="essay-content">
+                    <h1 class="essay-title">作文详情</h1>
+                    <p class="essay-annotation">点击下方链接查看作文内容 (PDF)</p>
+                    <div class="essay-text-container">
+                        <a :href="pdfUrl" target="_blank">查看作文内容 (PDF)</a>
+                    </div>
+                    <!-- 或者使用嵌入的 PDF 查看器 -->
+                    <embed :src="pdfUrl" type="application/pdf" width="100%" height="600px" />
+                </div>
+                <div v-else class="not-found">
+                    <p>Essay not found.</p>
                 </div>
             </div>
         </div>
@@ -23,47 +30,41 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
 import Sidebar from "@/components/Sidebar.vue";
 import Header from "@/components/Header.vue";
+import axios from 'axios';  // 引入 axios
 
 export default {
     name: 'EssayDetail',
     components: { Sidebar, Header },
     data() {
         return {
-            essay: {}
+            loading: true,
+            error: null,
+            pdfUrl: null
         };
     },
-    computed: {
-        ...mapState(['essays']),
-        formattedContent() {
-            // 添加首行缩进
-            if (this.essay && this.essay.content) {
-                // 将内容按段落分割，然后在每段首行前加两个空格
-                return this.essay.content.split('\n').map(line => {
-                    if (line.startsWith('——')) {
-                        // 如果行以“——”开头，只在“——”后面加两个空格
-                        return '                               ' +
-                            '                                  ' + line;
-                    } else {
-                        // 对于其他行，正常处理
-                        return line ? '  ' + line : '';
-                    }
-                }).join('<br>');
-            }
-            return '';
-        }
-    },
     created() {
-        const id = this.$route.params.id;
-        console.log('Route ID:', id); // 调试信息
-        this.essay = this.essays.find(essay => essay.id === parseInt(id));
-        console.log('Fetched Essay:', this.essay); // 调试信息
+        this.fetchEssayPdf();
     },
     methods: {
-        getEssayById(id) {
-            return this.essays.find(essay => essay.id === parseInt(id));
+        async fetchEssayPdf() {
+            const id = this.$route.params.id;
+            try {
+                // 获取作文的 PDF 内容
+                const response = await axios.get(`/api/student/essay/get-info/${id}`, {
+                    responseType: 'blob'  // 设置响应类型为 blob
+                });
+
+                // 创建一个 URL 对象
+                const url = window.URL.createObjectURL(response.data);
+                this.pdfUrl = url;
+
+                this.loading = false;
+            } catch (error) {
+                this.error = error;
+                this.loading = false;
+            }
         }
     }
 };
@@ -84,18 +85,13 @@ export default {
     padding: 1rem; /* 增加内边距，使内容与边缘有一定距离 */
 }
 
-/* 为散文内容添加样式 */
-.essay-text {
-    white-space: pre-wrap; /* 保留空格和换行，同时允许内容换行 */
-    word-wrap: break-word; /* 长单词或URL地址换行 */
-    font-family: 'Noto Serif SC', serif; /* 保持与文章内容一致的字体 */
-    line-height: 1.5; /* 调整行高以适应内容 */
-    margin: 1rem 0; /* 上下外边距，根据需要调整 */
-}
-
-/* 首行缩进 */
-.essay-text::first-line {
-    text-indent: 2ch; /* 2个字符宽度的缩进 */
+.essay-detail {
+    flex: 1;
+    background-color: #fff;
+    box-shadow: 5rem 5rem 5rem rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-left: 2rem;
 }
 
 .essay-title {
