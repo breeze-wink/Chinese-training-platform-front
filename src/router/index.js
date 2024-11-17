@@ -1,14 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../pages/Home.vue'
 //老师
-import TeacherPersonalInfo from '../pages/Teacher/PersonalInfo.vue';// 老师个人信息
-import ViewCurriculumStandard from "@/pages/Teacher/ViewCurriculumStandard.vue";
-
-import KnowledgePoint from '../pages/system-admin/KnowledgePoint.vue';
-import CourseStandard from '../pages/system-admin/CourseStandard.vue';
-import ManageTeacher from '../pages/school-admin/ManageTeacher.vue';
-import ManageStudent from '../pages/school-admin/ManageStudent.vue';
-import AuthorizationCode from '../pages/school-admin/AuthorizationCode.vue';
+import TeacherPersonalInfo from '@/pages/Teacher/PersonalInfo.vue';// 老师个人信息
+import ViewCurriculumStandard from "@/pages/Teacher/ViewCurriculumStandard.vue";//查看课标
+import ManageClass from "@/pages/Teacher/ManageClass.vue";
+//知识点
+import KnowledgePoint from '@/pages/system-admin/KnowledgePoint.vue';
 
 // 学生
 import StudentPersonalInfo from '../pages/Student/PersonalInfo.vue';
@@ -19,16 +16,30 @@ import EssayDetail from '@/pages/Student/EssayDetail.vue'; // 新增作文详情
 const routes = [
     //首页
     { path: '/', component: Home },
-    //老师的个人信息页面
-    { path: '/teacher/personal-info', component: TeacherPersonalInfo },
-    { path: '/teacher/view-curriculum-standard', component: ViewCurriculumStandard},
+
+    //老师页面
+    //个人信息
+    {
+        path: '/teacher/personal-info',
+        name: 'TeacherPersonalInfo',
+        component: TeacherPersonalInfo
+    },
+    //课标查看
+    {
+        path: '/teacher/view-curriculum-standard',
+        name: 'ViewCurriculumStandard',
+        component: ViewCurriculumStandard
+    },
+    //管理班级
+    {
+        path: '/teacher/manage-class',
+        name: 'ManageClass',
+        component: ManageClass
+    },
+
     //系统管理员
     { path: '/system-admin/KnowledgePoint', component: KnowledgePoint },
-    { path: '/system-admin/CourseStandard', component: CourseStandard },
-    //学校管理员
-     { path: '/school-admin/ManageTeacher', component: ManageTeacher},
-    { path: '/school-admin/ManageStudent', component: ManageStudent},
-    { path: '/school-admin/AuthorizationCode', component: AuthorizationCode},
+
     // 学生的个人页面
     { path: '/student/personal-info', component: StudentPersonalInfo},
     { path: '/student/poetry-list', component: PoetryList},
