@@ -67,11 +67,16 @@ import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import { useStore } from 'vuex';
+import { computed } from 'vue';
 import {CirclePlus, CirclePlusFilled, Plus} from "@element-plus/icons-vue";
 
-// classList 是一个班级信息的数组，每个对象包含classCode, className, classDescription 等字段
+
+// classList 是一个班级信息的数组，每个对象包含classId, classCode, className, classDescription 等字段
 const classList = ref([]);
 
+const store = useStore();
+const teacherId = computed(() => store.state.user.id);
 
 // 控制生成班级对话框的显示状态
 const createDialogVisible = ref(false);
@@ -85,9 +90,11 @@ const newClassForm = ref({
 // 获取班级信息列表的函数
 const fetchClassList = async () => {
     try {
-        const response = await axios.get('/api/teacher/75/get-classes');
-        if (response.status === 200 && response.data.message === 'success') {
+        const response = await axios.get(`/api/teacher/${teacherId.value}/get-classes`);
+
+        if (response.status === 200 && response.data.message === '班级信息获取成功') {
             classList.value = response.data.data;
+            console.log('获取班级列表成功:', response.data);
         } else {
             console.error('获取班级列表失败:', response.data.message);
         }
@@ -99,7 +106,7 @@ const fetchClassList = async () => {
 // 创建新班级的函数
 const createClass = async () => {
     try {
-        const response = await axios.post('/api/teacher/75/create-class', {
+        const response = await axios.post(`/api/teacher/${teacherId.value}/create-class`, {
             className: newClassForm.value.className,
             classDescription: newClassForm.value.classDescription
         });
