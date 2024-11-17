@@ -5,7 +5,7 @@ import { createStore } from 'vuex';
 export default createStore({
     state: {
         user: {
-            id: null, // 用户唯一标识符
+            id: 75, // 用户唯一标识符
             role: null // 用户角色，比如 'teacher' 或 'student'
         },
         isAuthenticated: false // 登录状态
