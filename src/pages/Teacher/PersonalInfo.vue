@@ -85,7 +85,8 @@ import axios from "axios";
 
 //从全局中ID信息
 const store = useStore();
-const teacherId = computed(() => store.state.user.id);
+//const teacherId = computed(() => store.state.user.id);
+const teacherId = '75';
 const teacherInfo = ref({
     name: '',
     userName: '',
