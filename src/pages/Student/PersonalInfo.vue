@@ -15,27 +15,43 @@
                 <el-card class="info-card">
                     <div class="info-item">
                         <label>昵称：</label>
-                        <span v-if="!Editusername">{{ userInfo.username }}</span>
-                        <el-input v-else v-model="editedUserInfo.username" size="small" class="edit-input" @blur="saveEditedUserInfo" />
-                        <el-icon v-if="!Editusername" @click="toggleEdit('username')"><Edit /></el-icon>
+                        <span v-if="!editNickname">{{ studentInfo.username }}</span>
+                        <el-input
+                            v-else
+                            v-model="studentInfo.username"
+                            size="small"
+                            class="edit-input"
+                            @blur="toggleEdit('nickname'); saveEditedUserInfo()"
+                        />
+                        <el-icon v-if="!editNickname" @click="toggleEdit('nickname')">
+                            <Edit />
+                        </el-icon>
                     </div>
                     <div class="info-item">
                         <label>实名：</label>
-                        <span>{{ userInfo.name }}</span>
+                        <span>{{ studentInfo.name }}</span>
                     </div>
                     <div class="info-item">
                         <label>班级：</label>
-                        <span>{{ accountInfo.class }}</span>
+                        <span>{{ studentInfo.class }}</span>
                     </div>
                     <div class="info-item">
                         <label>学校：</label>
-                        <span>{{ userInfo.schoolName }}</span>
+                        <span>{{ studentInfo.schoolName }}</span>
                     </div>
                     <div class="info-item">
                         <label>年级：</label>
-                        <span v-if="!Editgrade">{{ userInfo.grade }}</span>
-                        <el-input v-else v-model="editedUserInfo.grade" size="small" class="edit-input" @blur="saveEditedUserInfo" />
-                        <el-icon v-if="!Editgrade" @click="toggleEdit('grade')"><Edit /></el-icon>
+                        <span v-if="!editGrade">{{ studentInfo.grade }}</span>
+                        <el-input
+                            v-else
+                            v-model="studentInfo.grade"
+                            size="small"
+                            class="edit-input"
+                            @blur="toggleEdit('grade'); saveEditedUserInfo()"
+                        />
+                        <el-icon v-if="!editGrade" @click="toggleEdit('grade')">
+                            <Edit />
+                        </el-icon>
                     </div>
                 </el-card>
 
@@ -44,7 +60,7 @@
                 <el-card class="info-card" style="margin-top: 20px;">
                     <div class="info-item">
                         <label>账号ID：</label>
-                        <span>{{ accountInfo.accountId }}</span>
+                        <span>{{ studentInfo.accountId }}</span>
                     </div>
                     <div class="info-item">
                         <label>密码：</label>
@@ -55,15 +71,17 @@
                     </div>
                     <div class="info-item">
                         <label>绑定邮箱：</label>
-                        <span>{{ accountInfo.email }}</span>
+                        <span>{{ studentInfo.email }}</span>
                         <el-icon @click="showChangeEmailModal">
                             <Edit />
                         </el-icon>
                     </div>
                     <div class="info-item">
                         <label>实名认证：</label>
-                        <span>{{ accountInfo.realNameStatus }}</span>
-                        <el-button @click="requestRealNameVerification">去认证</el-button>
+                        <span v-if="studentInfo.realNameStatus === '未认证'">未认证</span>
+                        <span v-else-if="studentInfo.realNameStatus === '已认证'">已认证</span>
+                        <el-button v-if="studentInfo.realNameStatus === '未认证'" @click="requestRealNameVerification">去认证</el-button>
+                        <span v-else class="success-message">认证成功</span>
                     </div>
                     <div class="info-item">
                         <label>账号注销：</label>
@@ -132,11 +150,11 @@
 </template>
 
 <script>
-import Header from '@/components/Header.vue'; // 确保路径正确
+import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import axios from 'axios';
-import {Edit} from "@element-plus/icons-vue";
-import {ref} from "vue";
+import { Edit } from '@element-plus/icons-vue';
+import { ref, onMounted } from 'vue';
 
 export default {
     components: {
@@ -146,23 +164,18 @@ export default {
     },
     data() {
         return {
-            userInfo: {
-                name: '调查',
-                username: '调查',
-                schoolName: '调查',
-                grade: '调查'
+            studentInfo: {
+                name: ' 无 ',  // 实名
+                username: ' 李四 ', // 昵称
+                schoolName: ' 1 ',
+                grade: ' 7 ',
+                accountId: ' 123 ',
+                email: ' 835975242@qq.com ',
+                realNameStatus: ' 未认证 ', // 未认证和已认证两种结果
+                class: ' 1 '
             },
-            accountInfo: {
-                accountId: '调查',
-                email: '调查',
-                password: '调查',
-                realNameStatus: '未认证',
-                class: '调查'
-            },
-            isEditing: false, // 用于控制是否处于编辑模式
-            editedUserInfo: {}, // 用于存储编辑中的用户信息
-            Editusername: false, // 控制用户名编辑状态
-            Editgrade: false, // 控制年级编辑状态
+            editNickname: false,
+            editGrade: false,
 
             isChangeEmailModalVisible: false,
             newEmail: '',
@@ -180,18 +193,17 @@ export default {
             isAccountDeletionInProgress: false,
             deletionResultMessage: '',
 
-            isJoinClassModalVisible: false, // 控制加入班级模态窗口的可见性
-            inviteCode: '', // 用于存储用户输入的班级邀请码
-            joinClassResultMessage: '' // 显示加入班级的结果信息
+            isJoinClassModalVisible: false,
+            inviteCode: '',
+            joinClassResultMessage: ''
         };
     },
     methods: {
         async fetchStudentInfo() {
             try {
-                const response = await axios.get(`/api/student/${this.accountInfo.accountId}`);
+                const response = await axios.get(`/api/student/${this.studentInfo.accountId}`);
                 if (response.status === 200) {
-                    this.userInfo = response.data.data;
-                    this.accountInfo.class = this.userInfo.schoolName; // 更新班级信息
+                    this.studentInfo = response.data.data;
                 }
             } catch (error) {
                 console.error("获取学生信息失败:", error);
@@ -199,35 +211,25 @@ export default {
         },
 
         toggleEdit(field) {
-            if (field === 'username') {
-                this.Editusername = !this.Editusername;
+            if (field === 'nickname') {
+                this.editNickname = !this.editNickname;
             } else if (field === 'grade') {
-                this.Editgrade = !this.Editgrade;
+                this.editGrade = !this.editGrade;
             }
         },
 
         async saveEditedUserInfo() {
             try {
-                const userId = this.userInfo.username;
-                const updatedData = {
-                    username: this.editedUserInfo.username || this.userInfo.username,
-                    name: this.editedUserInfo.name || this.userInfo.name,
-                    grade: parseInt(this.editedUserInfo.grade || this.userInfo.grade)
-                };
-
-                const response = await axios.post(`/api/student/${userId}/edit-information`, updatedData, {
+                const response = await axios.post(`/api/student/${this.studentInfo.accountId}/edit-information`, this.studentInfo, {
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 });
 
                 if (response.status === 200) {
-                    this.userInfo = response.data.data;
-                    this.isEditing = false;
-                    this.editedUserInfo = {};
-                    this.Editusername = false; // 保存后重置编辑状态
-                    this.Editgrade = false; // 保存后重置编辑状态
                     alert("个人信息更新成功");
+                    this.toggleEdit('nickname');
+                    this.toggleEdit('grade');
                 } else {
                     alert("个人信息更新失败");
                 }
@@ -236,7 +238,6 @@ export default {
                 alert("个人信息更新过程中出现错误，请稍后再试");
             }
         },
-
 
         showChangeEmailModal() {
             this.isChangeEmailModalVisible = true;
@@ -252,8 +253,7 @@ export default {
 
         async sendVerificationCode() {
             try {
-                console.log('Sending verification code for:', this.newEmail, 'with account ID:', this.accountInfo.accountId);
-                const response = await axios.post(`/api/student/${this.accountInfo.accountId}/change-email/send-verification`, {
+                const response = await axios.post(`/api/student/${this.studentInfo.accountId}/change-email/send-verification`, {
                     email: this.newEmail
                 }, {
                     headers: {
@@ -268,9 +268,10 @@ export default {
                 console.error('验证码发送失败:', error.response ? error.response.data : error.message);
             }
         },
+
         async handleChangeEmail() {
             try {
-                const response = await axios.post(`/api/student/${this.accountInfo.accountId}/change-email`, {
+                const response = await axios.post(`/api/student/${this.studentInfo.accountId}/change-email`, {
                     email: this.newEmail
                 }, {
                     headers: {
@@ -279,7 +280,7 @@ export default {
                 });
                 if (response.status === 200) {
                     this.successMessage = '邮箱更换成功';
-                    this.accountInfo.email = this.newEmail; // 更新显示的邮箱
+                    this.studentInfo.email = this.newEmail;
                     this.hideChangeEmailModal();
                 }
             } catch (error) {
@@ -289,11 +290,11 @@ export default {
         },
 
         showChangePasswordModal() {
-            this.isChangePasswordModalVisible = true; // 控制密码修改模态窗口的显示
+            this.isChangePasswordModalVisible = true;
         },
 
         hideChangePasswordModal() {
-            this.isChangePasswordModalVisible = false; // 控制密码修改模态窗口的隐藏
+            this.isChangePasswordModalVisible = false;
             this.oldPassword = '';
             this.newPassword = '';
             this.confirmNewPassword = '';
@@ -308,7 +309,7 @@ export default {
             }
 
             try {
-                const response = await axios.post(`/api/student/${this.accountInfo.accountId}/change-password`, {
+                const response = await axios.post(`/api/student/${this.studentInfo.accountId}/change-password`, {
                     oldPassword: this.oldPassword,
                     newPassword: this.newPassword
                 }, {
@@ -319,7 +320,7 @@ export default {
 
                 if (response.status === 200) {
                     this.passwordSuccessMessage = '密码更改成功';
-                    this.hideChangePasswordModal(); // 关闭模态框并重置表单
+                    this.hideChangePasswordModal();
                 } else {
                     this.passwordErrorMessage = '密码更改失败，请稍后再试';
                 }
@@ -333,7 +334,7 @@ export default {
             if (confirm('确定要注销账号吗？此操作不可逆！')) {
                 this.isAccountDeletionInProgress = true;
 
-                axios.delete(`/api/student/${this.accountInfo.accountId}/account-deactivation`, {
+                axios.delete(`/api/student/${this.studentInfo.accountId}/account-deactivation`, {
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -341,7 +342,6 @@ export default {
                     .then(response => {
                         if (response.status === 200) {
                             this.deletionResultMessage = '账号注销成功';
-                            // 注销成功后跳转到登录页面
                             this.$router.push({ name: 'Home' });
                         } else {
                             this.deletionResultMessage = '账号注销失败';
@@ -357,25 +357,21 @@ export default {
             }
         },
 
-        // 显示加入班级模态窗口
         showJoinClassModal() {
             this.isJoinClassModalVisible = true;
         },
 
-        // 隐藏加入班级模态窗口
         hideJoinClassModal() {
             this.isJoinClassModalVisible = false;
             this.inviteCode = '';
             this.joinClassResultMessage = '';
         },
 
-        // 处理加入班级的逻辑
         async joinClass() {
-            const studentId = this.accountInfo.accountId; // 获取学生的 ID
-            const payload = { inviteCode: this.inviteCode }; // 构建请求体
-
             try {
-                const response = await axios.post(`/api/student/${studentId}/join-class`, payload, {
+                const response = await axios.post(`/api/student/${this.studentInfo.accountId}/join-class`, {
+                    inviteCode: this.inviteCode
+                }, {
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -383,9 +379,9 @@ export default {
 
                 if (response.status === 200) {
                     this.joinClassResultMessage = response.data.message;
-                    this.accountInfo.class = response.data.data.className; // 更新班级信息
-                    this.fetchStudentInfo(); // 获取最新的学生信息，包括学校
-                    this.hideJoinClassModal(); // 成功后隐藏模态窗口
+                    this.studentInfo.class = response.data.data.className;
+                    this.fetchStudentInfo();
+                    this.hideJoinClassModal();
                 } else {
                     this.joinClassResultMessage = '加入班级失败';
                 }
@@ -395,10 +391,13 @@ export default {
             }
         },
 
-        created() {
-            // 组件创建时获取学生信息
-            this.fetchStudentInfo();
+        requestRealNameVerification() { // 实名认证
+
+            alert('跳转到实名认证页面');
         }
+    },
+    created() {
+        this.fetchStudentInfo();
     }
 };
 </script>
@@ -459,21 +458,18 @@ export default {
     width: 200px; /* 限制输入框的宽度，避免太长 */
 }
 
-
-.error-message, .success-message, .result-message {
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 4px;
+.result-message {
+    color: green;
+    font-weight: bold;
 }
 
 .error-message {
-    background: #fdd;
-    color: #c00;
+    color: red;
+    font-weight: bold;
 }
 
-.success-message, .result-message {
-    background: #dfd;
-    color: #0c0;
+.success-message {
+    color: green;
+    font-weight: bold;
 }
-
 </style>
