@@ -85,8 +85,8 @@ import axios from "axios";
 
 //从全局中ID信息
 const store = useStore();
-//const teacherId = computed(() => store.state.user.id);
-const teacherId = '75';
+const teacherId = computed(() => store.state.user.id);
+
 const teacherInfo = ref({
     name: '',
     userName: '',
@@ -106,7 +106,7 @@ const errorMessage = ref('');
 // 获取教师信息
 const getTeacherInfo = async () => {
     try {
-        const response = await axios.get(`/api/teacher/75`);
+        const response = await axios.get(`/api/teacher/${teacherId.value}`);
         if (response.status === 200 && response.data.message === 'success') {
             // 更新教师信息
             teacherInfo.value = response.data.data;
@@ -138,7 +138,7 @@ function toggleEdit(field) {
 
 const updateUsername = async () => {
     try {
-        const url = `/api/teacher/75/update-username`;
+        const url = `/api/teacher/${teacherId.value}/update-username`;
 
         // 发送 POST 请求
         const response = await axios.post(url, {
@@ -160,10 +160,10 @@ const updatePhoneNumber = async () => {
 
     try {
         //发送 POST 请求
-        const url = `api/teacher/${teacherId.value}/update-phoneNumber`
+        const url = `/api/teacher/${teacherId.value}/update-phoneNumber`;
 
         const response = await axios.post(url, {
-            phoneNumber:teacherInfo.value.phoneNumber
+            phoneNumber: teacherInfo.value.phoneNumber
 
         });
 
