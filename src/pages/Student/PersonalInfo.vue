@@ -2,15 +2,12 @@
     <div class="page-container">
         <!-- 引入头部通用组件 -->
         <Header />
-
         <div class="main-container">
             <!-- 引入侧边栏通用组件 -->
             <Sidebar />
-
             <!-- 内容区 -->
             <div class="content">
                 <h2>个人信息</h2>
-
                 <!-- 个人信息卡片 -->
                 <el-card class="info-card">
                     <div class="info-item">
@@ -29,7 +26,9 @@
                     </div>
                     <div class="info-item">
                         <label>实名：</label>
-                        <span>{{ studentInfo.name }}</span>
+                        <span>{{ studentInfo.name || '未实名' }}</span>
+                        <el-button v-if="studentInfo.realNameStatus === '未认证'" @click="showRealNameVerificationModal">去实名</el-button>
+                        <span v-else class="success-message">已认证</span>
                     </div>
                     <div class="info-item">
                         <label>班级：</label>
@@ -76,13 +75,13 @@
                             <Edit />
                         </el-icon>
                     </div>
-                    <div class="info-item">
-                        <label>实名认证：</label>
-                        <span v-if="studentInfo.realNameStatus === '未认证'">未认证</span>
-                        <span v-else-if="studentInfo.realNameStatus === '已认证'">已认证</span>
-                        <el-button v-if="studentInfo.realNameStatus === '未认证'" @click="requestRealNameVerification">去认证</el-button>
-                        <span v-else class="success-message">认证成功</span>
-                    </div>
+<!--                    <div class="info-item">-->
+<!--                        <label>实名认证：</label>-->
+<!--                        <span v-if="studentInfo.realNameStatus === '未认证'">未认证</span>-->
+<!--                        <span v-else-if="studentInfo.realNameStatus === '已认证'">已认证</span>-->
+<!--                        <el-button v-if="studentInfo.realNameStatus === '未认证'" @click="showRealNameVerificationModal">去认证</el-button>-->
+<!--                        <span v-else class="success-message">认证成功</span>-->
+<!--                    </div>-->
                     <div class="info-item">
                         <label>账号注销：</label>
                         <el-button @click="requestAccountDeactivation" :loading="isAccountDeletionInProgress">申请注销</el-button>
@@ -146,6 +145,23 @@
             </el-form>
             <p v-if="joinClassResultMessage" class="result-message">{{ joinClassResultMessage }}</p>
         </el-dialog>
+
+        <!-- 实名认证模态窗口 -->
+        <el-dialog v-model="isRealNameVerificationModalVisible" title="实名认证" @close="hideRealNameVerificationModal">
+            <el-form :model="realNameForm" :rules="realNameRules" ref="realNameFormRef">
+                <el-form-item label="姓名" prop="name">
+                    <el-input v-model="realNameForm.name" placeholder="请输入您的姓名"></el-input>
+                </el-form-item>
+                <el-form-item label="身份证号码" prop="idCard">
+                    <el-input v-model="realNameForm.idCard" placeholder="请输入您的身份证号码"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="submitRealNameVerification">确认提交</el-button>
+                </el-form-item>
+            </el-form>
+            <p v-if="realNameErrorMessage" class="error-message">{{ realNameErrorMessage }}</p>
+            <p v-if="realNameSuccessMessage" class="success-message">{{ realNameSuccessMessage }}</p>
+        </el-dialog>
     </div>
 </template>
 
@@ -171,9 +187,15 @@ export default {
                 grade: ' 7 ',
                 accountId: ' 123 ',
                 email: ' 835975242@qq.com ',
-                realNameStatus: ' 未认证 ', // 未认证和已认证两种结果
+                realNameStatus: '未认证', // 未认证和已认证两种结果
                 class: ' 1 '
             },
+
+            realNameForm: {
+                name: '',
+                idCard: ''
+            },
+
             editNickname: false,
             editGrade: false,
 
@@ -195,7 +217,11 @@ export default {
 
             isJoinClassModalVisible: false,
             inviteCode: '',
-            joinClassResultMessage: ''
+            joinClassResultMessage: '',
+
+            isRealNameVerificationModalVisible: false,
+            realNameErrorMessage: '',
+            realNameSuccessMessage: '',
         };
     },
     methods: {
@@ -203,7 +229,14 @@ export default {
             try {
                 const response = await axios.get(`/api/student/${this.studentInfo.accountId}`);
                 if (response.status === 200) {
-                    this.studentInfo = response.data.data;
+                    const studentData = response.data.data;
+                    // 动态设置 realNameStatus
+                    if (studentData.name) {
+                        studentData.realNameStatus = '已认证';
+                    } else {
+                        studentData.realNameStatus = '未认证';
+                    }
+                    this.studentInfo = studentData;
                 }
             } catch (error) {
                 console.error("获取学生信息失败:", error);
@@ -216,6 +249,8 @@ export default {
             } else if (field === 'grade') {
                 this.editGrade = !this.editGrade;
             }
+
+            // this[field] = !this[field];
         },
 
         async saveEditedUserInfo() {
@@ -391,16 +426,69 @@ export default {
             }
         },
 
-        requestRealNameVerification() { // 实名认证
+        showRealNameVerificationModal() {
+            this.isRealNameVerificationModalVisible = true;
+        },
 
-            alert('跳转到实名认证页面');
+        hideRealNameVerificationModal() {
+            this.isRealNameVerificationModalVisible = false;
+            this.realNameForm = {
+                name: '',
+                idCard: ''
+            };
+            this.realNameErrorMessage = '';
+            this.realNameSuccessMessage = '';
+        },
+
+        async submitRealNameVerification() {
+            const accessKeyId = import.meta.env.VUE_APP_ACCESS_KEY_ID; // 从环境变量中获取
+            const accessKeySecret = import.meta.env.VUE_APP_ACCESS_KEY_SECRET; // 从环境变量中获取
+            const regionId = 'cn-hangzhou'; // 根据实际情况设置
+            const action = 'id2MetaVerify';
+
+            const params = {
+                Action: action,
+                Format: 'json',
+                Version: '2020-06-01',
+                Name: this.realNameForm.name,
+                IdentifyNum: this.realNameForm.idCard,
+                ParamType: 'normal' // 如果不加密，使用normal
+            };
+
+            const url = `https://cloudauth.${regionId}.aliyuncs.com/`;
+
+            try {
+                const response = await axios.post(url, null, {
+                    params: params,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                });
+
+                if (response.data.Code === '200' && response.data.ResultObject.BizCode === '1') {
+                    this.realNameSuccessMessage = '实名认证成功';
+                    this.studentInfo.realNameStatus = '已认证';
+                    this.studentInfo.name = this.realNameForm.name;
+                    this.hideRealNameVerificationModal();
+                } else {
+                    this.realNameErrorMessage = '实名认证失败，请检查您的信息';
+                }
+            } catch (error) {
+                this.realNameErrorMessage = '实名认证过程中出现错误，请稍后再试';
+                console.error('实名认证失败:', error.response ? error.response.data : error.message);
+            }
         }
     },
     created() {
-        this.fetchStudentInfo();
+        this.fetchStudentInfo(); // 在组件创建时获取学生信息
     }
 };
+
+onMounted(() => {
+    this.fetchStudentInfo();
+});
 </script>
+
 
 <style scoped>
 .page-container {
@@ -472,4 +560,5 @@ export default {
     color: green;
     font-weight: bold;
 }
+
 </style>
