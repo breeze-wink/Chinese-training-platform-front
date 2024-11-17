@@ -6,6 +6,7 @@ import ViewCurriculumStandard from "@/pages/Teacher/ViewCurriculumStandard.vue";
 import ManageClass from "@/pages/Teacher/ManageClass.vue";
 //知识点
 import KnowledgePoint from '@/pages/system-admin/KnowledgePoint.vue';
+import CourseStandard from '@/pages/system-admin/CourseStandard.vue';
 
 // 学生
 import StudentPersonalInfo from '../pages/Student/PersonalInfo.vue';
@@ -39,6 +40,7 @@ const routes = [
 
     //系统管理员
     { path: '/system-admin/KnowledgePoint', component: KnowledgePoint },
+    { path: '/system-admin/CourseStandard', component: CourseStandard },
 
     // 学生的个人页面
     { path: '/student/personal-info', component: StudentPersonalInfo},
