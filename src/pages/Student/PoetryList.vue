@@ -110,7 +110,6 @@ import {
     poems_nine_upper,
     poems_nine_lower,
 } from '@/store/poems';
-import { essays } from "@/store/essays";
 
 export default {
     components: {
