@@ -1,11 +1,11 @@
 <template>
     <div class="page-container">
         <!-- 引入头部通用组件 -->
-        <Header />
+        <Header/>
 
         <div class="main-container">
             <!-- 引入侧边栏通用组件 -->
-            <Sidebar />
+            <Sidebar/>
 
             <!-- 内容区 -->
             <div class="content">
@@ -17,13 +17,13 @@
                         <label>昵称：</label>
                         <span v-if="!editNickname">{{ teacherInfo.userName }}</span>
                         <el-input
-                            v-else
-                            v-model="teacherInfo.userName"
-                            size="small"
-                            class="edit-input"
-                            @blur="toggleEdit('nickname'); updateUsername()"/>
+                                v-else
+                                v-model="teacherInfo.userName"
+                                size="small"
+                                class="edit-input"
+                                @blur="toggleEdit('nickname'); updateUsername()"/>
                         <el-icon @click="toggleEdit('nickname')">
-                            <Edit />
+                            <Edit/>
                         </el-icon>
                     </div>
                     <div class="info-item">
@@ -34,19 +34,29 @@
                         <label>电话号码：</label>
                         <span v-if="!editPhone">{{ teacherInfo.phoneNumber }}</span>
                         <el-input
-                            v-else
-                            v-model="teacherInfo.phoneNumber"
-                            size="small"
-                            class="edit-input"
-                            @blur="toggleEdit('phone'); updatePhoneNumber()" />
+                                v-else
+                                v-model="teacherInfo.phoneNumber"
+                                size="small"
+                                class="edit-input"
+                                @blur="toggleEdit('phone'); updatePhoneNumber()"/>
                         <el-icon @click="toggleEdit('phone')">
-                            <Edit />
+                            <Edit/>
                         </el-icon>
                     </div>
                     <div class="info-item">
                         <label>实名：</label>
-                        <span>{{ teacherInfo.name}}</span>
-                        <el-button type="primary" size="small" @click="openRealNameDialog">实名认证</el-button>
+                        <span v-if="!editName">{{ teacherInfo.name }}</span>
+                        <el-input
+                                v-else
+                                v-model="teacherInfo.name"
+                                size="small"
+                                class="edit-input"
+                                @blur="toggleEdit('name'); updateName()"/>
+                        <el-icon @click="toggleEdit('name')">
+                            <Edit/>
+                        </el-icon>
+
+
                     </div>
                 </el-card>
 
@@ -61,7 +71,7 @@
                         <label>密码：</label>
                         <span>******</span>
                         <el-icon @click="editPassword">
-                            <Edit />
+                            <Edit/>
                         </el-icon>
                     </div>
                     <div class="info-item">
@@ -75,10 +85,12 @@
             <el-dialog title="实名认证" v-model="realNameDialogVisible" width="500px">
                 <el-form :model="realNameForm" label-width="100px" class="form-container">
                     <el-form-item label="真实姓名" class="form-item-spacing">
-                        <el-input v-model="realNameForm.name" placeholder="请输入真实姓名" class="input-limited"></el-input>
+                        <el-input v-model="realNameForm.name" placeholder="请输入真实姓名"
+                                  class="input-limited"></el-input>
                     </el-form-item>
                     <el-form-item label="身份证号" class="form-item-spacing">
-                        <el-input v-model="realNameForm.idCard" placeholder="请输入身份证号" class="input-limited"></el-input>
+                        <el-input v-model="realNameForm.idCard" placeholder="请输入身份证号"
+                                  class="input-limited"></el-input>
                     </el-form-item>
                 </el-form>
 
@@ -95,10 +107,10 @@
 //公共组件引入
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import {computed, ref,onMounted} from 'vue';
+import {computed, ref, onMounted} from 'vue';
 //图标引入
-import { ElIcon, ElCard, ElInput } from 'element-plus';
-import { Edit } from '@element-plus/icons-vue';
+import {ElIcon, ElCard, ElInput} from 'element-plus';
+import {Edit} from '@element-plus/icons-vue';
 import {useStore} from "vuex";
 import axios from "axios";
 
@@ -124,6 +136,7 @@ const realNameForm = ref({
 // 控制编辑状态
 const editNickname = ref(false);
 const editPhone = ref(false);
+const editName = ref(false);
 const realNameDialogVisible = ref(false);
 
 // 错误消息
@@ -152,15 +165,17 @@ onMounted(() => {
 });
 
 
-
 // 切换编辑状态
 function toggleEdit(field) {
     if (field === 'nickname') {
         editNickname.value = !editNickname.value;
     } else if (field === 'phone') {
         editPhone.value = !editPhone.value;
+    } else if (field === 'name') {
+        editName.value = !editName.value;
     }
 }
+
 // 打开实名认证对话框
 const openRealNameDialog = () => {
     realNameDialogVisible.value = true;
@@ -197,12 +212,33 @@ const updatePhoneNumber = async () => {
 
         });
 
-        if(response.status === 200 && response.data.message === '手机号修改成功'){
+        if (response.status === 200 && response.data.message === '手机号修改成功') {
             console.log(response.data.message);
         } else {
             console.error(response.data.message);
         }
-    }catch (error){
+    } catch (error) {
+        console.error('请求失败' + error.message);
+    }
+
+}
+
+const updateName = async () => {
+
+    try {
+        //发送 POST 请求
+        const url = `/api/teacher/${teacherId.value}/update-name`;
+
+        const response = await axios.post(url, {
+            phoneNumber: teacherInfo.value.name
+        });
+
+        if (response.status === 200 && response.data.message === '姓名修改成功') {
+            console.log(response.data.message);
+        } else {
+            console.error(response.data.message);
+        }
+    } catch (error) {
         console.error('请求失败' + error.message);
     }
 
@@ -305,6 +341,7 @@ function editPassword() {
 .form-item-spacing {
     margin-bottom: 30px; /* 表单项之间的上下间距 */
 }
+
 .form-container {
     align-items: center; /* 水平方向居中 */
     margin-top: 20px; /* 给表单添加上方的间距，使标题与表单之间有间距 */
