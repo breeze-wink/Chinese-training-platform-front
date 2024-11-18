@@ -25,10 +25,18 @@
                         </el-icon>
                     </div>
                     <div class="info-item">
-                        <label>实名：</label>
-                        <span>{{ studentInfo.name || '未实名' }}</span>
-                        <el-button v-if="studentInfo.realNameStatus === '未认证'" @click="showRealNameVerificationModal" class="action-button">去实名</el-button>
-                        <span v-else class="success-message">已认证</span>
+                        <label>姓名：</label>
+                        <span v-if="!editName">{{ studentInfo.name }}</span>
+                        <el-input
+                            v-else
+                            v-model="studentInfo.name"
+                            size="small"
+                            class="edit-input"
+                            @blur="toggleEdit('name'); saveEditedUserInfo()"
+                        />
+                        <el-icon v-if="!editName" @click="toggleEdit('name')" class="edit-icon">
+                            <Edit />
+                        </el-icon>
                     </div>
                     <div class="info-item">
                         <label>班级：</label>
@@ -146,23 +154,6 @@
             </el-form>
             <p v-if="joinClassResultMessage" class="result-message">{{ joinClassResultMessage }}</p>
         </el-dialog>
-
-        <!-- 实名认证模态窗口 -->
-        <el-dialog v-model="isRealNameVerificationModalVisible" title="实名认证" @close="hideRealNameVerificationModal" custom-class="square-modal">
-            <el-form :model="realNameForm" :rules="realNameRules" ref="realNameFormRef">
-                <el-form-item label="姓名" prop="name">
-                    <el-input v-model="realNameForm.name" placeholder="请输入您的姓名"></el-input>
-                </el-form-item>
-                <el-form-item label="身份证号码" prop="idCard">
-                    <el-input v-model="realNameForm.idCard" placeholder="请输入您的身份证号码"></el-input>
-                </el-form-item>
-                <el-form-item>
-                    <el-button type="primary" @click="submitRealNameVerification" class="action-button">确认提交</el-button>
-                </el-form-item>
-            </el-form>
-            <p v-if="realNameErrorMessage" class="error-message">{{ realNameErrorMessage }}</p>
-            <p v-if="realNameSuccessMessage" class="success-message">{{ realNameSuccessMessage }}</p>
-        </el-dialog>
     </div>
 </template>
 
@@ -170,29 +161,8 @@
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import axios from 'axios';
-import CryptoJS from 'crypto-js';
 import { ElMessage } from 'element-plus';
 import { Edit } from '@element-plus/icons-vue';
-import { defineComponent, reactive, ref, onMounted } from 'vue';
-
-function percentEncode(str) {
-    return encodeURIComponent(str)
-        .replace(/!/g, '%21')
-        .replace(/'/g, '%27')
-        .replace(/\(/g, '%28')
-        .replace(/\)/g, '%29')
-        .replace(/\*/g, '%2A');
-}
-
-function generateSignature(params, accessKeySecret) {
-    const sortedParams = Object.keys(params)
-        .sort()
-        .map(key => `${percentEncode(key)}=${percentEncode(params[key])}`)
-        .join('&');
-    const stringToSign = `POST&%2F&${percentEncode(sortedParams)}`;
-    const hmac = CryptoJS.HmacSHA1(stringToSign, `${accessKeySecret}&`);
-    return hmac.toString(CryptoJS.enc.Base64);
-}
 
 export default {
     components: {
@@ -209,13 +179,7 @@ export default {
                 grade: '',
                 accountId: '84',
                 email: '',
-                realNameStatus: '未认证', // 未认证和已认证两种结果
                 class: ''
-            },
-
-            realNameForm: {
-                name: '',
-                idCard: ''
             },
 
             emailForm: {
@@ -230,6 +194,7 @@ export default {
             },
 
             editNickname: false,
+            editName: false,
             editGrade: false,
 
             isChangeEmailModalVisible: false,
@@ -249,10 +214,6 @@ export default {
             inviteCode: '',
             joinClassResultMessage: '',
 
-            isRealNameVerificationModalVisible: false,
-            realNameErrorMessage: '',
-            realNameSuccessMessage: '',
-
             passwordRules: {
                 oldPassword: [
                     { required: true, message: '请输入旧密码', trigger: 'blur' }
@@ -264,16 +225,6 @@ export default {
                 confirmNewPassword: [
                     { required: true, message: '请再次输入新密码', trigger: 'blur' },
                     { validator: this.validateConfirmPassword, trigger: 'blur' }
-                ]
-            },
-
-            realNameRules: {
-                name: [
-                    { required: true, message: '请输入姓名', trigger: 'blur' }
-                ],
-                idCard: [
-                    { required: true, message: '请输入身份证号码', trigger: 'blur' },
-                    { pattern: /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/, message: '请输入有效的身份证号码', trigger: 'blur' }
                 ]
             },
 
@@ -304,17 +255,11 @@ export default {
                 const response = await axios.get(`/api/student/${accountId}`);
                 if (response.status === 200) {
                     const studentData = response.data.data;
-                    // 动态设置 realNameStatus
-                    if (studentData.name) {
-                        studentData.realNameStatus = '已认证';
-                    } else {
-                        studentData.realNameStatus = '未认证';
-                    }
-                    studentData.class = studentData.className;
-                    delete studentData.className; // 删除 className 字段，避免重复
                     this.studentInfo = {
                         ...studentData,
-                        accountId: accountId.toString()
+                        class: studentData.className,
+                        accountId: accountId.toString(),
+                        name: studentData.name
                     };
                 } else {
                     console.error('获取学生信息失败: 未知状态码', response.status);
@@ -340,6 +285,8 @@ export default {
         toggleEdit(field) {
             if (field === 'nickname') {
                 this.editNickname = !this.editNickname;
+            } else if (field === 'name') { // 添加对姓名的编辑支持
+                this.editName = !this.editName;
             } else if (field === 'grade') {
                 this.editGrade = !this.editGrade;
             }
@@ -371,6 +318,7 @@ export default {
                         this.studentInfo.grade = responseData.data.grade;
                         ElMessage.success("个人信息更新成功");
                         this.toggleEdit('nickname');
+                        this.toggleEdit('name');
                         this.toggleEdit('grade');
                     } else {
                         // 后端返回的其他消息
@@ -591,74 +539,8 @@ export default {
             this.realNameErrorMessage = '';
             this.realNameSuccessMessage = '';
         },
-
-        async submitRealNameVerification() {
-            try {
-                const params = {
-                    Action: 'Id2MetaVerify',
-                    Format: 'json',
-                    Version: '2019-03-07',
-                    AccessKeyId: 'Access Key ID',
-                    SignatureMethod: 'HMAC-SHA1',
-                    Timestamp: new Date().toISOString().replace('Z', '+0000'),
-                    SignatureVersion: '1.0',
-                    SignatureNonce: Math.random().toString(36).substring(7),
-                    ParamType: 'normal', // 添加 ParamType 参数
-                    IdentifyNum: this.realNameForm.idCard, // 证件号码
-                    UserName: this.realNameForm.name, // 姓名
-                    CertType: 'IDENTITY_CARD', // 证件类型
-                    ProductCode: 'authfaceverify',
-                    RegionId: 'cn-hangzhou',
-                };
-
-                // 构建签名
-                const signature = generateSignature(params, 'Access Key Secret');
-
-                params.Signature = signature;
-
-                console.log('Request Params:', params); // 调试信息
-                console.log('Signature:', signature); // 调试信息
-
-                const response = await axios.post(
-                    'https://cloudauth.cn-hangzhou.aliyuncs.com/',
-                    null, // 不需要请求体
-                    {
-                        params: params,
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                    }
-                );
-
-                if (response.status === 200) {
-                    const responseData = response.data;
-                    console.log('Response Data:', responseData); // 调试信息
-
-                    if (responseData.Id2MetaVerifyResponse && responseData.Id2MetaVerifyResponse.VerifyResult === 'PASS') {
-                        this.realNameSuccessMessage = '实名认证成功';
-                        this.realNameErrorMessage = ''; // 清除错误消息
-                        this.fetchStudentInfo(); // 重新获取学生信息
-                    } else {
-                        this.realNameErrorMessage = '实名认证失败，请稍后再试';
-                        if (responseData.Id2MetaVerifyResponse && responseData.Id2MetaVerifyResponse.VerifyMsg) {
-                            this.realNameErrorMessage += ' - ' + responseData.Id2MetaVerifyResponse.VerifyMsg;
-                        }
-                    }
-                } else {
-                    this.realNameErrorMessage = '实名认证失败，请稍后再试';
-                    if (response.data && response.data.Message) {
-                        this.realNameErrorMessage += ' - ' + response.data.Message;
-                    }
-                }
-            } catch (error) {
-                this.realNameErrorMessage = '实名认证失败，请检查网络连接或稍后再试';
-                if (error.response && error.response.data && error.response.data.Message) {
-                    this.realNameErrorMessage += ' - ' + error.response.data.Message;
-                }
-                console.error('实名认证失败:', error.response ? error.response.data : error.message);
-            }
-        },
     },
+
     created() {
         this.fetchStudentInfo(); // 在组件创建时获取学生信息
     }
