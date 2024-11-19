@@ -9,16 +9,17 @@
 
             <!-- 内容区 -->
             <div class="content">
-                <h2>班级管理</h2>
-
-                <!-- 生成班级按钮 -->
-                <el-button
-                    type="primary"
-                    @click="createDialogVisible = true"
-                    class="custom-button create-class-button">
-                    <el-icon><CirclePlusFilled /></el-icon>
-                    <span class="button-text">创建班级</span>
-                </el-button>
+                <div class="title-and-button-container">
+                    <h2>班级管理</h2>
+                    <!-- 生成班级按钮 -->
+                    <el-button
+                            type="primary"
+                            @click="createDialogVisible = true"
+                            class="custom-button create-class-button">
+                        <el-icon><CirclePlusFilled /></el-icon>
+                        <span class="button-text">创建班级</span>
+                    </el-button>
+                </div>
 
                 <el-table :data="classList" border style="width: 100%">
                     <el-table-column prop="classCode" label="班级码" width="80"></el-table-column>
@@ -56,6 +57,59 @@
                     </div>
                 </el-dialog>
 
+                <!-- 小组管理部分 -->
+                <div class="title-and-button-container">
+                    <h2>小组管理</h2>
+                    <!-- 生成小组按钮 -->
+                    <el-button
+                            type="primary"
+                            @click="createGroupDialogVisible = true"
+                            class="custom-button create-group-button">
+                        <el-icon><CirclePlusFilled /></el-icon>
+                        <span class="button-text">创建小组</span>
+                    </el-button>
+                </div>
+
+                <el-table :data="groupList" border style="width: 100%">
+                    <el-table-column prop="groupName" label="小组名称" width="200"></el-table-column>
+                    <el-table-column prop="className" label="所属班级" width="200"></el-table-column>
+                    <el-table-column prop="groupDescription" label="小组描述"></el-table-column>
+                    <el-table-column label="操作" width="320">
+                        <template #default="scope">
+                            <el-button type="primary" class="custom-button view-members-button" @click="viewGroupMembers(scope.row)">查看成员</el-button>
+                            <el-button type="success" class="custom-button view-stats-button" @click="viewGroupStats(scope.row)">统计概况</el-button>
+                            <el-button type="danger" class="custom-button disband-button" @click="disbandGroup(scope.row)">解散小组</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+
+                <!-- 创建小组的对话框 -->
+                <el-dialog title="创建小组" v-model="createGroupDialogVisible" width="500px" align-center>
+                    <el-form :model="newGroupForm" label-width="100px" class="form-container">
+                        <el-form-item label="小组名称" class="form-item-spacing">
+                            <el-input v-model="newGroupForm.groupName" placeholder="请输入小组名称"></el-input>
+                        </el-form-item>
+                        <el-form-item label="所属班级" class="form-item-spacing">
+                            <el-select v-model="newGroupForm.classId" placeholder="请选择所属班级">
+                                <el-option v-for="classItem in classList" :key="classItem.classId" :label="classItem.className" :value="classItem.classId"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="小组描述" class="form-item-spacing">
+                            <!-- 使用文本域 -->
+                            <el-input
+                                    type="textarea"
+                                    v-model="newGroupForm.groupDescription"
+                                    placeholder="请输入小组描述"
+                                    :rows="4"
+                            ></el-input>
+                        </el-form-item>
+                    </el-form>
+
+                    <div slot="footer" class="dialog-footer">
+                        <el-button @click="createGroupDialogVisible = false">取消</el-button>
+                        <el-button type="primary" @click="createGroup">创建</el-button>
+                    </div>
+                </el-dialog>
             </div>
         </div>
     </div>
@@ -74,17 +128,26 @@ import {CirclePlus, CirclePlusFilled, Plus} from "@element-plus/icons-vue";
 
 // classList 是一个班级信息的数组，每个对象包含classId, classCode, className, classDescription 等字段
 const classList = ref([]);
+const groupList = ref([]);
 
 const store = useStore();
 const teacherId = computed(() => store.state.user.id);
 
 // 控制生成班级对话框的显示状态
 const createDialogVisible = ref(false);
+// 控制生成小组对话框的显示状态
+const createGroupDialogVisible = ref(false);
 
 // 新建班级表单的数据
 const newClassForm = ref({
     className: '',
     classDescription: ''
+});
+
+const newGroupForm = ref({
+    groupName: '',
+    classId: '',
+    groupDescription: ''
 });
 
 // 获取班级信息列表的函数
@@ -102,6 +165,23 @@ const fetchClassList = async () => {
         console.error('获取班级列表失败:', error.message);
     }
 };
+
+// 获取小组信息列表的函数
+const fetchGroupList = async () => {
+    try {
+        const response = await axios.get(`/api/teacher/${teacherId.value}/get-groups`);
+
+        if (response.status === 200 && response.data.message === '小组信息获取成功') {
+            groupList.value = response.data.data;
+            console.log('获取小组列表成功:', response.data);
+        } else {
+            console.error('获取小组列表失败:', response.data.message);
+        }
+    } catch (error) {
+        console.error('获取小组列表失败:', error.message);
+    }
+};
+
 
 // 创建新班级的函数
 const createClass = async () => {
@@ -131,6 +211,33 @@ const createClass = async () => {
         }
     } catch (error) {
         console.error('创建班级失败:', error.message);
+    }
+};
+
+// 创建新小组的函数
+const createGroup = async () => {
+    try {
+        const response = await axios.post(`/api/teacher/${teacherId.value}/create-group`, {
+            groupName: newGroupForm.value.groupName,
+            classId: newGroupForm.value.classId,
+            groupDescription: newGroupForm.value.groupDescription
+        });
+
+        if (response.status === 200 && response.data.message === '小组创建成功') {
+            const newGroup = {
+                groupId: response.data.groupId,
+                groupName: newGroupForm.value.groupName,
+                className: classList.value.find(item => item.classId === newGroupForm.value.classId).className,
+                groupDescription: newGroupForm.value.groupDescription
+            };
+            groupList.value.push(newGroup);
+            console.log('小组创建成功:', newGroup);
+            createGroupDialogVisible.value = false; // 关闭对话框
+        } else {
+            console.error('创建小组失败:', response.data.message);
+        }
+    } catch (error) {
+        console.error('创建小组失败:', error.message);
     }
 };
 
@@ -165,6 +272,7 @@ const disbandClass = async (classInfo) => {
 // 在组件挂载时获取班级列表
 onMounted(() => {
     fetchClassList();
+    fetchGroupList();
 });
 </script>
 
@@ -205,7 +313,8 @@ onMounted(() => {
 }
 
 .el-table {
-    margin-top: 20px;
+
+    margin-bottom: 50px; /* 表格下方的间距 */
 }
 
 .form-container {
@@ -221,5 +330,22 @@ onMounted(() => {
     justify-content: center;
     margin-top: 20px; /* 底部按钮与表单的间距 */
 }
+
+.title-and-button-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* 在容器中将标题和按钮分别放在两边 */
+    margin-bottom: 20px; /* 设置标题和表格之间的间距 */
+}
+
+.create-class-button {
+    margin-bottom: 0; /* 移除下方间距 */
+    margin-right: 40px;
+}
+.create-group-button {
+    margin-bottom: 0; /* 移除下方间距 */
+    margin-right: 40px;
+}
+
 
 </style>
