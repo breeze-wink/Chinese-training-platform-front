@@ -10,133 +10,186 @@
       <!-- 内容区 -->
       <div class="content">
         <h2>知识点管理</h2>
-        <el-input v-model="search" placeholder="搜索知识点" style="width: 300px; margin-bottom: 20px;"></el-input>
-        <el-button type="primary" @click="openAddDialog">新增知识点</el-button>
+        <div class="input-button-group" style="display: flex; align-items: center;">
+          <el-input v-model="search" placeholder="搜索知识点" style="width: 300px;"></el-input>
+          <el-button type="primary" @click="addKnowledgePoint" style="margin-left: 10px;">新增知识点</el-button>
+        </div>
+
+        <!-- 新增知识点表单 -->
+        <div class="add-knowledge-container" v-if="addMode">
+          <el-form :model="currentItem" label-width="80px">
+            <el-form-item label="标题">
+              <el-input v-model="currentItem.name"></el-input>
+            </el-form-item>
+            <el-form-item label="描述">
+              <el-input type="textarea" v-model="currentItem.description"></el-input>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="saveItem">保存</el-button>
+              <el-button @click="cancelAdd">取消</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
 
         <el-table :data="filteredData" style="width: 100%; margin-top: 20px;">
           <el-table-column prop="id" label="ID" width="180"></el-table-column>
-          <el-table-column prop="title" label="标题"></el-table-column>
+          <el-table-column prop="name" label="标题"></el-table-column>
           <el-table-column prop="description" label="描述"></el-table-column>
           <el-table-column label="操作">
             <template #default="{ row }">
-              <el-button size="small" @click="openViewDialog(row)">查看</el-button>
-              <el-button size="small" @click="openEditDialog(row)">编辑</el-button>
+              <el-button size="small" @click="viewKnowledgePoint(row)">查看</el-button>
+              <el-button size="small" @click="editKnowledgePoint(row)">编辑</el-button>
               <el-button size="small" type="danger" @click="deleteItem(row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
 
-        <!-- 新增知识点弹窗 -->
-        <el-dialog title="新增知识点" :visible.sync="addDialogVisible" width="30%">
-          <el-form :model="currentItem">
+        <!-- 查看知识点详情 -->
+        <div class="view-knowledge-container" v-if="viewMode">
+          <el-form :model="currentItem" label-width="80px">
             <el-form-item label="标题">
-              <el-input v-model="currentItem.title"></el-input>
-            </el-form-item>
-            <el-form-item label="描述">
-              <el-input type="textarea" v-model="currentItem.description"></el-input>
-            </el-form-item>
-          </el-form>
-          <span slot="footer" class="dialog-footer">
-            <el-button @click="addDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="saveItem">保存</el-button>
-          </span>
-        </el-dialog>
-
-        <!-- 查看知识点弹窗 -->
-        <el-dialog title="查看知识点" :visible.sync="viewDialogVisible" width="30%">
-          <el-form :model="currentItem">
-            <el-form-item label="标题">
-              <el-input v-model="currentItem.title" disabled></el-input>
+              <el-input v-model="currentItem.name" disabled></el-input>
             </el-form-item>
             <el-form-item label="描述">
               <el-input type="textarea" v-model="currentItem.description" disabled></el-input>
             </el-form-item>
+            <el-form-item>
+              <el-button @click="closeView">关闭</el-button>
+            </el-form-item>
           </el-form>
-          <span slot="footer" class="dialog-footer">
-            <el-button @click="viewDialogVisible = false">关闭</el-button>
-          </span>
-        </el-dialog>
+        </div>
 
-        <!-- 编辑知识点弹窗 -->
-        <el-dialog title="编辑知识点" :visible.sync="editDialogVisible" width="30%">
-          <el-form :model="currentItem">
+        <!-- 编辑知识点表单 -->
+        <div class="add-knowledge-container" v-if="editMode">
+          <el-form :model="currentItem" label-width="80px">
             <el-form-item label="标题">
-              <el-input v-model="currentItem.title"></el-input>
+              <el-input v-model="currentItem.name"></el-input>
             </el-form-item>
             <el-form-item label="描述">
               <el-input type="textarea" v-model="currentItem.description"></el-input>
             </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="saveItem">保存</el-button>
+              <el-button @click="cancelEdit">取消</el-button>
+            </el-form-item>
           </el-form>
-          <span slot="footer" class="dialog-footer">
-            <el-button @click="editDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="saveItem">保存</el-button>
-          </span>
-        </el-dialog>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import { ElButton, ElDialog, ElInput, ElTable, ElTableColumn, ElForm, ElFormItem, ElMessage } from 'element-plus';
+import { ElButton, ElInput, ElTable, ElTableColumn, ElForm, ElFormItem, ElMessage } from 'element-plus';
+import axios from 'axios';
 
+// 定义变量
 const search = ref('');
-const addDialogVisible = ref(false);
-const viewDialogVisible = ref(false);
-const editDialogVisible = ref(false);
-const currentItem = ref({ id: null, title: '', description: '' });
-const items = ref([
-  { id: 1, title: '知识点1', description: '这是知识点1的描述' },
-  { id: 2, title: '知识点2', description: '这是知识点2的描述' },
-]);
+const addMode = ref(false);
+const viewMode = ref(false);
+const editMode = ref(false);
+const currentItem = ref({ id: null, name: '', description: '' });
+const items = ref([]);
 
+// 过滤搜索结果
 const filteredData = computed(() => {
   return items.value.filter(item =>
-      item.title.includes(search.value) || item.description.includes(search.value)
+      item.name.includes(search.value) || item.description.includes(search.value)
   );
 });
 
-// 打开新增知识点弹窗
-const openAddDialog = () => {
-  currentItem.value = { id: null, title: '', description: '' };
-  addDialogVisible.value = true;
+// 获取所有知识点
+const fetchKnowledgePoints = async () => {
+  try {
+    const response = await axios.get('/api/system-admin/get-all-knowledge-points');
+    if (response.status === 200) {
+      items.value = response.data.knowledgePointInfos;
+      ElMessage({ message: response.data.message, type: 'success' });
+    }
+  } catch (error) {
+    ElMessage({ message: '知识点获取失败', type: 'error' });
+  }
 };
 
-// 打开查看知识点弹窗
-const openViewDialog = (item) => {
+// 新增知识点
+const addKnowledgePoint = () => {
+  currentItem.value = { id: null, name: '', description: '' };
+  addMode.value = true;
+};
+
+// 编辑知识点
+const editKnowledgePoint = (item) => {
   currentItem.value = { ...item };
-  viewDialogVisible.value = true;
-};
-
-// 打开编辑知识点弹窗
-const openEditDialog = (item) => {
-  currentItem.value = { ...item };
-  editDialogVisible.value = true;
-};
-
-// 删除项目
-const deleteItem = (item) => {
-  items.value = items.value.filter(i => i.id !== item.id);
-  ElMessage({ message: '删除成功', type: 'success' });
+  editMode.value = true;
 };
 
 // 保存项目
-const saveItem = () => {
-  if (currentItem.value.id) {
-    const index = items.value.findIndex(i => i.id === currentItem.value.id);
-    if (index !== -1) {
-      items.value.splice(index, 1, currentItem.value);
-    }
-  } else {
-    currentItem.value.id = Date.now(); // 简单的ID生成方式
-    items.value.push(currentItem.value);
+const saveItem = async () => {
+  if (!currentItem.value.name || !currentItem.value.description) {
+    ElMessage({ message: '请填写所有必填项', type: 'warning' });
+    return;
   }
-  addDialogVisible.value = false;
-  editDialogVisible.value = false;
+  try {
+    if (currentItem.value.id) {
+      // 编辑知识点
+      await axios.put(`/api/system-admin/update-knowledge-point/${currentItem.value.id}`, currentItem.value);
+      const index = items.value.findIndex(i => i.id === currentItem.value.id);
+      if (index !== -1) {
+        items.value.splice(index, 1, currentItem.value);
+      }
+    } else {
+      // 新增知识点
+      const response = await axios.post('/api/system-admin/create-knowledge-point', currentItem.value);
+      currentItem.value.id = response.data.knowledgePointId;
+      items.value.push(currentItem.value);
+    }
+    addMode.value = false;
+    editMode.value = false;
+    ElMessage({ message: '保存成功', type: 'success' });
+  } catch (error) {
+    ElMessage({ message: '保存失败', type: 'error' });
+  }
 };
+
+// 取消新增
+const cancelAdd = () => {
+  addMode.value = false;
+};
+
+// 取消编辑
+const cancelEdit = () => {
+  editMode.value = false;
+};
+
+// 查看知识点
+const viewKnowledgePoint = (item) => {
+  currentItem.value = { ...item };
+  viewMode.value = true;
+};
+
+// 关闭查看
+const closeView = () => {
+  viewMode.value = false;
+};
+
+// 删除项目
+const deleteItem = async (item) => {
+  try {
+    await axios.delete(`/api/system-admin/delete-knowledge-point/${item.id}`);
+    items.value = items.value.filter(i => i.id !== item.id);
+    ElMessage({ message: '删除成功', type: 'success' });
+  } catch (error) {
+    ElMessage({ message: '删除失败', type: 'error' });
+  }
+};
+
+// 组件挂载时获取所有知识点
+onMounted(() => {
+  fetchKnowledgePoints();
+});
 </script>
 
 <style scoped>
@@ -144,6 +197,7 @@ const saveItem = () => {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  background-color: #f0f0f0;
 }
 
 .main-container {
@@ -152,18 +206,33 @@ const saveItem = () => {
 }
 
 .content {
-  flex: 1;
+  max-width: 1000px;
+  width: 100%;
   padding: 20px;
   background-color: #fff;
   overflow-y: auto;
+  margin-right: 50px;
 }
 
 .el-button {
   margin-top: 20px;
+  appearance: auto;
+  -webkit-appearance: button;
+  -moz-appearance: button;
 }
 
-.el-dialog {
-  z-index: 9999; /* 保证弹窗浮在最上层 */
+.input-button-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
+.add-knowledge-container, .view-knowledge-container {
+  margin-top: 20px;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
 </style>
