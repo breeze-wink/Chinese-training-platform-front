@@ -103,6 +103,15 @@
                                     :rows="4"
                             ></el-input>
                         </el-form-item>
+                        <el-form-item label="选择成员" class="form-item-spacing">
+                            <el-checkbox-group v-model="newGroupForm.selectedStudents">
+                                <el-row>
+                                    <el-col :span="12" v-for="member in classMembers" :key="member.studentId">
+                                        <el-checkbox :label="member.studentId" class="blue-checkbox">{{ member.studentName }}</el-checkbox>
+                                    </el-col>
+                                </el-row>
+                            </el-checkbox-group>
+                        </el-form-item>
                     </el-form>
 
                     <div slot="footer" class="dialog-footer">
@@ -137,6 +146,8 @@ const teacherId = computed(() => store.state.user.id);
 const createDialogVisible = ref(false);
 // 控制生成小组对话框的显示状态
 const createGroupDialogVisible = ref(false);
+// 控制成员对话框的显示状态
+const membersDialogVisible = ref(false);
 
 // 新建班级表单的数据
 const newClassForm = ref({
@@ -147,8 +158,12 @@ const newClassForm = ref({
 const newGroupForm = ref({
     groupName: '',
     classId: '',
-    groupDescription: ''
+    groupDescription: '',
+    selectedStudents: [] // 选中的学生ID
 });
+
+// 班级成员列表
+const classMembers = ref([]);
 
 // 获取班级信息列表的函数
 const fetchClassList = async () => {
@@ -220,7 +235,8 @@ const createGroup = async () => {
         const response = await axios.post(`/api/teacher/${teacherId.value}/create-group`, {
             groupName: newGroupForm.value.groupName,
             classId: newGroupForm.value.classId,
-            groupDescription: newGroupForm.value.groupDescription
+            groupDescription: newGroupForm.value.groupDescription,
+            studentIds: newGroupForm.value.selectedStudents // 选中的学生ID
         });
 
         if (response.status === 200 && response.data.message === '小组创建成功') {
@@ -242,9 +258,21 @@ const createGroup = async () => {
 };
 
 // 查看成员的函数
-const viewMembers = (classInfo) => {
-    console.log(`查看班级 ${classInfo.className} 的成员`);
-    // 在这里编写导航到查看成员页面的逻辑，或者打开一个对话框
+const viewMembers = async (classInfo) => {
+    try {
+        const response = await axios.get(`/api/teacher/${teacherId.value}/get-class-members`, {
+            params: { classId: classInfo.classId }
+        });
+
+        if (response.status === 200 && response.data.message === '班级成员信息获取成功') {
+            classMembers.value = response.data.data;
+            membersDialogVisible.value = true;
+        } else {
+            console.error('获取班级成员信息失败:', response.data.message);
+        }
+    } catch (error) {
+        console.error('获取班级成员信息失败:', error.message);
+    }
 };
 
 // 查看统计概况的函数
@@ -347,5 +375,18 @@ onMounted(() => {
     margin-right: 40px;
 }
 
+/* 小组成员复选框样式 */
+.blue-checkbox .el-checkbox__input.is-checked .el-checkbox__inner {
+    background-color: blue;
+    border-color: blue;
+}
 
+.blue-checkbox .el-checkbox__input.is-focus .el-checkbox__inner {
+    border-color: blue;
+}
+
+.blue-checkbox .el-checkbox__input.is-indeterminate .el-checkbox__inner {
+    background-color: blue;
+    border-color: blue;
+}
 </style>
