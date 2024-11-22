@@ -13,6 +13,10 @@ import StudentPersonalInfo from '../pages/Student/PersonalInfo.vue';
 import PoetryList from "@/pages/Student/PoetryList.vue";
 import PoemDetail from '@/pages/Student/PoemDetail.vue'; // 新增诗词详情页
 import EssayDetail from '@/pages/Student/EssayDetail.vue'; // 新增作文详情页
+import QuestionOptions from '@/pages/Student/QuestionOptions.vue';
+import AnswerPractice from "@/pages/Student/AnswerPractice.vue";
+import AnswerDetail from "@/pages/Student/AnswerDetail.vue";
+import ManageTest from "@/pages/Student/ManageTest.vue";
 
 const routes = [
     //首页
@@ -49,6 +53,12 @@ const routes = [
     { path: '/student/poem-detail/:id', name: 'PoemDetail', component: PoemDetail, props: true },
     // 作文详情路由
     { path: '/student/essay-detail/:id', name: 'EssayDetail', component: EssayDetail, props: true },
+    // 题目
+    { path: '/student/question-options', component: QuestionOptions },
+    { path: '/student/answer-practice', component: AnswerPractice },
+    { path: '/student/answer-detail', component: AnswerDetail },
+    // 试卷管理
+    { path: '/student/manage-test', component: ManageTest},
 ];
 
 

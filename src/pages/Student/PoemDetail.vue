@@ -101,6 +101,10 @@ export default {
     text-align: center;
     max-width: 800px; /* 限制最大宽度 */
     width: 75%; /* 占据屏幕的75%宽度 */
+    background-image: url('../../static/mountains.jpg'); /* 设置背景图像 */
+    background-size: cover; /* 背景图像覆盖整个元素 */
+    background-position: center; /* 背景图像居中 */
+    position: relative; /* 设置相对定位以便子元素绝对定位 */
     background-color: #fff; /* 内容区域背景色 */
 }
 
