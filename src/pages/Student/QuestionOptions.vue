@@ -57,7 +57,6 @@ export default {
             dialogVisible: false,
             checkList: [],
             knowledgePoints: [],
-            studentId: '123456',
             questionNum: 10,
         };
     },
