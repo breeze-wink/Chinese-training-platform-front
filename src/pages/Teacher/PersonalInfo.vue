@@ -15,10 +15,10 @@
                 <el-card class="info-card">
                     <div class="info-item">
                         <label>昵称：</label>
-                        <span v-if="!editNickname">{{ teacherInfo.userName }}</span>
+                        <span v-if="!editNickname">{{ teacherInfo.username }}</span>
                         <el-input
                                 v-else
-                                v-model="teacherInfo.userName"
+                                v-model="teacherInfo.username"
                                 size="small"
                                 class="edit-input"
                                 @blur="toggleEdit('nickname'); updateUsername()"/>
@@ -120,7 +120,7 @@ const teacherId = computed(() => store.state.user.id);
 
 const teacherInfo = ref({
     name: '',
-    userName: '',
+    username: '',
     email: '',
     phoneNumber: '',
     schoolName: ''
@@ -148,6 +148,7 @@ const getTeacherInfo = async () => {
         const response = await axios.get(`/api/teacher/${teacherId.value}`);
         if (response.status === 200 && response.data.message === 'success') {
             // 更新教师信息
+            console.log(response.data.data)
             teacherInfo.value = response.data.data;
         } else {
             errorMessage.value = '获取教师信息失败：' + response.data.message;
@@ -187,7 +188,7 @@ const updateUsername = async () => {
 
         // 发送 POST 请求
         const response = await axios.post(url, {
-            username: teacherInfo.value.userName
+            username: teacherInfo.value.username
         });
 
         // 处理响应

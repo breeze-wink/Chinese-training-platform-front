@@ -310,7 +310,7 @@ const login = async () => {
             if (Identity.value === 'teacher') {
                 await router.push({name: 'TeacherPersonalInfo'}); // 跳转到教师管理页面
             } else if (Identity.value === 'student') {
-                //await router.push({name: 'StudentDashboard'}); // 跳转到学生学习页面
+                await router.push({name: 'StudentPersonalInfo'}); // 跳转到学生学习页面
             }
 
 

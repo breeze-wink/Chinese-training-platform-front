@@ -37,7 +37,7 @@
                 <!-- 创建班级的对话框 -->
                 <el-dialog title="创建班级" v-model="createDialogVisible" width="500px" align-center>
                     <el-form :model="newClassForm" label-width="100px" class="form-container">
-                        <el-form-item label="班级描述" class="form-item-spacing">
+                        <el-form-item label="班级名称" class="form-item-spacing">
                             <el-input v-model="newClassForm.className" placeholder="请输入班级名称"></el-input>
                         </el-form-item>
                         <el-form-item label="班级描述" class="form-item-spacing">
@@ -133,6 +133,7 @@ import axios from 'axios';
 import { useStore } from 'vuex';
 import { computed } from 'vue';
 import {CirclePlus, CirclePlusFilled, Plus} from "@element-plus/icons-vue";
+import {ElMessage} from "element-plus";
 
 
 // classList 是一个班级信息的数组，每个对象包含classId, classCode, className, classDescription 等字段
@@ -141,6 +142,7 @@ const groupList = ref([]);
 
 const store = useStore();
 const teacherId = computed(() => store.state.user.id);
+
 
 // 控制生成班级对话框的显示状态
 const createDialogVisible = ref(false);
@@ -184,6 +186,7 @@ const fetchClassList = async () => {
 // 获取小组信息列表的函数
 const fetchGroupList = async () => {
     try {
+        console.log(teacherId);
         const response = await axios.get(`/api/teacher/${teacherId.value}/get-groups`);
 
         if (response.status === 200 && response.data.message === '小组信息获取成功') {
@@ -282,18 +285,23 @@ const viewStats = (classInfo) => {
 };
 
 // 解散班级的函数
-const disbandClass = async (classInfo) => {
-    try {
-        const response = await axios.delete(`/api/teacher/classes/${classInfo.classCode}`);
-        if (response.status === 200 && response.data.message === 'success') {
-            // 更新班级列表
-            classList.value = classList.value.filter(classItem => classItem.classCode !== classInfo.classCode);
-            console.log(`班级 ${classInfo.className} 解散成功`);
-        } else {
-            console.error(`解散班级失败: ${response.data.message}`);
+const disbandClass = async (classItem) => {
+    try{
+        const response = await axios.delete(`/api/teacher/${teacherId}/classes/disband`,{
+            params:{
+                classId:classItem.classId
+            }
+        });
+        if(response.status===200){
+            ElMessage.success(response.data.message); // 使用 ElMessage 显示成功提示
+        }else if(response.status===200)
+        {
+            ElMessage.error(response.data.message); // 使用 ElMessage 显示成功提示
         }
-    } catch (error) {
-        console.error(`解散班级失败: ${error.message}`);
+    }catch (error){
+        //解散失败
+            ElMessage.error('解散班级时发生错误'); // 显示默认错误信息
+
     }
 };
 
