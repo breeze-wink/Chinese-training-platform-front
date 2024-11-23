@@ -57,6 +57,47 @@
                     </div>
                 </el-dialog>
 
+                <!-- 查看成员的弹窗 -->
+                <el-dialog
+                        title="班级成员"
+                        v-model="membersDialogVisible"
+                        width="500px"
+                        align-center
+                >
+                    <el-table
+                            :data="classMembers"
+                            border
+                            style="width: 100%; max-height: 400px; overflow: auto"
+                    >
+                        <el-table-column prop="studentName" label="学生姓名" width="100"></el-table-column>
+                        <el-table-column prop="studentId" label="学生ID" width="100"></el-table-column>
+                        <el-table-column label="操作" width="300">
+                            <template #default="scope">
+                                <el-button
+                                        type="danger"
+                                        size="small"
+                                        @click="removeMember(scope.row)"
+                                >
+                                    移除成员
+                                </el-button>
+                                <el-button
+                                        type="primary"
+                                        size="small"
+                                        @click="viewMemberDetails(scope.row)"
+                                >
+                                    查看详情
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+
+                    <!-- 弹窗底部 -->
+                    <template #footer>
+                        <el-button @click="membersDialogVisible = false">关闭</el-button>
+                    </template>
+                </el-dialog>
+
+
                 <!-- 小组管理部分 -->
                 <div class="title-and-button-container">
                     <h2>小组管理</h2>
@@ -166,6 +207,7 @@ const newGroupForm = ref({
 
 // 班级成员列表
 const classMembers = ref([]);
+const groupMembers = ref([]);
 
 // 获取班级信息列表的函数
 const fetchClassList = async () => {
@@ -269,6 +311,8 @@ const viewMembers = async (classInfo) => {
 
         if (response.status === 200 && response.data.message === '班级成员信息获取成功') {
             classMembers.value = response.data.data;
+            console.log(classMembers.value);
+
             membersDialogVisible.value = true;
         } else {
             console.error('获取班级成员信息失败:', response.data.message);
@@ -276,6 +320,55 @@ const viewMembers = async (classInfo) => {
     } catch (error) {
         console.error('获取班级成员信息失败:', error.message);
     }
+};
+const viewGroupMembers = async (groupInfo) => {
+    try {
+        const response = await axios.get(`/api/teacher/${teacherId.value}/groups-members`, {
+            params: { groupId: groupInfo.groupId}
+        });
+
+        if (response.status === 200 ) {
+            classMembers.value = response.data.data;
+            console.log(classMembers.value);
+
+            membersDialogVisible.value = true;
+        } else {
+            console.error('获取小组成员信息失败:', response.data.message);
+        }
+    } catch (error) {
+        console.error('获取小组成员信息失败:', error.message);
+    }
+};
+
+
+// 移除成员的函数
+const removeMember = async (member) => {
+    try {
+        const response = await axios.delete(`/api/teacher/${teacherId.value}/remove-student`, {
+            params: {
+                studentId: member.studentId,
+            },
+        });
+
+        if (response.status === 200 && response.data.message === "成员移除成功") {
+            // 从班级成员列表中移除
+            classMembers.value = classMembers.value.filter(
+                    (m) => m.studentId !== member.studentId
+            );
+            ElMessage.success("成员已成功移除");
+        } else {
+            ElMessage.error(response.data.message || "移除成员失败");
+        }
+    } catch (error) {
+        console.error("移除成员失败:", error.message);
+        ElMessage.error("移除成员时发生错误");
+    }
+};
+
+// 查看成员详情的函数
+const viewMemberDetails = (member) => {
+    console.log("查看成员详情:", member);
+    ElMessage.info(`学生姓名：${member.studentName}, 学生ID：${member.studentId}`);
 };
 
 // 查看统计概况的函数
@@ -294,9 +387,9 @@ const disbandClass = async (classItem) => {
         });
         if(response.status===200){
             ElMessage.success(response.data.message); // 使用 ElMessage 显示成功提示
-        }else if(response.status===200)
+        }else if(response.status===400)
         {
-            ElMessage.error(response.data.message); // 使用 ElMessage 显示成功提示
+            ElMessage.error(response.data.message);
         }
     }catch (error){
         //解散失败
@@ -397,4 +490,8 @@ onMounted(() => {
     background-color: blue;
     border-color: blue;
 }
+
+
+
+
 </style>
