@@ -1,7 +1,6 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';  // 引入 router
-
 import store from './store/user.js';  // 引入 Vuex store
 
 //引入elementPlus
