@@ -296,15 +296,18 @@ const createClass = async () => {
         });
 
         if (response.status === 200 && response.data.message === '班级创建成功') {
+            console.log(response.data);
             // 创建成功后，获取新的班级码并添加到班级列表中
             const newClassId = response.data.classId; // 假设返回数据中包含新创建的班级详细信息
             const newClassCode = response.data.classCode; // 假设返回数据中包含新创建的班级详细信息
+
             const newClass = {
                 classId: newClassId,
                 classCode: newClassCode,
                 className: newClassForm.value.className,
                 classDescription: newClassForm.value.classDescription
             };
+
             classList.value.push(newClass);
 
             console.log('班级创建成功:', newClass);
@@ -423,6 +426,7 @@ const viewStats = (classInfo) => {
 
 // 解散班级的函数
 const disbandClass = async (classItem) => {
+    console.log(classItem)
 
     try{
         const response = await axios.delete(`/api/teacher/${teacherId.value}/classes/disband`,{
@@ -433,7 +437,7 @@ const disbandClass = async (classItem) => {
         if(response.status===200){
             ElMessage.success(response.data.message); // 使用 ElMessage 显示成功提示
 
-            //classList.value.filter(classItem => classItem.classId !== classItem.classId);
+            classList.value = classList.value.filter(clazz => clazz.classId !== classItem.classId);
 
 
         }else if(response.status===400)
