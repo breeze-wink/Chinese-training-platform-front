@@ -49,7 +49,7 @@
 import { computed, ref } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
-import {Document, Setting, User, Management} from '@element-plus/icons-vue';
+import {Document, Setting, User, Management, Upload} from '@element-plus/icons-vue';
 
 //获取路由
 const router = useRouter();
@@ -93,19 +93,22 @@ const menuItems = computed(() => {
                     icon: Document,
                     children: [
                         { index: '2-1', label: '课标', path: '/teacher/view-curriculum-standard'},
-                        { index: '2-2', label: '知识点', path:null },
+                        { index: '2-2', label: '知识点', path: '/teacher/view-knowledge-point' },
                     ],
                 },
                 {
                     index: '3',
                     label: '组织管理',
                     icon: Management,
-                    children: [
-                        { index: '3-1', label: '班级管理',  path: '/teacher/manage-class', },
-                        { index: '3-2', label: '小组管理', path:null  },
-                    ],
+                    path: '/teacher/manage-class'
                 },
-                { index: '4', label: '设置', icon: Setting,  path:null  },
+                {
+                    index: '4',
+                    label: '上传习题',
+                    icon: Upload,
+                    path: '/teacher/upload-question'
+                },
+                { index: '5', label: '设置', icon: Setting,  path:null  },
             ];
         case 'student':
             return [

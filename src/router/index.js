@@ -3,7 +3,12 @@ import Home from '../pages/Home.vue'
 //老师
 import TeacherPersonalInfo from '@/pages/Teacher/PersonalInfo.vue';// 老师个人信息
 import ViewCurriculumStandard from "@/pages/Teacher/ViewCurriculumStandard.vue";//查看课标
+import ViewKnowledgePoint from "@/pages/Teacher/ViewKnowledgePoint.vue";
 import ManageClass from "@/pages/Teacher/ManageClass.vue";
+import UploadQuestion from "@/pages/Teacher/UploadQuestion.vue";
+import UploadSingleQuestion from "@/pages/Teacher/UploadSingleQuestion.vue";
+import UploadCombinedQuestion from "@/pages/Teacher/UploadCombinedQuestion.vue"
+
 //知识点
 import KnowledgePoint from '@/pages/system-admin/KnowledgePoint.vue';
 import CourseStandard from '@/pages/system-admin/CourseStandard.vue';
@@ -17,6 +22,8 @@ import QuestionOptions from '@/pages/Student/QuestionOptions.vue';
 import AnswerPractice from "@/pages/Student/AnswerPractice.vue";
 import AnswerDetail from "@/pages/Student/AnswerDetail.vue";
 import ManageTest from "@/pages/Student/ManageTest.vue";
+
+
 
 const routes = [
     //首页
@@ -35,19 +42,47 @@ const routes = [
         name: 'ViewCurriculumStandard',
         component: ViewCurriculumStandard
     },
+    //查看知识点
+    {
+        path: '/teacher/view-knowledge-point',
+        name: 'ViewKnowledgePoint',
+        component: ViewKnowledgePoint
+    },
     //管理班级
     {
         path: '/teacher/manage-class',
         name: 'ManageClass',
         component: ManageClass
     },
+    //上传习题
+    {
+        path: '/teacher/upload-question',
+        name: 'UploadQuestion',
+        component: UploadQuestion
+    },
+    //上传单题
+    {
+        path: '/teacher/upload-single-question',
+        name: 'UploadSingleQuestion',
+        component: UploadSingleQuestion
+    },
+    //上传组合题目
+    {
+        path: '/teacher/upload-combined-question',
+        name: 'UploadCombinedQuestion',
+        component: UploadCombinedQuestion
+    },
+
+
 
     //系统管理员
     { path: '/system-admin/KnowledgePoint', component: KnowledgePoint },
     { path: '/system-admin/CourseStandard', component: CourseStandard },
 
     // 学生的个人页面
-    { path: '/student/personal-info', component: StudentPersonalInfo},
+    { path: '/student/personal-info',
+        name:'StudentPersonalInfo',
+        component: StudentPersonalInfo},
     { path: '/student/poetry-list', component: PoetryList},
     // 诗词详情路由
     { path: '/student/poem-detail/:id', name: 'PoemDetail', component: PoemDetail, props: true },
