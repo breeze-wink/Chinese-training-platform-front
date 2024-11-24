@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../pages/Home.vue'
+import TouristPoem from "@/pages/TouristPoem.vue";
 //老师
 import TeacherPersonalInfo from '@/pages/Teacher/PersonalInfo.vue';// 老师个人信息
 import ViewCurriculumStandard from "@/pages/Teacher/ViewCurriculumStandard.vue";//查看课标
@@ -18,10 +19,12 @@ import AnswerPractice from "@/pages/Student/AnswerPractice.vue";
 import AnswerDetail from "@/pages/Student/AnswerDetail.vue";
 import ManageTest from "@/pages/Student/ManageTest.vue";
 
+
 const routes = [
     //首页
     { path: '/', component: Home },
-
+    // 游客诗词详情页
+    { path: '/poem/:id', name: 'TouristPoem', component: TouristPoem, props: true },
     //老师页面
     //个人信息
     {
@@ -47,7 +50,7 @@ const routes = [
     { path: '/system-admin/CourseStandard', component: CourseStandard },
 
     // 学生的个人页面
-    { path: '/student/personal-info', component: StudentPersonalInfo},
+    { path: '/student/personal-info', name: 'StudentPersonalInfo',component: StudentPersonalInfo},
     { path: '/student/poetry-list', component: PoetryList},
     // 诗词详情路由
     { path: '/student/poem-detail/:id', name: 'PoemDetail', component: PoemDetail, props: true },
