@@ -97,6 +97,47 @@
                     </template>
                 </el-dialog>
 
+                <!-- 查看小组成员的弹窗 -->
+                <el-dialog
+                        title="小组成员"
+                        v-model="groupMembersDialogVisible"
+                        width="500px"
+                        align-center
+                >
+                    <el-table
+                            :data="groupMembers"
+                            border
+                            style="width: 100%; max-height: 400px; overflow: auto"
+                    >
+                        <!-- 仅显示学生姓名和操作 -->
+                        <el-table-column prop="studentName" label="学生姓名" width="150"></el-table-column>
+                        <el-table-column label="操作" width="200">
+                            <template #default="scope">
+                                <el-button
+                                        type="danger"
+                                        size="small"
+                                        @click="removeGroupMember(scope.row)"
+                                >
+                                    移除成员
+                                </el-button>
+                                <el-button
+                                        type="primary"
+                                        size="small"
+                                        @click="viewGroupMemberDetails(scope.row)"
+                                >
+                                    查看详情
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+
+                    <!-- 弹窗底部 -->
+                    <template #footer>
+                        <el-button @click="groupMembersDialogVisible = false">关闭</el-button>
+                    </template>
+                </el-dialog>
+
+
 
                 <!-- 小组管理部分 -->
                 <div class="title-and-button-container">
@@ -185,12 +226,15 @@ const store = useStore();
 const teacherId = computed(() => store.state.user.id);
 
 
+
 // 控制生成班级对话框的显示状态
 const createDialogVisible = ref(false);
 // 控制生成小组对话框的显示状态
 const createGroupDialogVisible = ref(false);
 // 控制成员对话框的显示状态
 const membersDialogVisible = ref(false);
+const groupMembersDialogVisible = ref(false);
+
 
 // 新建班级表单的数据
 const newClassForm = ref({
@@ -331,7 +375,7 @@ const viewGroupMembers = async (groupInfo) => {
             classMembers.value = response.data.data;
             console.log(classMembers.value);
 
-            membersDialogVisible.value = true;
+            groupMembersDialogVisible.value = true;
         } else {
             console.error('获取小组成员信息失败:', response.data.message);
         }
@@ -379,16 +423,22 @@ const viewStats = (classInfo) => {
 
 // 解散班级的函数
 const disbandClass = async (classItem) => {
+
     try{
-        const response = await axios.delete(`/api/teacher/${teacherId}/classes/disband`,{
+        const response = await axios.delete(`/api/teacher/${teacherId.value}/classes/disband`,{
             params:{
                 classId:classItem.classId
             }
         });
         if(response.status===200){
             ElMessage.success(response.data.message); // 使用 ElMessage 显示成功提示
+
+            //classList.value.filter(classItem => classItem.classId !== classItem.classId);
+
+
         }else if(response.status===400)
         {
+
             ElMessage.error(response.data.message);
         }
     }catch (error){
