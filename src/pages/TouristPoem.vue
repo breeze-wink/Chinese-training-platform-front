@@ -1,10 +1,6 @@
 <template>
     <div class="page-container">
-        <Header />
-
         <div class="main-container">
-            <Sidebar />
-
             <div class="poem-detail">
                 <button class="back-button" @click="goBack">返回</button>
                 <div v-if="poem.title" class="poem-content">
@@ -36,12 +32,9 @@ import {
     poems_nine_upper,
     poems_nine_lower
 } from '@/store/poems';
-import Sidebar from "@/components/Sidebar.vue";
-import { useRouter } from 'vue-router';
 
 export default {
-    name: 'PoemDetail',
-    components: { Sidebar },
+    name: 'TouristPoem',
     props: {
         id: {
             type: String,
@@ -62,12 +55,24 @@ export default {
             return this.allPoems.findIndex(p => p.title === this.id) < this.allPoems.length - 1;
         }
     },
+    mounted() {
+        console.log('TouristPoem mounted with id:', this.id);
+        if (this.id) {
+            this.fetchPoemDetails(this.id);
+        } else {
+            console.error('ID is undefined or missing');
+        }
+    },
     watch: {
-        // 监听 id 变化，当 id 改变时重新获取诗词数据
         id: {
-            immediate: true, // 初始化时立即执行
+            immediate: true,
             handler(newId) {
-                this.fetchPoemDetails(newId);
+                console.log('id changed to:', newId);
+                if (newId) {
+                    this.fetchPoemDetails(newId);
+                } else {
+                    console.error('ID is undefined or missing');
+                }
             }
         }
     },
@@ -86,18 +91,18 @@ export default {
             this.poem = this.allPoems.find(poem => poem.title === id) || {};
         },
         goBack() {
-            this.$router.push({ path: '/student/poetry-list' }); // 返回到指定路径
+            this.$router.push({ path: '/' });
         },
         goToPrev() {
             const currentIndex = this.allPoems.findIndex(p => p.title === this.id);
             if (currentIndex > 0) {
-                this.$router.push({ name: 'PoemDetail', params: { id: this.allPoems[currentIndex - 1].title } });
+                this.$router.push({ name: 'TouristPoem', params: { id: this.allPoems[currentIndex - 1].title } });
             }
         },
         goToNext() {
             const currentIndex = this.allPoems.findIndex(p => p.title === this.id);
             if (currentIndex < this.allPoems.length - 1) {
-                this.$router.push({ name: 'PoemDetail', params: { id: this.allPoems[currentIndex + 1].title } });
+                this.$router.push({ name: 'TouristPoem', params: { id: this.allPoems[currentIndex + 1].title } });
             }
         }
     }
@@ -106,33 +111,33 @@ export default {
 
 <style scoped>
 .page-container {
-    background-color: #f9f9f9; /* 添加背景色 */
-    background-image: url('../../static/mountains.jpg'); /* 设置背景图像 */
-    background-size: cover; /* 背景图像覆盖整个元素 */
-    background-position: center; /* 背景图像居中 */
+    background-color: #f9f9f9;
+    background-image: url('../static/mountains.jpg');
+    background-size: cover;
+    background-position: center;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
 }
 
 .main-container {
-    background-color: rgba(255, 255, 255, 0.8); /* 添加半透明背景色 */
+    background-color: rgba(255, 255, 255, 0.8);
     display: flex;
     flex: 1;
 }
 
 .poem-detail {
     display: flex;
-    flex-direction: column; /* 垂直方向按列排列 */
-    padding-top: 20px; /* 上方内边距，使内容从顶部开始 */
-    flex: 1; /* 占据剩余空间 */
-    padding-left: 20px; /* 左侧内边距，与 Sidebar 对齐 */
+    flex-direction: column;
+    padding-top: 20px;
+    flex: 1;
+    padding-left: 20px;
 }
 
 .back-button {
     position: absolute;
     top: 20px;
-    right: 20px; /* 将按钮移动到右上方 */
+    right: 20px;
     padding: 10px 20px;
     background-color: #626aef;
     color: #fff;
@@ -147,35 +152,35 @@ export default {
 }
 
 .poem-content {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 添加投影效果 */
-    padding: 30px; /* 内边距 */
-    border-radius: 8px; /* 圆角 */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    border-radius: 8px;
     text-align: center;
-    max-width: 800px; /* 限制最大宽度 */
-    width: 75%; /* 占据屏幕的75%宽度 */
-    background-color: #fff; /* 内容区域背景色 */
-    margin: 0 auto; /* 水平居中 */
+    max-width: 800px;
+    width: 75%;
+    background-color: #fff;
+    margin: 0 auto;
 }
 
 .poem-title {
-    font-family: 'Noto Serif SC', serif; /* 使用更优雅的字体 */
-    font-size: 2.5rem; /* 标题字体大小 */
-    margin-bottom: 1rem; /* 标题下方间距 */
-    color: #333; /* 更深的文字颜色 */
+    font-family: 'Noto Serif SC', serif;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #333;
 }
 
 .poem-author {
-    font-family: 'Noto Sans SC', sans-serif; /* 使用简洁的字体 */
-    font-size: 1.5rem; /* 作者字体大小 */
-    color: #666; /* 作者字体颜色 */
-    margin-bottom: 1rem; /* 作者下方间距 */
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 1.5rem;
+    color: #666;
+    margin-bottom: 1rem;
 }
 
 .poem-annotation {
-    font-family: 'Noto Sans SC', sans-serif; /* 使用简洁的字体 */
-    font-size: 1.2rem; /* 注释字体大小 */
-    color: #888; /* 注释字体颜色 */
-    margin-bottom: 2rem; /* 注释下方间距 */
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 1.2rem;
+    color: #888;
+    margin-bottom: 2rem;
 }
 
 .poem-text-container {
@@ -185,21 +190,21 @@ export default {
 }
 
 .poem-text {
-    font-family: 'Noto Serif SC', serif; /* 使用更优雅的字体 */
-    font-size: 1.2rem; /* 诗词内容字体大小 */
-    line-height: 1.6; /* 行高 */
-    white-space: pre-wrap; /* 保留换行符 */
-    word-break: break-all; /* 防止长单词超出容器 */
-    margin: 0 auto; /* 水平居中 */
-    max-width: 80ch; /* 限制诗词内容的最大宽度 */
-    color: #333; /* 更深的文字颜色 */
-    text-align: center; /* 文字居中 */
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.2rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 0 auto;
+    max-width: 80ch;
+    color: #333;
+    text-align: center;
 }
 
 .navigation-buttons {
     display: flex;
-    justify-content: center; /* 水平居中 */
-    margin-top: 20px; /* 与上方内容的距离 */
+    justify-content: center;
+    margin-top: 20px;
 }
 
 .nav-button {
@@ -210,7 +215,7 @@ export default {
     border-radius: 5px;
     cursor: pointer;
     font-size: 1rem;
-    margin: 0 10px; /* 按钮之间的间距 */
+    margin: 0 10px;
 }
 
 .nav-button:hover {
@@ -218,7 +223,7 @@ export default {
 }
 
 .loading {
-    font-size: 1.5rem; /* 加载提示字体大小 */
-    color: #aaa; /* 加载提示字体颜色 */
+    font-size: 1.5rem;
+    color: #aaa;
 }
 </style>

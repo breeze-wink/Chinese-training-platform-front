@@ -112,17 +112,18 @@ const menuItems = computed(() => {
             ];
         case 'student':
             return [
-                { index: '1', label: '个人信息', icon: User,  path:null  },
+                { index: '1', label: '个人信息', icon: User,  path:'/student/personal-info' },
+                { index: '2', label: '查看资讯', icon: Document,  path:'/student/poetry-list' },
                 {
-                    index: '2',
+                    index: '3',
                     label: '课程学习',
                     icon: Document,
                     children: [
-                        { index: '2-1', label: '我的课程',  path:null  },
-                        { index: '2-2', label: '学习进度',  path:null  },
+                        { index: '2-1', label: '练习选择',  path:'/student/question-options' },
+                        { index: '2-2', label: '试卷管理',  path:'/student/manage-test' },
                     ],
                 },
-                { index: '3', label: '设置', icon: Setting,  path:null  },
+                { index: '4', label: '设置', icon: Setting,  path:null  },
             ];
         // 其他角色
         default:

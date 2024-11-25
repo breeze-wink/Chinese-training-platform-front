@@ -19,7 +19,75 @@
                             <img class="carousel-image" src="../static/2.jpg" v-if="item === 4">
                         </el-carousel-item>
                     </el-carousel>
-                    <!-- 内容 -->
+
+                    <!-- 诗词列表页面 -->
+                    <div class="poetry-list-section">
+                        <section class="poetry-list">
+                            <div class="poetry-section">
+                                <h1>必背古诗词</h1>
+                                <h2>七年级上册</h2>
+                                <div class="poem-grid">
+                                    <div v-for="poem in poems_seven_upper" :key="poem.title" class="poem-item">
+                                        <router-link :to="{ name: 'TouristPoem', params: { id: poem.title } }">
+                                            <h3>{{ poem.title }}</h3>
+                                        </router-link>
+                                        <p>{{ poem.author }} | {{ poem.dynasty }}</p>
+                                        <p>{{ poem.annotation }}</p>
+                                    </div>
+                                </div>
+                                <h2>七年级下册</h2>
+                                <div class="poem-grid">
+                                    <div v-for="poem in poems_seven_lower" :key="poem.title" class="poem-item">
+                                        <router-link :to="{ name: 'TouristPoem', params: { id: poem.title } }">
+                                            <h3>{{ poem.title }}</h3>
+                                        </router-link>
+                                        <p>{{ poem.author }} | {{ poem.dynasty }}</p>
+                                        <p>{{ poem.annotation }}</p>
+                                    </div>
+                                </div>
+                                <h2>八年级上册</h2>
+                                <div class="poem-grid">
+                                    <div v-for="poem in poems_eight_upper" :key="poem.title" class="poem-item">
+                                        <router-link :to="{ name: 'TouristPoem', params: { id: poem.title } }">
+                                            <h3>{{ poem.title }}</h3>
+                                        </router-link>
+                                        <p>{{ poem.author }} | {{ poem.dynasty }}</p>
+                                        <p>{{ poem.annotation }}</p>
+                                    </div>
+                                </div>
+                                <h2>八年级下册</h2>
+                                <div class="poem-grid">
+                                    <div v-for="poem in poems_eight_lower" :key="poem.title" class="poem-item">
+                                        <router-link :to="{ name: 'TouristPoem', params: { id: poem.title } }">
+                                            <h3>{{ poem.title }}</h3>
+                                        </router-link>
+                                        <p>{{ poem.author }} | {{ poem.dynasty }}</p>
+                                        <p>{{ poem.annotation }}</p>
+                                    </div>
+                                </div>
+                                <h2>九年级上册</h2>
+                                <div class="poem-grid">
+                                    <div v-for="poem in poems_nine_upper" :key="poem.title" class="poem-item">
+                                        <router-link :to="{ name: 'TouristPoem', params: { id: poem.title } }">
+                                            <h3>{{ poem.title }}</h3>
+                                        </router-link>
+                                        <p>{{ poem.author }} | {{ poem.dynasty }}</p>
+                                        <p>{{ poem.annotation }}</p>
+                                    </div>
+                                </div>
+                                <h2>九年级下册</h2>
+                                <div class="poem-grid">
+                                    <div v-for="poem in poems_nine_lower" :key="poem.title" class="poem-item">
+                                        <router-link :to="{ name: 'TouristPoem', params: { id: poem.title } }">
+                                            <h3>{{ poem.title }}</h3>
+                                        </router-link>
+                                        <p>{{ poem.author }} | {{ poem.dynasty }}</p>
+                                        <p>{{ poem.annotation }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
                 </el-scrollbar>
             </el-main>
 
@@ -206,8 +274,12 @@ import {ref, onMounted, reactive, getCurrentInstance, computed} from 'vue'
 import axios from 'axios'
 import {User} from "@element-plus/icons-vue";
 import {useStore} from 'vuex'; // 引入 useStore 来使用 Vuex
-import {useRouter} from 'vue-router';
-import {ElMessage} from "element-plus"; //引入路由
+
+
+import {ElMessage} from "element-plus"; 
+import {useRouter} from 'vue-router'; //引入路由
+import { poems_seven_upper, poems_seven_lower, poems_eight_upper, poems_eight_lower, poems_nine_upper, poems_nine_lower } from '@/store/poems';
+
 
 const store = useStore(); // 获取 Vuex Store 实例
 const router = useRouter(); // 获取 Vue Router 实例
@@ -683,5 +755,70 @@ async function submitForm(formName, userType) {
 .sign-up-btn .el-button:hover {
     background-color: #4d5aff; /* 鼠标悬停时改变背景颜色 */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
+}
+
+.page-container {
+    display: flex;
+    flex-wrap: wrap;
+    grid-template-columns: auto minmax(auto, 800px);
+    gap: 2rem;
+}
+
+.main-container {
+    display: flex;
+    flex-grow: 1;
+    flex-basis: calc(100% - 200px); /* 减去 sidebar 宽度 */
+}
+
+/* 主要内容区域 */
+.content {
+    background-color: #f4f4f9;
+    border-radius: 5px;
+    padding: 2rem;
+}
+
+/* 古诗词网格布局 */
+.poem-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 调整列数以适应诗歌数量 */
+    gap: 1rem;
+}
+
+/* 单个诗歌项 */
+.poem-item {
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+}
+
+/* 标题样式 */
+h1,
+h2,
+h3 {
+    font-family: "Roboto Slab", serif; /* 使用更美观的字体 */
+    margin-bottom: 0.5rem;
+}
+
+h1 {
+    color: #333;
+    font-size: 2rem;
+}
+
+h2 {
+    color: #666;
+    font-size: 1.5rem;
+}
+
+h3 {
+    color: #777;
+    font-size: 1.2rem;
+}
+
+/* 段落文本样式 */
+p {
+    font-family: kaiti, sans-serif;
+    line-height: 1.6;
+    color: #444;
 }
 </style>
