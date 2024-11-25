@@ -89,6 +89,7 @@ import Sidebar from "@/components/Sidebar.vue";
 import Header from "@/components/Header.vue";
 import axios from 'axios';
 import router from '@/router'; // 引入路由模块
+import { mapGetters } from 'vuex';
 
 export default {
     components: { Header, Sidebar },
@@ -103,14 +104,16 @@ export default {
             completedItems: {
                 作业: [],
                 练习: []
-            },
-            studentId: '123456' // 假设学生的ID为123456，实际使用时从Vuex或其他地方获取
+            }
         };
+    },
+    computed: {
+        ...mapGetters(['getUserId'])
     },
     methods: {
         async fetchPendingPractices() {
             try {
-                const response = await axios.get(`/api/student/${this.studentId}/get-unfinished-practice-list`, {
+                const response = await axios.get(`/api/student/${this.getUserId}/get-unfinished-practice-list`, {
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -130,7 +133,7 @@ export default {
         },
         async fetchPendingAssignments() {
             try {
-                const response = await axios.get(`/api/student/${this.studentId}/get-unfinished-assignment-list`, {
+                const response = await axios.get(`/api/student/${this.getUserId}/get-unfinished-assignment-list`, {
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -152,7 +155,7 @@ export default {
         },
         async fetchCompletedPractices() {
             try {
-                const response = await axios.get(`/api/student/${this.studentId}/get-finished-practice-list`, {
+                const response = await axios.get(`/api/student/${this.getUserId}/get-finished-practice-list`, {
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -173,7 +176,7 @@ export default {
         },
         async fetchCompletedAssignments() {
             try {
-                const response = await axios.get(`/api/student/${this.studentId}/get-finished-assignment-list`, {
+                const response = await axios.get(`/api/student/${this.getUserId}/get-finished-assignment-list`, {
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -196,9 +199,18 @@ export default {
         },
         async continueTraining(item) {
             try {
-                const response = await axios.post(`/api/student/${this.studentId}/continue-practice`, {
-                    practiceId: item.practiceId
-                }, {
+                let endpoint;
+                let params;
+
+                if ('practiceId' in item) {
+                    endpoint = `/api/student/${this.getUserId}/continue-practice`;
+                    params = { practiceId: item.practiceId };
+                } else if ('assignmentId' in item) {
+                    endpoint = `/api/student/${this.getUserId}/continue-assignment`;
+                    params = { assignmentId: item.assignmentId };
+                }
+
+                const response = await axios.post(endpoint, params, {
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -209,23 +221,23 @@ export default {
                     // 将题目传递给答题页面
                     router.push({
                         name: 'AnswerPractice',
-                        params: {
-                            practiceId: item.practiceId,
-                            questions: questions
+                        query: {
+                            id: item.practiceId || item.assignmentId,
+                            questions: JSON.stringify(questions)
                         }
                     });
                 } else {
-                    console.error('获取练习题目失败', response.data.message);
+                    console.error('获取题目失败', response.data.message);
                 }
             } catch (error) {
-                console.error('获取练习题目失败', error);
+                console.error('获取题目失败', error);
             }
         },
         async viewAnswers(item) {
             try {
-                const response = await axios.get(`/api/student/${this.studentId}/practice/get-answer`, {
+                const response = await axios.get(`/api/student/${this.getUserId}/practice/get-answer`, {
                     params: {
-                        practiceId: item.practiceId
+                        practiceId: item.practiceId || item.assignmentId
                     },
                     headers: {
                         'Content-Type': 'application/json'
@@ -238,24 +250,24 @@ export default {
                     router.push({
                         name: 'AnswerDetail',
                         params: {
-                            practiceId: item.practiceId,
+                            id: item.practiceId || item.assignmentId,
                             answers: answers
                         }
                     });
                 } else {
-                    console.error('获取练习答案失败', response.data.message);
+                    console.error('获取答案失败', response.data.message);
                 }
             } catch (error) {
-                console.error('获取练习答案失败', error);
+                console.error('获取答案失败', error);
             }
         },
         deletePractice(item) {
             // 实现删除练习的功能
-            console.log(`删除练习：${item.practiceName}`);
+            console.log(`删除练习：${item.practiceName || item.title}`);
         },
         teacherComment(item) {
             // 实现查看老师评语的功能
-            console.log(`查看老师评语：${item.practiceName}`);
+            console.log(`查看老师评语：${item.practiceName || item.title}`);
         }
     },
     created() {
@@ -318,3 +330,6 @@ button:hover {
     background-color: #45a049;
 }
 </style>
+
+
+

@@ -33,6 +33,7 @@
 import Sidebar from "@/components/Sidebar.vue";
 import Header from "@/components/Header.vue";
 import axios from 'axios';  // 引入 axios
+import { mapGetters } from 'vuex';
 
 export default {
     name: 'EssayDetail',
@@ -44,15 +45,19 @@ export default {
             pdfUrl: null
         };
     },
+    computed: {
+        ...mapGetters(['getUserId'])  // 从 Vuex store 获取学生 ID
+    },
     created() {
         this.fetchEssayPdf();
     },
     methods: {
         async fetchEssayPdf() {
-            const id = this.$route.params.id;
+            const studentId = this.getUserId; // 从 Vuex store 获取学生 ID
+            const essayId = this.$route.params.id; // 从路由参数获取作文 ID
             try {
                 // 获取作文的 PDF 内容
-                const response = await axios.get(`/api/student/essay/get-info/${id}`, {
+                const response = await axios.get(`/api/student/${studentId}/essay/get-info/${essayId}`, {
                     responseType: 'blob'  // 设置响应类型为 blob
                 });
 
@@ -88,7 +93,7 @@ export default {
 .essay-detail {
     flex: 1;
     background-color: #fff;
-    box-shadow: 5rem 5rem 5rem rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     padding: 2rem;
     margin-left: 2rem;
