@@ -16,7 +16,7 @@
                             自定义
                         </label>
                     </div>
-                    <div class="question-number-input">
+                    <div class="question-number-input" v-if="selectedOption === 'custom'">
                         <label for="questionNumber">题目数量:</label>
                         <input type="number" id="questionNumber" v-model.number="questionNum" min="1" max="100" />
                     </div>
@@ -96,7 +96,7 @@ export default {
                         id: item.id,
                         name: item.name,
                         description: item.description,
-                        type: item.type
+                        type: Array.isArray(item.type) ? item.type.join(', ') : item.type
                     }));
                 } else {
                     console.error('获取知识点失败', response.data.message);
@@ -122,16 +122,22 @@ export default {
                     },
                 });
                 console.log('题目发送成功', response.data);
-                const questions = response.data.data;
-                this.$router.push({
-                    name: 'AnswerPractice',
-                    query: {
-                        practiceId: this.studentId.toString(),
-                        questions: JSON.stringify(questions),
-                        mode: 'auto',
-                        practiceName: '自动练习' // 添加练习名称
-                    },
-                });
+                const practiceId = response.data.practiceId; // 提取 practiceId
+                if (practiceId !== undefined) {
+                    console.log('PracticeId:', practiceId); // 打印 practiceId
+                    const questions = response.data.data;
+                    this.$router.push({
+                        name: 'AnswerPractice',
+                        query: {
+                            practiceId: practiceId, // 不需要转换为字符串
+                            questions: encodeURIComponent(JSON.stringify(questions)),
+                            mode: 'auto',
+                            practiceName: '自动练习' // 添加练习名称
+                        },
+                    });
+                } else {
+                    console.error('PracticeId is undefined');
+                }
             } catch (error) {
                 console.error('题目发送失败', error.response ? error.response.data : error.message);
             }
@@ -140,7 +146,7 @@ export default {
             const requestBody = {
                 num: this.questionNum,
                 name: 'Custom Practice',
-                data: this.checkList.map(knowledgePointId => ({knowledgePointId})),
+                data: this.checkList.map(knowledgePointId => ({ knowledgePointId })),
             };
 
             try {
@@ -153,21 +159,27 @@ export default {
                     },
                 });
                 console.log('题目发送成功', response.data);
-                const questions = response.data.data;
+                const practiceId = response.data.practiceId; // 提取 practiceId
+                if (practiceId !== undefined) {
+                    console.log('PracticeId:', practiceId); // 打印 practiceId
+                    const questions = response.data.data;
 
-                // 确保 questions 是一个有效的 JSON 字符串
-                const questionsString = JSON.stringify(questions);
-                console.log('Questions String:', questionsString); // 打印 questions 字符串
+                    // 确保 questions 是一个有效的 JSON 字符串
+                    const questionsString = JSON.stringify(questions);
+                    console.log('Questions String:', questionsString); // 打印 questions 字符串
 
-                this.$router.push({
-                    name: 'AnswerPractice',
-                    query: {
-                        practiceId: this.studentId.toString(), // 确保 practiceId 是字符串
-                        questions: questionsString,
-                        mode: 'custom',
-                        practiceName: '自定义练习' // 添加练习名称
-                    },
-                });
+                    this.$router.push({
+                        name: 'AnswerPractice',
+                        query: {
+                            practiceId: practiceId, // 不需要转换为字符串
+                            questions: encodeURIComponent(questionsString),
+                            mode: 'custom',
+                            practiceName: '自定义练习' // 添加练习名称
+                        },
+                    });
+                } else {
+                    console.error('PracticeId is undefined');
+                }
             } catch (error) {
                 console.error('考点和题目发送失败', error.response ? error.response.data : error.message);
             }
@@ -255,8 +267,12 @@ button:hover {
     color: white;
     border: none;
     border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
+    padding: 10px 20px;
+    margin: 0 10px;
+}
+
+.submit-button:hover {
+    background-color: #0056b3;
 }
 
 .generated-questions h3 {
@@ -286,7 +302,7 @@ button:hover {
     background-color: #007BFF;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 5px;
     padding: 10px 20px;
     margin: 0 10px;
 }
@@ -311,3 +327,9 @@ button:hover {
     margin-bottom: 10px;
 }
 </style>
+
+
+
+
+
+

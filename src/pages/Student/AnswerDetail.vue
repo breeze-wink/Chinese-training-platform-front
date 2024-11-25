@@ -74,6 +74,7 @@ export default {
             return;
         }
 
+        console.log('PracticeId:', this.practiceId); // 增加日志以查看 practiceId
         this.fetchAnswers(studentId);
     },
     methods: {
@@ -85,6 +86,7 @@ export default {
                     }
                 });
 
+                console.log('响应状态码:', response.status); // 增加日志以查看响应状态码
                 console.log('响应数据:', response.data); // 增加日志以查看响应内容
 
                 if (response.status === 200 && response.data.message === '答案获取成功') {
@@ -179,3 +181,9 @@ export default {
     margin-bottom: 10px;
 }
 </style>
+
+
+
+
+
+
