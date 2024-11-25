@@ -235,9 +235,14 @@ export default {
         },
         async viewAnswers(item) {
             try {
+                if (!item.practiceId) {
+                    console.error('Missing required param "practiceId"', item);
+                    return;
+                }
+
                 const response = await axios.get(`/api/student/${this.getUserId}/practice/get-answer`, {
                     params: {
-                        practiceId: item.practiceId || item.assignmentId
+                        practiceId: item.practiceId
                     },
                     headers: {
                         'Content-Type': 'application/json'
@@ -246,12 +251,12 @@ export default {
 
                 if (response.status === 200) {
                     const answers = response.data.data;
-                    // 将答案传递给答案页面
+                    // 将答案传递给查看答案页面
                     router.push({
                         name: 'AnswerDetail',
-                        params: {
-                            id: item.practiceId || item.assignmentId,
-                            answers: answers
+                        query: {
+                            practiceId: item.practiceId,
+                            answers: JSON.stringify(answers)
                         }
                     });
                 } else {
@@ -261,20 +266,20 @@ export default {
                 console.error('获取答案失败', error);
             }
         },
-        deletePractice(item) {
-            // 实现删除练习的功能
-            console.log(`删除练习：${item.practiceName || item.title}`);
-        },
         teacherComment(item) {
-            // 实现查看老师评语的功能
-            console.log(`查看老师评语：${item.practiceName || item.title}`);
+            // 处理老师评语逻辑
+            console.log('Teacher comment for:', item);
+        },
+        deletePractice(item) {
+            // 处理删除练习逻辑
+            console.log('Delete practice:', item);
         }
     },
     created() {
-        this.fetchPendingPractices(); // 在组件创建时获取未完成练习列表
-        this.fetchPendingAssignments(); // 在组件创建时获取未完成作业列表
-        this.fetchCompletedPractices(); // 在组件创建时获取已完成练习列表
-        this.fetchCompletedAssignments(); // 在组件创建时获取已完成作业列表
+        this.fetchPendingPractices();
+        this.fetchPendingAssignments();
+        this.fetchCompletedPractices();
+        this.fetchCompletedAssignments();
     }
 };
 </script>
@@ -300,9 +305,14 @@ section {
     margin-bottom: 40px;
 }
 
+h2 {
+    margin-bottom: 10px;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
+    margin-bottom: 20px;
 }
 
 th, td {
@@ -313,21 +323,26 @@ th, td {
 
 th {
     background-color: #f2f2f2;
-    font-weight: bold;
 }
 
 button {
-    margin: 0 5px;
-    padding: 5px 10px;
-    background-color: #4CAF50;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #007BFF;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    margin-right: 10px;
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #0056b3;
+}
+
+p {
+    text-align: center;
+    color: #888;
 }
 </style>
 
