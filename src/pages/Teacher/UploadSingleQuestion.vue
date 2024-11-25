@@ -51,6 +51,12 @@
                                         ></el-option>
                                     </el-select>
                                 </el-form-item>
+
+                                <!-- 所属知识点下拉框 -->
+
+                                <KnowledgePointSelector ref="knowledgePointSelector" />
+
+
                                 <el-form-item label="解析">
                                     <el-input
                                             v-model="choiceForm.explanation"
@@ -96,6 +102,9 @@
                                         </div>
                                     </el-form-item>
 
+                                    <!-- 所属知识点下拉框 -->
+                                    <KnowledgePointSelector ref="knowledgePointSelector" />
+
                                     <el-form-item label="解析">
                                         <el-input
                                                 v-model="fillForm.explanation"
@@ -130,6 +139,10 @@
                                                 :autosize="{ minRows: 3, maxRows: 10 }"
                                         ></el-input>
                                     </el-form-item>
+
+                                    <!-- 所属知识点下拉框 -->
+                                    <KnowledgePointSelector ref="knowledgePointSelector" />
+
                                     <el-form-item label="解析" class="form-item-spacing">
                                         <el-input
                                                 v-model="qaForm.explanation"
@@ -164,6 +177,10 @@
                                                 :autosize="{ minRows: 4, maxRows: 10 }"
                                         ></el-input>
                                     </el-form-item>
+
+                                    <!-- 所属知识点下拉框 -->
+                                    <KnowledgePointSelector ref="knowledgePointSelector" />
+
                                     <el-form-item label="上传范文">
                                         <el-upload
                                                 action="/api/upload/essay-sample"
@@ -195,9 +212,23 @@
 <script setup>
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import { ref } from 'vue';
+import {computed, onMounted, ref} from 'vue';
+import axios from "axios";
+import {useStore} from "vuex";
+import KnowledgePointSelector from '@/pages/Teacher/TeacherPublicComponent/KnowledgePointSelector.vue'; // 引入知识点选择组件
+
+
 
 const activeTab = ref('choice'); // 当前激活的标签页
+const knowledgePoints = ref([]); // 后端返回的知识点
+const categories = ref([]); // 所有分类（category）
+const selectedCategory = ref(null); // 当前选择的分类
+const selectedPointName = ref(null); // 当前选择的知识点名称
+const filteredPoints = ref([]); // 当前分类下的知识点列表
+const store = useStore();
+const teacherId = computed(() => store.state.user.id);
+const knowledgePointSelector = ref(null);
+
 
 // 选择表单数据
 const choiceForm = ref({
@@ -239,6 +270,7 @@ const handleUploadSuccess = (response, file) => {
     console.log('范文上传成功:', response, file);
 };
 
+
 // 提交表单
 const submitQuestion = () => {
     const data =
@@ -252,6 +284,10 @@ const submitQuestion = () => {
 
     console.log('提交数据:', data);
 }
+// 初始化获取知识点数据
+onMounted(() => {
+
+});
 </script>
 
 <style scoped>
@@ -336,7 +372,7 @@ const submitQuestion = () => {
 }
 
 .form-item-spacing {
-    margin-bottom: 40px; /* 设置下方间距，可根据需求调整 */
+    margin-bottom: 20px; /* 设置下方间距，可根据需求调整 */
 }
 
 
