@@ -1,5 +1,5 @@
 <template>
-    <div class="answer-detail-page">
+    <div class="page-container">
         <Header />
         <div class="main-container">
             <Sidebar />
@@ -8,19 +8,18 @@
                     <p>加载中...</p>
                 </div>
                 <div v-else-if="answers.length > 0" class="answers-container">
-                    <h2>{{ practiceName }} 的详细答案</h2>
+                    <h2>练习答案</h2>
                     <div v-for="(group, groupName) in groupedAnswers" :key="groupName" class="question-group">
-                        <h3>{{ groupName }}</h3>
-                        <div v-for="answer in group" :key="answer.practiceQuestionId" class="answer">
-                            <h4>{{ answer.questionContent }}</h4>
-                            <p><strong>题型:</strong> {{ answer.questionType }}</p>
+                        <h3>{{ getGroupName(groupName) }}</h3>
+                        <div v-for="answer in group" :key="answer.id" class="answer">
+                            <h4>{{ answer.questionNumber }}. {{ answer.questionContent }}</h4>
                             <ul v-if="answer.questionOptions" class="options-list">
                                 <li v-for="option in getOptions(answer.questionOptions)" :key="option.label" class="option">
-                                    {{ option.text }}
+                                    <span class="option-label">{{ option.label }}</span>. {{ option.text }}
                                 </li>
                             </ul>
-                            <p><strong>你的答案:</strong> {{ answer.studentAnswer }}</p>
-                            <p><strong>正确答案:</strong> {{ answer.answer }}</p>
+                            <p><strong class="highlight">你的答案:</strong> <span class="answer-text">{{ answer.studentAnswer }}</span></p>
+                            <p><strong class="highlight">正确答案:</strong> <span class="answer-text">{{ answer.answer }}</span></p>
                         </div>
                     </div>
                 </div>
@@ -46,7 +45,16 @@ export default {
         Header,
         Sidebar,
     },
-    props: ['practiceId', 'practiceName'], // 确保这里接收 practiceId 和 practiceName
+    props: {
+        practiceId: {
+            type: Number,
+            required: true
+        },
+        practiceName: {
+            type: String,
+            required: true
+        }
+    },
     data() {
         return {
             answers: [],
@@ -109,10 +117,22 @@ export default {
                 if (!acc[answer.questionType]) {
                     acc[answer.questionType] = [];
                 }
-                answer.id = this.answers.findIndex(a => a === answer); // 为每个答案分配一个唯一的 ID
                 acc[answer.questionType].push(answer);
                 return acc;
             }, {});
+
+            // 按照题型排序
+            for (const group of Object.values(this.groupedAnswers)) {
+                group.sort((a, b) => a.id - b.id);
+            }
+
+            // 分配题号
+            let questionNumber = 1;
+            for (const group of Object.values(this.groupedAnswers)) {
+                for (const answer of group) {
+                    answer.questionNumber = questionNumber++;
+                }
+            }
 
             // 重新分配连续的 ID
             let currentId = 0;
@@ -133,23 +153,34 @@ export default {
                 });
             }
             return options;
+        },
+        getGroupName(groupName) {
+            switch (groupName) {
+                case 'CHOICE':
+                    return '选择题';
+                case 'FILL_IN_BLANK':
+                    return '填空题';
+                case 'SHORT_ANSWER':
+                    return '简答题';
+                default:
+                    return groupName;
+            }
         }
     }
 };
 </script>
 
 <style scoped>
-.answer-detail-page {
-    padding: 20px;
+.page-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
 .main-container {
     display: flex;
-}
-
-.sidebar {
-    width: 25%;
-    margin-right: 20px;
+    flex: 1;
+    padding: 20px; /* 为主要内容区域添加内边距 */
 }
 
 .content {
@@ -168,22 +199,42 @@ export default {
     margin-bottom: 20px;
 }
 
-.answer h4 {
-    margin-top: 0;
+h2, h3, h4, .option-label, .option, .highlight, .answer-text {
+    font-family: "楷体", "KaiTi"; /* 设置所有指定元素的字体为楷体 */
+}
+
+h2 {
+    font-size: 2em; /* 最大的字体 */
+}
+
+h3 {
+    font-size: 1.75em; /* 其次的字体 */
+}
+
+h4 {
+    font-size: 1.5em; /* 第三大的字体 */
+}
+
+.option-label {
+    font-size: 1.4em; /* 放大选项标签 */
+    margin-right: 5px; /* 添加间距 */
 }
 
 .options-list {
-    list-style-type: none;
+    list-style-type: none; /* 去掉列表项前面的点 */
     padding: 0;
 }
 
 .option {
     margin-bottom: 10px;
+    font-size: 1.4em; /* 确保选项内容的字体大小与标签一致 */
+}
+
+.highlight {
+    font-size: 1.4em; /* 放大“你的答案”和“正确答案”的标签 */
+}
+
+.answer-text {
+    font-size: 1.4em; /* 放大答案文本的字体 */
 }
 </style>
-
-
-
-
-
-

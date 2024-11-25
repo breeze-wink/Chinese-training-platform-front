@@ -7,7 +7,7 @@
                     <h2 class="practice-name">{{ practiceName }}</h2>
                     <form @submit.prevent="submitAnswers">
                         <div v-for="(group, groupName) in groupedQuestions" :key="groupName" class="question-group">
-                            <h3 class="group-name">{{ groupName }}</h3>
+                            <h3 class="group-name">{{ getGroupName(groupName) }}</h3>
                             <div v-for="(question, index) in group" :key="index" class="question" :id="'question-' + question.id" ref="questionElements">
                                 <h4>{{ question.id + 1 }}. {{ question.questionContent }}</h4>
                                 <div v-if="question.type === 'CHOICE'" class="options">
@@ -34,10 +34,10 @@
             <div class="navigation">
                 <ul>
                     <li v-for="(group, groupName) in groupedQuestions" :key="groupName" :class="{ active: currentGroup === groupName }">
-                        <h3 class="group-name">{{ groupName }}</h3>
+                        <h3 class="group-name">{{ getGroupName(groupName) }}</h3>
                         <ul>
                             <li v-for="(question, index) in group" :key="index" :class="{ active: currentIndex === question.id }">
-                                <a :href="'#question-' + question.id" class="nav-link" @click.prevent="scrollToQuestion(question.id)">
+                                <a :href="'#question-' + question.id" class="nav-link" @click.prevent="scrollToQuestion(index)">
                                     <div class="nav-option">
                                         {{ question.id + 1 }}
                                     </div>
@@ -151,7 +151,8 @@ export default {
                                 practiceId: this.practiceId
                             },
                             query: {
-                                score: score
+                                score: score,
+                                practiceName: this.practiceName
                             }
                         });
                     } else {
@@ -236,6 +237,22 @@ export default {
                 questionElement.scrollIntoView({ behavior: 'smooth' });
             }
         }
+    },
+    computed: {
+        getGroupName() {
+            return (groupName) => {
+                switch (groupName) {
+                    case 'CHOICE':
+                        return '选择题';
+                    case 'FILL_IN_BLANK':
+                        return '填空题';
+                    case 'SHORT_ANSWER':
+                        return '简答题';
+                    default:
+                        return groupName;
+                }
+            };
+        }
     }
 };
 </script>
@@ -252,7 +269,6 @@ export default {
 .main-container {
     display: flex;
     flex: 1;
-    padding: 20px; /* 为主要内容区域添加内边距 */
 }
 
 .content {
@@ -276,8 +292,6 @@ export default {
     font-size: 28px;
     margin-bottom: 20px;
     font-family: 'SimHei', sans-serif; /* 黑体 */
-    color: #000; /* 黑色 */
-    font-weight: bold; /* 加粗 */
 }
 
 .question-group {
@@ -288,15 +302,11 @@ export default {
     font-size: 24px;
     margin-bottom: 10px;
     font-family: 'KaiTi', sans-serif; /* 楷体 */
-    color: #000; /* 黑色 */
-    font-weight: normal; /* 不加粗 */
 }
 
 .question {
     margin-bottom: 20px;
     font-family: 'kaiti', 'Times New Roman', sans-serif; /* 中文宋体，英文新罗马 */
-    color: #000; /* 黑色 */
-    font-weight: normal; /* 不加粗 */
     font-size: 20px; /* 增大字体大小 */
 }
 
@@ -316,8 +326,6 @@ export default {
     border-radius: 5px;
     transition: background 0.3s ease-in-out;
     font-family: 'kaiti', 'Times New Roman', sans-serif; /* 中文宋体，英文新罗马 */
-    color: #000; /* 黑色 */
-    font-weight: normal; /* 不加粗 */
     font-size: 18px; /* 增大选项字体大小 */
 }
 
@@ -338,7 +346,7 @@ export default {
 }
 
 .option input:checked {
-    border-color: #4CAF50;
+    border-color: #007BFF;
 }
 
 .option input:checked::before {
@@ -365,8 +373,6 @@ input[type="text"], textarea {
     border: 1px solid #ddd;
     border-radius: 5px;
     font-family: 'kaiti', 'Times New Roman', sans-serif; /* 中文宋体，英文新罗马 */
-    color: #000; /* 黑色 */
-    font-weight: normal; /* 不加粗 */
     font-size: 18px; /* 增大输入框字体大小 */
     transition: border 0.3s ease-in-out;
 }
@@ -410,7 +416,6 @@ input[type="text"]:focus, textarea:focus {
     margin-left: 20px; /* 添加左边距，使导航栏与题目区域有间隔 */
     font-family: 'SimHei', sans-serif; /* 黑体 */
     color: #000; /* 黑色 */
-    font-weight: bold; /* 加粗 */
 }
 
 .navigation ul {
@@ -440,7 +445,6 @@ input[type="text"]:focus, textarea:focus {
     border-radius: 5px;
     color: white; /* 白色文字 */
     font-family: 'SimHei', sans-serif; /* 黑体 */
-    font-weight: bold; /* 加粗 */
     transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
     cursor: pointer;
 }
@@ -470,6 +474,9 @@ input[type="text"]:focus, textarea:focus {
     margin: 0;
 }
 </style>
+
+
+
 
 
 

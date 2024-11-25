@@ -20,16 +20,20 @@
                         <label for="questionNumber">题目数量:</label>
                         <input type="number" id="questionNumber" v-model.number="questionNum" min="1" max="100" />
                     </div>
+                    <div class="practice-name-input" v-if="selectedOption === 'custom'">
+                        <label for="practiceName">练习名称:</label>
+                        <input type="text" id="practiceName" v-model="practiceName" placeholder="Custom Practice" />
+                    </div>
                     <button @click="handleClick">确定出题</button>
                 </div>
             </div>
         </div>
         <el-dialog title="考点选择" v-model="dialogVisible" width="50%">
             <el-checkbox-group v-model="checkList">
-                <div v-for="(group, index) in groupedKnowledgePoints" :key="index" class="knowledge-group">
-                    <h4>{{ group.type }}</h4>
+                <div v-for="(group, type) in groupedKnowledgePoints" :key="type" class="knowledge-group">
+                    <h4 @click="logGroupType(type)">{{ type }}</h4>
                     <el-row :gutter="20">
-                        <el-col :span="8" v-for="item in group.items" :key="item.id">
+                        <el-col :span="8" v-for="item in group" :key="item.id">
                             <el-checkbox :label="item.id">{{ item.name }}</el-checkbox>
                         </el-col>
                     </el-row>
@@ -63,6 +67,7 @@ export default {
             checkList: [],
             knowledgePoints: [],
             questionNum: 10,
+            practiceName: 'Custom Practice', // 默认练习名称
         };
     },
     computed: {
@@ -73,12 +78,15 @@ export default {
         groupedKnowledgePoints() {
             const groups = {};
             this.knowledgePoints.forEach(item => {
-                if (!groups[item.type]) {
-                    groups[item.type] = { type: item.type, items: [] };
+                const type = item.type; // 直接使用字符串类型的 type
+                console.log('Processing type:', type); // 调试信息
+                if (!groups[type]) {
+                    groups[type] = [];
                 }
-                groups[item.type].items.push(item);
+                groups[type].push(item);
             });
-            return Object.values(groups);
+            console.log('分组后的知识点数据:', groups); // 调试信息
+            return groups;
         }
     },
     created() {
@@ -92,12 +100,15 @@ export default {
             try {
                 const response = await axios.get(`/api/student/${this.studentId}/practice/get-knowledge-points`);
                 if (response.status === 200) {
-                    this.knowledgePoints = response.data.data.map(item => ({
+                    const rawKnowledgePoints = response.data.data;
+                    console.log('原始知识点数据:', rawKnowledgePoints); // 调试信息
+                    this.knowledgePoints = rawKnowledgePoints.map(item => ({
                         id: item.id,
                         name: item.name,
                         description: item.description,
-                        type: Array.isArray(item.type) ? item.type.join(', ') : item.type
+                        type: item.type // 保持 type 为字符串
                     }));
+                    console.log('处理后的知识点数据:', this.knowledgePoints); // 调试信息
                 } else {
                     console.error('获取知识点失败', response.data.message);
                 }
@@ -145,7 +156,7 @@ export default {
         async confirmSelection() {
             const requestBody = {
                 num: this.questionNum,
-                name: 'Custom Practice',
+                name: this.practiceName, // 使用用户输入的练习名称
                 data: this.checkList.map(knowledgePointId => ({ knowledgePointId })),
             };
 
@@ -174,7 +185,7 @@ export default {
                             practiceId: practiceId, // 不需要转换为字符串
                             questions: encodeURIComponent(questionsString),
                             mode: 'custom',
-                            practiceName: '自定义练习' // 添加练习名称
+                            practiceName: this.practiceName // 使用用户输入的练习名称
                         },
                     });
                 } else {
@@ -186,6 +197,9 @@ export default {
 
             this.dialogVisible = false;
         },
+        logGroupType(type) {
+            console.log('Group Type:', type); // 控制台输出
+        }
     }
 };
 </script>
@@ -234,6 +248,21 @@ export default {
 
 .question-number-input input {
     width: 100px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.practice-name-input {
+    margin-bottom: 20px;
+}
+
+.practice-name-input label {
+    margin-right: 10px;
+}
+
+.practice-name-input input {
+    width: 200px;
     padding: 5px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -320,6 +349,7 @@ button:hover {
     font-weight: bold;
     border-bottom: 1px solid #ddd; /* 添加下划线以区分不同的知识点类型 */
     padding-bottom: 5px;
+    cursor: pointer; /* 使标题可点击 */
 }
 
 .el-checkbox {
@@ -327,9 +357,3 @@ button:hover {
     margin-bottom: 10px;
 }
 </style>
-
-
-
-
-
-

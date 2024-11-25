@@ -167,6 +167,7 @@ export default {
                         practiceTime: item.practiceTime,
                         totalScore: item.totalScore
                     }));
+                    console.log('Fetched completed practices:', this.completedItems.练习); // 调试日志
                 } else {
                     console.error('获取已完成练习列表失败', response.data.message);
                 }
@@ -202,13 +203,18 @@ export default {
                 let endpoint;
                 let params;
 
-                if ('practiceId' in item) {
+                if ('practiceId' in item && item.practiceId) {
                     endpoint = `/api/student/${this.getUserId}/continue-practice`;
                     params = { practiceId: item.practiceId };
-                } else if ('assignmentId' in item) {
+                } else if ('assignmentId' in item && item.assignmentId) {
                     endpoint = `/api/student/${this.getUserId}/continue-assignment`;
                     params = { assignmentId: item.assignmentId };
+                } else {
+                    console.error('Invalid item provided for continue training', item);
+                    return;
                 }
+
+                console.log(`Sending POST request to ${endpoint} with params:`, params); // 调试日志
 
                 const response = await axios.post(endpoint, params, {
                     headers: {
@@ -218,6 +224,7 @@ export default {
 
                 if (response.status === 200) {
                     const questions = response.data.data;
+                    console.log('Received questions:', questions); // 调试日志
                     // 将题目传递给答题页面
                     router.push({
                         name: 'AnswerPractice',
@@ -230,38 +237,24 @@ export default {
                     console.error('获取题目失败', response.data.message);
                 }
             } catch (error) {
-                console.error('获取题目失败', error);
+                console.error('获取题目失败', error.response ? error.response.data : error.message);
             }
         },
-        async viewAnswers(item) {
+        viewAnswers(item) {
             try {
+                console.log('Item passed to viewAnswers:', item); // 调试日志
                 if (!item.practiceId) {
                     console.error('Missing required param "practiceId"', item);
                     return;
                 }
 
-                const response = await axios.get(`/api/student/${this.getUserId}/practice/get-answer`, {
+                console.log('Navigating to AnswerDetail with practiceId:', item.practiceId); // 调试日志
+                router.push({
+                    name: 'AnswerDetail',
                     params: {
-                        practiceId: item.practiceId
-                    },
-                    headers: {
-                        'Content-Type': 'application/json'
+                        practiceId: item.practiceId // 传递 practiceId 作为路径参数
                     }
                 });
-
-                if (response.status === 200) {
-                    const answers = response.data.data;
-                    // 将答案传递给查看答案页面
-                    router.push({
-                        name: 'AnswerDetail',
-                        query: {
-                            practiceId: item.practiceId,
-                            answers: JSON.stringify(answers)
-                        }
-                    });
-                } else {
-                    console.error('获取答案失败', response.data.message);
-                }
             } catch (error) {
                 console.error('获取答案失败', error);
             }
@@ -345,6 +338,3 @@ p {
     color: #888;
 }
 </style>
-
-
-
