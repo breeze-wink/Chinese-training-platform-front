@@ -95,6 +95,10 @@
                                             ></el-option>
                                         </el-select>
                                     </el-form-item>
+
+                                    <!-- 所属知识点下拉框 -->
+                                    <KnowledgePointSelector ref="knowledgePointSelector" />
+
                                     <el-form-item label="解析">
                                         <el-input
                                                 v-model="question.data.explanation"
@@ -135,6 +139,10 @@
                                             ></el-input>
                                         </div>
                                     </el-form-item>
+
+                                    <!-- 所属知识点下拉框 -->
+                                    <KnowledgePointSelector ref="knowledgePointSelector" />
+
                                     <el-form-item label="解析">
                                         <el-input
                                                 v-model="question.data.explanation"
@@ -162,6 +170,10 @@
                                                 :autosize="{ minRows: 3, maxRows: 10 }"
                                         ></el-input>
                                     </el-form-item>
+
+                                    <!-- 所属知识点下拉框 -->
+                                    <KnowledgePointSelector ref="knowledgePointSelector" />
+
                                     <el-form-item label="解析" class="form-item-spacing">
                                         <el-input
                                                 v-model="question.data.explanation"
@@ -202,6 +214,8 @@ const selectedType = ref(null);
 
 // 子题数组
 const questions = ref([]);
+import KnowledgePointSelector from '@/pages/Teacher/TeacherPublicComponent/KnowledgePointSelector.vue'; // 引入知识点选择组件
+
 
 // 题型标签
 const questionTypeLabels = {
@@ -234,6 +248,23 @@ const addQuestion = () => {
 // 删除题目
 const removeQuestion = (index) => {
     questions.value.splice(index, 1);
+};
+
+// 动态更新填空答案数组
+const updateFillAnswers = (index) => {
+    const currentQuestion = questions.value[index];
+    const currentFillCount = currentQuestion.data.fillCount;
+    const answers = currentQuestion.data.answers;
+
+    if (currentFillCount > answers.length) {
+        // 填空个数增加时，补充空字符串到答案数组
+        for (let i = answers.length; i < currentFillCount; i++) {
+            answers.push('');
+        }
+    } else if (currentFillCount < answers.length) {
+        // 填空个数减少时，截断答案数组
+        answers.splice(currentFillCount);
+    }
 };
 
 // 提交所有题目
