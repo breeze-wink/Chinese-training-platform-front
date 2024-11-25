@@ -37,7 +37,7 @@
                 <!-- 创建班级的对话框 -->
                 <el-dialog title="创建班级" v-model="createDialogVisible" width="500px" align-center>
                     <el-form :model="newClassForm" label-width="100px" class="form-container">
-                        <el-form-item label="班级描述" class="form-item-spacing">
+                        <el-form-item label="班级名称" class="form-item-spacing">
                             <el-input v-model="newClassForm.className" placeholder="请输入班级名称"></el-input>
                         </el-form-item>
                         <el-form-item label="班级描述" class="form-item-spacing">
@@ -56,6 +56,88 @@
                         <el-button type="primary" @click="createClass">创建</el-button>
                     </div>
                 </el-dialog>
+
+                <!-- 查看成员的弹窗 -->
+                <el-dialog
+                        title="班级成员"
+                        v-model="membersDialogVisible"
+                        width="500px"
+                        align-center
+                >
+                    <el-table
+                            :data="classMembers"
+                            border
+                            style="width: 100%; max-height: 400px; overflow: auto"
+                    >
+                        <el-table-column prop="studentName" label="学生姓名" width="100"></el-table-column>
+                        <el-table-column prop="studentId" label="学生ID" width="100"></el-table-column>
+                        <el-table-column label="操作" width="300">
+                            <template #default="scope">
+                                <el-button
+                                        type="danger"
+                                        size="small"
+                                        @click="removeMember(scope.row)"
+                                >
+                                    移除成员
+                                </el-button>
+                                <el-button
+                                        type="primary"
+                                        size="small"
+                                        @click="viewMemberDetails(scope.row)"
+                                >
+                                    查看详情
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+
+                    <!-- 弹窗底部 -->
+                    <template #footer>
+                        <el-button @click="membersDialogVisible = false">关闭</el-button>
+                    </template>
+                </el-dialog>
+
+                <!-- 查看小组成员的弹窗 -->
+                <el-dialog
+                        title="小组成员"
+                        v-model="groupMembersDialogVisible"
+                        width="500px"
+                        align-center
+                >
+                    <el-table
+                            :data="groupMembers"
+                            border
+                            style="width: 100%; max-height: 400px; overflow: auto"
+                    >
+                        <!-- 仅显示学生姓名和操作 -->
+                        <el-table-column prop="studentName" label="学生姓名" width="150"></el-table-column>
+                        <el-table-column label="操作" width="200">
+                            <template #default="scope">
+                                <el-button
+                                        type="danger"
+                                        size="small"
+                                        @click="removeGroupMember(scope.row)"
+                                >
+                                    移除成员
+                                </el-button>
+                                <el-button
+                                        type="primary"
+                                        size="small"
+                                        @click="viewGroupMemberDetails(scope.row)"
+                                >
+                                    查看详情
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+
+                    <!-- 弹窗底部 -->
+                    <template #footer>
+                        <el-button @click="groupMembersDialogVisible = false">关闭</el-button>
+                    </template>
+                </el-dialog>
+
+
 
                 <!-- 小组管理部分 -->
                 <div class="title-and-button-container">
@@ -133,6 +215,7 @@ import axios from 'axios';
 import { useStore } from 'vuex';
 import { computed } from 'vue';
 import {CirclePlus, CirclePlusFilled, Plus} from "@element-plus/icons-vue";
+import {ElMessage} from "element-plus";
 
 
 // classList 是一个班级信息的数组，每个对象包含classId, classCode, className, classDescription 等字段
@@ -142,12 +225,16 @@ const groupList = ref([]);
 const store = useStore();
 const teacherId = computed(() => store.state.user.id);
 
+
+
 // 控制生成班级对话框的显示状态
 const createDialogVisible = ref(false);
 // 控制生成小组对话框的显示状态
 const createGroupDialogVisible = ref(false);
 // 控制成员对话框的显示状态
 const membersDialogVisible = ref(false);
+const groupMembersDialogVisible = ref(false);
+
 
 // 新建班级表单的数据
 const newClassForm = ref({
@@ -164,6 +251,7 @@ const newGroupForm = ref({
 
 // 班级成员列表
 const classMembers = ref([]);
+const groupMembers = ref([]);
 
 // 获取班级信息列表的函数
 const fetchClassList = async () => {
@@ -184,6 +272,7 @@ const fetchClassList = async () => {
 // 获取小组信息列表的函数
 const fetchGroupList = async () => {
     try {
+        console.log(teacherId);
         const response = await axios.get(`/api/teacher/${teacherId.value}/get-groups`);
 
         if (response.status === 200 && response.data.message === '小组信息获取成功') {
@@ -207,15 +296,18 @@ const createClass = async () => {
         });
 
         if (response.status === 200 && response.data.message === '班级创建成功') {
+            console.log(response.data);
             // 创建成功后，获取新的班级码并添加到班级列表中
             const newClassId = response.data.classId; // 假设返回数据中包含新创建的班级详细信息
             const newClassCode = response.data.classCode; // 假设返回数据中包含新创建的班级详细信息
+
             const newClass = {
                 classId: newClassId,
                 classCode: newClassCode,
                 className: newClassForm.value.className,
                 classDescription: newClassForm.value.classDescription
             };
+
             classList.value.push(newClass);
 
             console.log('班级创建成功:', newClass);
@@ -266,6 +358,8 @@ const viewMembers = async (classInfo) => {
 
         if (response.status === 200 && response.data.message === '班级成员信息获取成功') {
             classMembers.value = response.data.data;
+            console.log(classMembers.value);
+
             membersDialogVisible.value = true;
         } else {
             console.error('获取班级成员信息失败:', response.data.message);
@@ -273,6 +367,55 @@ const viewMembers = async (classInfo) => {
     } catch (error) {
         console.error('获取班级成员信息失败:', error.message);
     }
+};
+const viewGroupMembers = async (groupInfo) => {
+    try {
+        const response = await axios.get(`/api/teacher/${teacherId.value}/groups-members`, {
+            params: { groupId: groupInfo.groupId}
+        });
+
+        if (response.status === 200 ) {
+            classMembers.value = response.data.data;
+            console.log(classMembers.value);
+
+            groupMembersDialogVisible.value = true;
+        } else {
+            console.error('获取小组成员信息失败:', response.data.message);
+        }
+    } catch (error) {
+        console.error('获取小组成员信息失败:', error.message);
+    }
+};
+
+
+// 移除成员的函数
+const removeMember = async (member) => {
+    try {
+        const response = await axios.delete(`/api/teacher/${teacherId.value}/remove-student`, {
+            params: {
+                studentId: member.studentId,
+            },
+        });
+
+        if (response.status === 200 && response.data.message === "成员移除成功") {
+            // 从班级成员列表中移除
+            classMembers.value = classMembers.value.filter(
+                    (m) => m.studentId !== member.studentId
+            );
+            ElMessage.success("成员已成功移除");
+        } else {
+            ElMessage.error(response.data.message || "移除成员失败");
+        }
+    } catch (error) {
+        console.error("移除成员失败:", error.message);
+        ElMessage.error("移除成员时发生错误");
+    }
+};
+
+// 查看成员详情的函数
+const viewMemberDetails = (member) => {
+    console.log("查看成员详情:", member);
+    ElMessage.info(`学生姓名：${member.studentName}, 学生ID：${member.studentId}`);
 };
 
 // 查看统计概况的函数
@@ -282,18 +425,30 @@ const viewStats = (classInfo) => {
 };
 
 // 解散班级的函数
-const disbandClass = async (classInfo) => {
-    try {
-        const response = await axios.delete(`/api/teacher/classes/${classInfo.classCode}`);
-        if (response.status === 200 && response.data.message === 'success') {
-            // 更新班级列表
-            classList.value = classList.value.filter(classItem => classItem.classCode !== classInfo.classCode);
-            console.log(`班级 ${classInfo.className} 解散成功`);
-        } else {
-            console.error(`解散班级失败: ${response.data.message}`);
+const disbandClass = async (classItem) => {
+    console.log(classItem)
+
+    try{
+        const response = await axios.delete(`/api/teacher/${teacherId.value}/classes/disband`,{
+            params:{
+                classId:classItem.classId
+            }
+        });
+        if(response.status===200){
+            ElMessage.success(response.data.message); // 使用 ElMessage 显示成功提示
+
+            classList.value = classList.value.filter(clazz => clazz.classId !== classItem.classId);
+
+
+        }else if(response.status===400)
+        {
+
+            ElMessage.error(response.data.message);
         }
-    } catch (error) {
-        console.error(`解散班级失败: ${error.message}`);
+    }catch (error){
+        //解散失败
+            ElMessage.error('解散班级时发生错误'); // 显示默认错误信息
+
     }
 };
 
@@ -389,4 +544,8 @@ onMounted(() => {
     background-color: blue;
     border-color: blue;
 }
+
+
+
+
 </style>
