@@ -77,22 +77,23 @@
                         <h1>优秀范文</h1>
                         <table class="essay-table">
                             <thead>
-                                <tr>
-                                    <th>标题</th>
-                                    <th>点评</th>
-                                </tr>
+                            <tr>
+                                <th>标题</th>
+                                <th>点评</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="essay in essays" :key="essay.id">
-                                    <td>
-                                        <router-link :to="{ name: 'EssayDetail', params: { id: essay.id } }">
-                                            {{ essay.title }}
-                                        </router-link>
-                                    </td>
-                                    <td>{{ essay.annotation }}</td>
-                                </tr>
+                            <tr v-for="essay in essays" :key="essay.id">
+                                <td>
+                                    <router-link :to="{ name: 'EssayDetail', params: { id: essay.id } }">
+                                        {{ essay.title }}
+                                    </router-link>
+                                </td>
+                                <td>{{ essay.annotation }}</td>
+                            </tr>
                             </tbody>
                         </table>
+                        <div v-if="error" class="error">{{ error }}</div>
                     </div>
                 </section>
             </main>
@@ -101,7 +102,10 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+import axios from 'axios';
 import Sidebar from "@/components/Sidebar.vue";
+import Header from "@/components/Header.vue";
 import {
     poems_seven_upper,
     poems_seven_lower,
@@ -113,7 +117,8 @@ import {
 
 export default {
     components: {
-        Sidebar
+        Sidebar,
+        Header
     },
     data() {
         return {
@@ -123,15 +128,46 @@ export default {
             poems_eight_lower: poems_eight_lower,
             poems_nine_upper: poems_nine_upper,
             poems_nine_lower: poems_nine_lower,
-
-            essays:  essays
+            essays: [], // 初始化为空数组
+            loading: true,
+            error: null
         };
+    },
+    computed: {
+        ...mapGetters(['getUserId'])
+    },
+    created() {
+        this.fetchEssays();
+    },
+    methods: {
+        async fetchEssays() {
+            const studentId = this.getUserId; // 从 Vuex store 获取学生 ID
+            if (!studentId) {
+                this.error = '缺少学生 ID';
+                this.loading = false;
+                return;
+            }
+
+            try {
+                const response = await axios.get(`/api/student/${studentId}/view-essays`);
+                console.log('API Response:', response.data); // 打印 API 返回的数据
+                if (response.status === 200) {
+                    this.essays = response.data.infoData; // 将 infoData 赋值给 essays
+                    this.loading = false;
+                } else {
+                    throw new Error('作文列表获取失败');
+                }
+            } catch (error) {
+                console.error('请求失败:', error.response ? error.response.data : error.message);
+                this.error = error.response ? error.response.data.message : '请求失败';
+                this.loading = false;
+            }
+        }
     }
 };
 </script>
 
 <style scoped>
-
 .page-container {
     display: flex;
     flex-wrap: wrap;
@@ -144,7 +180,6 @@ export default {
     flex-grow: 1;
     flex-basis: calc(100% - 200px); /* 减去 sidebar 宽度 */
 }
-
 
 /* 主要内容区域 */
 .content {
@@ -226,5 +261,11 @@ p {
     font-family: kaiti, sans-serif;
     line-height: 1.6;
     color: #444;
+}
+
+/* 错误提示样式 */
+.error {
+    color: red;
+    margin-top: 1rem;
 }
 </style>
