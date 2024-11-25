@@ -26,15 +26,20 @@
         </div>
         <el-dialog title="考点选择" v-model="dialogVisible" width="50%">
             <el-checkbox-group v-model="checkList">
-                <el-row :gutter="20">
-                    <el-col :span="8" v-for="item in knowledgePoints" :key="item.id">
-                        <el-checkbox :label="item.id">{{ item.name }}</el-checkbox>
-                    </el-col>
-                </el-row>
+                <div v-for="(group, index) in groupedKnowledgePoints" :key="index" class="knowledge-group">
+                    <h4>{{ group.type }}</h4>
+                    <el-row :gutter="20">
+                        <el-col :span="8" v-for="item in group.items" :key="item.id">
+                            <el-checkbox :label="item.id">{{ item.name }}</el-checkbox>
+                        </el-col>
+                    </el-row>
+                </div>
             </el-checkbox-group>
             <span slot="footer" class="dialog-footer">
-                <el-button @click="dialogVisible = false">取 消</el-button>
-                <el-button type="primary" @click="confirmSelection">确 定</el-button>
+                <div class="button-container">
+                    <el-button @click="dialogVisible = false" class="submit-button">取 消</el-button>
+                    <el-button type="primary" @click="confirmSelection" class="submit-button">确 定</el-button>
+                </div>
             </span>
         </el-dialog>
     </div>
@@ -44,7 +49,7 @@
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import axios from 'axios';
-import router from '@/router';
+import { mapGetters } from 'vuex';
 
 export default {
     components: {
@@ -60,15 +65,39 @@ export default {
             questionNum: 10,
         };
     },
+    computed: {
+        ...mapGetters(['getUserId']),
+        studentId() {
+            return this.getUserId;
+        },
+        groupedKnowledgePoints() {
+            const groups = {};
+            this.knowledgePoints.forEach(item => {
+                if (!groups[item.type]) {
+                    groups[item.type] = { type: item.type, items: [] };
+                }
+                groups[item.type].items.push(item);
+            });
+            return Object.values(groups);
+        }
+    },
     created() {
-        this.fetchKnowledgePoints();
+        this.fetchKnowledgePoints().then(() => {
+            console.log('知识点数据:', this.knowledgePoints);
+            console.log('分组后的知识点数据:', this.groupedKnowledgePoints);
+        });
     },
     methods: {
         async fetchKnowledgePoints() {
             try {
                 const response = await axios.get(`/api/student/${this.studentId}/practice/get-knowledge-points`);
                 if (response.status === 200) {
-                    this.knowledgePoints = response.data.data;
+                    this.knowledgePoints = response.data.data.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        description: item.description,
+                        type: item.type
+                    }));
                 } else {
                     console.error('获取知识点失败', response.data.message);
                 }
@@ -85,19 +114,22 @@ export default {
         },
         async generateAutoQuestions() {
             try {
-                const response = await axios.post(`/api/student/${this.studentId}/practice/generate-auto`, {}, {
+                const url = `/api/student/${this.studentId}/practice/generate-auto`;
+                console.log('Request URL:', url); // 打印请求 URL
+                const response = await axios.post(url, {}, {
                     headers: {
                         'Content-Type': 'application/json',
                     },
                 });
                 console.log('题目发送成功', response.data);
                 const questions = response.data.data;
-                router.push({
+                this.$router.push({
                     name: 'AnswerPractice',
-                    params: {
-                        practiceId: this.studentId,
+                    query: {
+                        practiceId: this.studentId.toString(),
                         questions: JSON.stringify(questions),
                         mode: 'auto',
+                        practiceName: '自动练习' // 添加练习名称
                     },
                 });
             } catch (error) {
@@ -108,23 +140,32 @@ export default {
             const requestBody = {
                 num: this.questionNum,
                 name: 'Custom Practice',
-                data: this.checkList.map(knowledgePointId => ({ knowledgePointId })),
+                data: this.checkList.map(knowledgePointId => ({knowledgePointId})),
             };
 
             try {
-                const response = await axios.post(`/api/student/${this.studentId}/practice/generate-define`, requestBody, {
+                const url = `/api/student/${this.studentId}/practice/generate-define`;
+                console.log('Request URL:', url); // 打印请求 URL
+                console.log('Request Body:', requestBody); // 打印请求体
+                const response = await axios.post(url, requestBody, {
                     headers: {
                         'Content-Type': 'application/json',
                     },
                 });
                 console.log('题目发送成功', response.data);
                 const questions = response.data.data;
-                router.push({
+
+                // 确保 questions 是一个有效的 JSON 字符串
+                const questionsString = JSON.stringify(questions);
+                console.log('Questions String:', questionsString); // 打印 questions 字符串
+
+                this.$router.push({
                     name: 'AnswerPractice',
-                    params: {
-                        practiceId: this.studentId,
-                        questions: JSON.stringify(questions),
+                    query: {
+                        practiceId: this.studentId.toString(), // 确保 practiceId 是字符串
+                        questions: questionsString,
                         mode: 'custom',
+                        practiceName: '自定义练习' // 添加练习名称
                     },
                 });
             } catch (error) {
@@ -132,7 +173,7 @@ export default {
             }
 
             this.dialogVisible = false;
-        }
+        },
     }
 };
 </script>
@@ -189,7 +230,7 @@ export default {
 button {
     padding: 10px 20px;
     font-size: 16px;
-    background-color: #4CAF50;
+    background-color: #007BFF;
     color: white;
     border: none;
     border-radius: 4px;
@@ -197,7 +238,7 @@ button {
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #0056b3;
 }
 
 .generated-questions {
@@ -206,6 +247,16 @@ button:hover {
     border-radius: 8px;
     padding: 20px;
     background-color: #f9f9f9;
+}
+
+.submit-button {
+    padding: 10px 20px;
+    background-color: #007BFF; /* 设置按钮背景颜色 */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
 .generated-questions h3 {
@@ -218,5 +269,45 @@ button:hover {
 
 .el-row {
     margin-bottom: 20px;
+}
+
+/* 新增样式 */
+.el-dialog__footer {
+    text-align: center;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center; /* 水平居中 */
+    align-items: center; /* 垂直居中 */
+}
+
+.button-container .el-button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    margin: 0 10px;
+}
+
+.button-container .el-button:hover {
+    background-color: #0056b3;
+}
+
+.knowledge-group {
+    margin-bottom: 20px;
+}
+
+.knowledge-group h4 {
+    margin-bottom: 10px;
+    font-weight: bold;
+    border-bottom: 1px solid #ddd; /* 添加下划线以区分不同的知识点类型 */
+    padding-bottom: 5px;
+}
+
+.el-checkbox {
+    display: block; /* 使复选框垂直排列 */
+    margin-bottom: 10px;
 }
 </style>

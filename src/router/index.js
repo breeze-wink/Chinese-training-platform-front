@@ -57,9 +57,21 @@ const routes = [
     // 作文详情路由
     { path: '/student/essay-detail/:id', name: 'EssayDetail', component: EssayDetail, props: true },
     // 题目
-    { path: '/student/question-options', component: QuestionOptions },
-    { path: '/student/answer-practice', component: AnswerPractice },
-    { path: '/student/answer-detail', component: AnswerDetail },
+    { path: '/student/question-options', name: 'QuestionOptions', component: QuestionOptions },
+    { path: '/student/answer-practice', name: 'AnswerPractice', component: AnswerPractice,
+        props: route => ({
+            practiceId: route.query.practiceId,
+            questions: route.query.questions,
+            mode: route.query.mode,
+            practiceName: route.query.practiceName,
+        }),
+    },
+    { path: '/student/answer-detail/:practiceId', name: 'AnswerDetail', component: AnswerDetail,
+        props: route => ({
+            practiceId: route.params.practiceId,
+            score: route.query.score // 将 score 作为查询参数传递
+        })
+    },
     // 试卷管理
     { path: '/student/manage-test', component: ManageTest},
 ];
