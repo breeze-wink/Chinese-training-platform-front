@@ -570,8 +570,8 @@ const disbandGroup = async (group) => {
         });
 
         // 检查响应状态码和返回的消息
-        if (response.status === 200 && response.data.message === "小组解散成功") {
-            ElMessage.success("小组已成功解散");
+        if (response.status === 200 ) {
+            ElMessage.success(response.data.message); // 使用 ElMessage 显示成功提示
 
             // 从 groupList 中移除解散的小组
             groupList.value = groupList.value.filter((g) => g.groupId !== group.groupId);
@@ -583,8 +583,6 @@ const disbandGroup = async (group) => {
         ElMessage.error("解散小组时发生错误，请稍后再试");
     }
 };
-
-
 
 // 在组件挂载时获取班级列表
 onMounted(() => {
@@ -679,7 +677,9 @@ onMounted(() => {
     border-color: blue;
 }
 
-
+.el-message--success {
+    background-color: #f0f9eb !important; /* 恢复为绿色 */
+}
 
 
 </style>
