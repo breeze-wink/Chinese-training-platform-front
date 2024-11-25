@@ -53,7 +53,6 @@ const startSingleUpload = () => {
 const startCombinedUpload = () => {
     ElMessage.info('进入组合式题目上传页面');
     router.push( '/teacher/upload-combined-question');
-
     // 在这里添加跳转逻辑或其他处理
 };
 </script>

@@ -25,9 +25,10 @@
                     <el-table-column prop="classCode" label="班级码" width="80"></el-table-column>
                     <el-table-column prop="className" label="班级名称" width="200"></el-table-column>
                     <el-table-column prop="classDescription" label="班级描述"></el-table-column>
-                    <el-table-column label="操作" width="320">
+                    <el-table-column label="操作" width="420">
                         <template #default="scope">
                             <el-button type="primary" class="custom-button view-members-button" @click="viewMembers(scope.row)">查看成员</el-button>
+                            <el-button type="warning" class="custom-button edit-button" @click="openEditDialog(scope.row)">修改信息</el-button>
                             <el-button type="success" class="custom-button view-stats-button" @click="viewStats(scope.row)">统计概况</el-button>
                             <el-button type="danger"  class="custom-button disband-button" @click="disbandClass(scope.row)">解散班级</el-button>
                         </template>
@@ -96,6 +97,28 @@
                         <el-button @click="membersDialogVisible = false">关闭</el-button>
                     </template>
                 </el-dialog>
+                <!-- 修改班级信息的弹窗 -->
+                <el-dialog title="修改班级信息" v-model="editDialogVisible" width="500px" align-center>
+                    <el-form :model="editClassForm" label-width="100px" class="form-container">
+                        <el-form-item label="班级名称" class="form-item-spacing">
+                            <el-input v-model="editClassForm.className" placeholder="请输入班级名称"></el-input>
+                        </el-form-item>
+                        <el-form-item label="班级描述" class="form-item-spacing">
+                            <el-input
+                                    type="textarea"
+                                    v-model="editClassForm.classDescription"
+                                    placeholder="请输入班级描述"
+                                    :rows="4"
+                            ></el-input>
+                        </el-form-item>
+                    </el-form>
+
+                    <div slot="footer" class="dialog-footer">
+                        <el-button @click="editDialogVisible = false">取消</el-button>
+                        <el-button type="primary" @click="updateClass">确认修改</el-button>
+                    </div>
+                </el-dialog>
+
 
                 <!-- 查看小组成员的弹窗 -->
                 <el-dialog
@@ -186,13 +209,20 @@
                             ></el-input>
                         </el-form-item>
                         <el-form-item label="选择成员" class="form-item-spacing">
-                            <el-checkbox-group v-model="newGroupForm.selectedStudents">
-                                <el-row>
-                                    <el-col :span="12" v-for="member in classMembers" :key="member.studentId">
-                                        <el-checkbox :label="member.studentId" class="blue-checkbox">{{ member.studentName }}</el-checkbox>
-                                    </el-col>
-                                </el-row>
-                            </el-checkbox-group>
+                            <template v-if="classMembers.length > 0">
+                                <el-checkbox-group v-model="newGroupForm.selectedStudents">
+                                    <el-row>
+                                        <el-col :span="12" v-for="member in classMembers" :key="member.studentId">
+                                            <el-checkbox :label="member.studentId" class="blue-checkbox">
+                                                {{ member.studentName }}
+                                            </el-checkbox>
+                                        </el-col>
+                                    </el-row>
+                                </el-checkbox-group>
+                            </template>
+                            <template v-else>
+                                <p style="color: rgb(128,128,128);">该班级暂无成员</p>
+                            </template>
                         </el-form-item>
                     </el-form>
 
@@ -210,7 +240,7 @@
 // 公共组件引入
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import { ref, onMounted } from 'vue';
+import {ref, onMounted, watch} from 'vue';
 import axios from 'axios';
 import { useStore } from 'vuex';
 import { computed } from 'vue';
@@ -234,12 +264,30 @@ const createGroupDialogVisible = ref(false);
 // 控制成员对话框的显示状态
 const membersDialogVisible = ref(false);
 const groupMembersDialogVisible = ref(false);
+const editDialogVisible = ref(false); // 控制修改班级信息弹窗显示
+
+//修改信息按钮响应
+const openEditDialog = (classItem) => {
+    editClassForm.value = {
+        classId: classItem.classId,
+        className: classItem.className,
+        classDescription: classItem.classDescription,
+    };
+    editDialogVisible.value = true;
+};
+
 
 
 // 新建班级表单的数据
 const newClassForm = ref({
     className: '',
     classDescription: ''
+});
+//修改班级表单
+const editClassForm = ref({
+    classId: null,
+    className: '',
+    classDescription: '',
 });
 
 const newGroupForm = ref({
@@ -268,6 +316,34 @@ const fetchClassList = async () => {
         console.error('获取班级列表失败:', error.message);
     }
 };
+
+// 监听班级选择的变化
+watch(
+        () => newGroupForm.value.classId,
+        async (newClassId) => {
+            if (newClassId) {
+                try {
+                    // 调用 API 获取班级成员
+                    const response = await axios.get(`/api/teacher/${teacherId.value}/get-class-members`, {
+                        params: { classId: newClassId },
+                    });
+
+                    if (response.status === 200 && response.data.message === "班级成员信息获取成功") {
+                        classMembers.value = response.data.data;
+                    } else {
+                        classMembers.value = [];
+                        ElMessage.warning("该班级暂无成员");
+                    }
+                } catch (error) {
+                    console.error("获取班级成员失败:", error.message);
+                    classMembers.value = [];
+                    ElMessage.error("获取班级成员信息时发生错误");
+                }
+            } else {
+                classMembers.value = []; // 清空成员列表
+            }
+        }
+);
 
 // 获取小组信息列表的函数
 const fetchGroupList = async () => {
@@ -369,14 +445,16 @@ const viewMembers = async (classInfo) => {
     }
 };
 const viewGroupMembers = async (groupInfo) => {
+
     try {
         const response = await axios.get(`/api/teacher/${teacherId.value}/groups-members`, {
             params: { groupId: groupInfo.groupId}
-        });
 
+        });
+        console.log(groupInfo.groupId);
         if (response.status === 200 ) {
-            classMembers.value = response.data.data;
-            console.log(classMembers.value);
+            groupMembers.value = response.data.students;
+            console.log(groupMembers.value);
 
             groupMembersDialogVisible.value = true;
         } else {
@@ -386,6 +464,36 @@ const viewGroupMembers = async (groupInfo) => {
         console.error('获取小组成员信息失败:', error.message);
     }
 };
+//更改班级信息
+const updateClass = async () => {
+    try {
+        const response = await axios.put(`/api/teacher/${teacherId.value}/update-class`, {
+            classId: editClassForm.value.classId,
+            className: editClassForm.value.className,
+            classDescription: editClassForm.value.classDescription,
+        });
+
+        if (response.status === 200 && response.data.message === "更新成功") {
+            ElMessage.success(response.data.message);
+
+            // 更新 classList
+            const index = classList.value.findIndex(item => item.classId === editClassForm.value.classId);
+            if (index !== -1) {
+                classList.value[index].className = editClassForm.value.className;
+                classList.value[index].classDescription = editClassForm.value.classDescription;
+            }
+            // 关闭弹窗
+            editDialogVisible.value = false;
+        } else {
+            ElMessage.error(response.data.message || "更新失败");
+        }
+    } catch (error) {
+        console.error("更新班级信息失败:", error.message);
+        ElMessage.error("更新班级信息时发生错误");
+    }
+};
+
+
 
 
 // 移除成员的函数
@@ -451,6 +559,32 @@ const disbandClass = async (classItem) => {
 
     }
 };
+//解散小组
+// 解散小组的函数
+const disbandGroup = async (group) => {
+    console.log(group);
+    try {
+        // 调用后端 API 删除小组
+        const response = await axios.delete(`/api/teacher/${teacherId.value}/disband-group`, {
+            params: { groupId: group.groupId }
+        });
+
+        // 检查响应状态码和返回的消息
+        if (response.status === 200 && response.data.message === "小组解散成功") {
+            ElMessage.success("小组已成功解散");
+
+            // 从 groupList 中移除解散的小组
+            groupList.value = groupList.value.filter((g) => g.groupId !== group.groupId);
+        } else {
+            ElMessage.error(response.data.message || "解散小组失败");
+        }
+    } catch (error) {
+        console.error("解散小组时发生错误:", error.message);
+        ElMessage.error("解散小组时发生错误，请稍后再试");
+    }
+};
+
+
 
 // 在组件挂载时获取班级列表
 onMounted(() => {

@@ -230,11 +230,12 @@ const updateName = async () => {
         //发送 POST 请求
         const url = `/api/teacher/${teacherId.value}/update-name`;
 
-        const response = await axios.post(url, {
-            phoneNumber: teacherInfo.value.name
+        const response = await axios.put(url, {
+            name: teacherInfo.value.name
         });
 
         if (response.status === 200 && response.data.message === '姓名修改成功') {
+
             console.log(response.data.message);
         } else {
             console.error(response.data.message);

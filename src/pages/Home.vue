@@ -206,7 +206,8 @@ import {ref, onMounted, reactive, getCurrentInstance, computed} from 'vue'
 import axios from 'axios'
 import {User} from "@element-plus/icons-vue";
 import {useStore} from 'vuex'; // 引入 useStore 来使用 Vuex
-import {useRouter} from 'vue-router'; //引入路由
+import {useRouter} from 'vue-router';
+import {ElMessage} from "element-plus"; //引入路由
 
 const store = useStore(); // 获取 Vuex Store 实例
 const router = useRouter(); // 获取 Vue Router 实例
@@ -290,7 +291,13 @@ const front = () => {
 
 const login = async () => {
     const url = urls[Identity.value];
-
+    if(account.value===""||password.value===""){
+        ElMessage({
+            message: '信息未填写完整',
+            type: 'warning',
+        })
+        return; // 提前返回，阻止后续逻辑执行
+    }
     try {
         const response = await axios.post(url, {
             account: account.value,
@@ -317,10 +324,12 @@ const login = async () => {
         } else {
             // 处理非200状态码的情况
             console.error("登录失败:", response.data.message);
+            ElMessage.error('用户名密码不正确');
         }
     } catch (error) {
         // 处理错误
         console.error('登录请求失败:', error.message);
+        ElMessage.error('登陆失败');
         // 这里可以添加更多的错误处理逻辑，比如显示错误信息等
     }
 }
