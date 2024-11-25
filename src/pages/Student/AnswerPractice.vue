@@ -26,7 +26,7 @@
                         </div>
                         <div class="button-group">
                             <button type="submit" class="submit-button">提交答案</button>
-                            <button @click="saveAnswers" class="save-button">暂存答案</button>
+                            <button type="button" class="save-button" @click="saveAnswers">暂存答案</button>
                         </div>
                     </form>
                 </div>
@@ -53,16 +53,14 @@
 
 <script>
 import Header from '@/components/Header.vue';
-import Sidebar from '@/components/Sidebar.vue';
 import axios from 'axios';
-import { mapGetters } from 'vuex';
+import { nextTick } from 'vue';
 
 export default {
     components: {
         Header,
-        Sidebar,
     },
-    props: ['practiceId', 'questions', 'mode', 'practiceName'],
+    props: ['practiceId', 'mode', 'practiceName'],
     data() {
         return {
             studentAnswers: {},
@@ -74,12 +72,13 @@ export default {
         };
     },
     created() {
-        if (this.questions) {
+        const questionsFromQuery = this.$route.query.questions;
+        if (questionsFromQuery) {
             try {
-                this.parsedQuestions = JSON.parse(this.questions);
+                this.parsedQuestions = JSON.parse(decodeURIComponent(questionsFromQuery));
                 this.groupAndReorderQuestions();
-                this.studentAnswers = this.parsedQuestions.reduce((acc, question, index) => {
-                    acc[index] = '';
+                this.studentAnswers = this.parsedQuestions.reduce((acc, question) => {
+                    acc[question.id] = '';
                     return acc;
                 }, {});
             } catch (error) {
@@ -92,6 +91,9 @@ export default {
         }
     },
     mounted() {
+        // 初始设置 IntersectionObserver 可能会失败，因此我们将其放在 updated 钩子中
+    },
+    updated() {
         this.setupIntersectionObserver();
     },
     beforeDestroy() {
@@ -119,6 +121,8 @@ export default {
             }
         },
         async submitAnswers() {
+            console.log('开始提交答案'); // 添加调试信息
+
             if (!this.practiceId) {
                 console.error('practiceId 未定义');
                 this.$message.error('练习ID未定义，请重试。');
@@ -159,11 +163,13 @@ export default {
                     this.$message.error(`提交答案失败: ${response.data.message}`);
                 }
             } catch (error) {
-                console.error('提交答案失败', error);
+                console.error('提交答案失败', error.response ? error.response.data : error.message);
                 this.$message.error(`提交答案失败: ${error.response ? error.response.data.message : error.message}`);
             }
         },
         async saveAnswers() {
+            console.log('开始保存答案'); // 添加调试信息
+
             const answers = this.parsedQuestions.map((question) => ({
                 practiceQuestionId: question.practiceQuestionId,
                 answerContent: this.studentAnswers[question.id]
@@ -176,31 +182,41 @@ export default {
 
                 if (response.status === 200) {
                     this.$message.success('暂存成功');
-                    this.$router.push({ name: 'QuestionOptions' });
+                    this.$router.push({name: 'QuestionOptions'});
                 } else {
                     this.$message.error('暂存失败');
                 }
             } catch (error) {
-                console.error('暂存答案失败', error);
+                console.error('暂存答案失败', error.response ? error.response.data : error.message);
                 this.$message.error('暂存答案失败');
             }
         },
         setupIntersectionObserver() {
+            if (this.observer) {
+                this.observer.disconnect();
+            }
+
             this.observer = new IntersectionObserver((entries) => {
                 let firstVisibleEntry = entries.find(entry => entry.isIntersecting);
                 if (firstVisibleEntry) {
-                    this.currentIndex = this.parsedQuestions.indexOf(firstVisibleEntry.target.__vue__);
-                    this.currentGroup = Object.keys(this.groupedQuestions).find(groupName => this.groupedQuestions[groupName].some(q => q.id === this.currentIndex));
+                    const targetElement = firstVisibleEntry.target;
+                    this.currentIndex = parseInt(targetElement.id.split('-')[1], 10);
+                    this.currentGroup = Object.keys(this.groupedQuestions).find(groupName =>
+                        this.groupedQuestions[groupName].some(q => q.id === this.currentIndex)
+                    );
                 }
             }, { threshold: 0.5 });
 
-            if (this.$refs.questionElements && this.$refs.questionElements.length > 0) {
-                this.$refs.questionElements.forEach(question => {
-                    this.observer.observe(question);
-                });
-            } else {
-                console.warn('没有找到问题元素');
-            }
+            nextTick(() => {
+                console.log('Checking $refs:', this.$refs.questionElements); // 调试日志
+                if (this.$refs.questionElements && this.$refs.questionElements.length > 0) {
+                    this.$refs.questionElements.forEach(question => {
+                        this.observer.observe(question);
+                    });
+                } else {
+                    console.warn('没有找到问题元素');
+                }
+            });
         },
         getOptions(optionsString) {
             const options = [];

@@ -46,7 +46,7 @@ export default {
         Header,
         Sidebar,
     },
-    props: ['practiceId', 'practiceName'],
+    props: ['practiceId', 'practiceName'], // 确保这里接收 practiceId 和 practiceName
     data() {
         return {
             answers: [],
@@ -179,9 +179,3 @@ export default {
     margin-bottom: 10px;
 }
 </style>
-
-
-
-
-
-

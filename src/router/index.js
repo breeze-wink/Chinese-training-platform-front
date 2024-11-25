@@ -58,7 +58,10 @@ const routes = [
     { path: '/student/essay-detail/:id', name: 'EssayDetail', component: EssayDetail, props: true },
     // 题目
     { path: '/student/question-options', name: 'QuestionOptions', component: QuestionOptions },
-    { path: '/student/answer-practice', name: 'AnswerPractice', component: AnswerPractice,
+    {
+        path: '/student/answer-practice',
+        name: 'AnswerPractice',
+        component: AnswerPractice,
         props: route => ({
             practiceId: route.query.practiceId,
             questions: route.query.questions,
@@ -66,14 +69,14 @@ const routes = [
             practiceName: route.query.practiceName,
         }),
     },
-    { path: '/student/answer-detail/:practiceId', name: 'AnswerDetail', component: AnswerDetail,
-        props: route => ({
-            practiceId: route.params.practiceId,
-            score: route.query.score // 将 score 作为查询参数传递
-        })
+    {
+        path: '/student/answer-detail/:practiceId',
+        name: 'AnswerDetail',
+        component: AnswerDetail,
+        props: true
     },
     // 试卷管理
-    { path: '/student/manage-test', component: ManageTest},
+    { path: '/student/manage-test', name: 'ManageTest', component: ManageTest},
 ];
 
 
