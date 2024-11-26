@@ -200,19 +200,8 @@ export default {
         },
         async continueTraining(item) {
             try {
-                let endpoint;
-                let params;
-
-                if ('practiceId' in item && item.practiceId) {
-                    endpoint = `/api/student/${this.getUserId}/continue-practice`;
-                    params = { practiceId: item.practiceId };
-                } else if ('assignmentId' in item && item.assignmentId) {
-                    endpoint = `/api/student/${this.getUserId}/continue-assignment`;
-                    params = { assignmentId: item.assignmentId };
-                } else {
-                    console.error('Invalid item provided for continue training', item);
-                    return;
-                }
+                const endpoint = `/api/student/${this.getUserId}/continue-practice`;
+                const params = { practiceId: item.practiceId };
 
                 console.log(`Sending POST request to ${endpoint} with params:`, params); // 调试日志
 
@@ -225,12 +214,15 @@ export default {
                 if (response.status === 200) {
                     const questions = response.data.data;
                     console.log('Received questions:', questions); // 调试日志
-                    // 将题目传递给答题页面
+
+                    // 将题目和其他必要信息传递给答题页面
                     router.push({
-                        name: 'AnswerPractice',
+                        name: 'AnswerTemporary',
                         query: {
-                            id: item.practiceId || item.assignmentId,
-                            questions: JSON.stringify(questions)
+                            practiceId: item.practiceId,
+                            questions: JSON.stringify(questions),
+                            mode: item.mode,
+                            practiceName: item.practiceName
                         }
                     });
                 } else {

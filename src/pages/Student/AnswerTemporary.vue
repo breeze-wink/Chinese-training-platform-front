@@ -8,19 +8,22 @@
                     <form @submit.prevent="submitAnswers">
                         <div v-for="(group, groupName) in groupedQuestions" :key="groupName" class="question-group">
                             <h3 class="group-name">{{ getGroupName(groupName) }}</h3>
-                            <div v-for="(question, index) in group" :key="index" class="question" :id="'question-' + question.id" ref="questionElements">
-                                <h4>{{ question.id + 1 }}. {{ question.questionContent }}</h4>
-                                <div v-if="question.type === 'CHOICE'" class="options">
-                                    <label v-for="(option, optionIndex) in getOptions(question.questionOptions)" :key="optionIndex" class="option">
-                                        <input type="radio" :name="`question-${question.id}`" :value="option.text" v-model="studentAnswers[question.id]">
+                            <div v-for="(question, index) in group" :key="index" class="question" :id="'question-' + question.practiceQuestionId" ref="questionElements">
+                                <h4>{{ question.sequence }}. {{ question.questionContent }}</h4>
+                                <div v-if="question.questionType === 'CHOICE'" class="options">
+                                    <label v-for="option in getOptions(question.questionOptions)" :key="option.label" class="option">
+                                        <input type="radio"
+                                               :name="`question-${question.practiceQuestionId}`"
+                                               :value="option.label"
+                                               v-model="studentAnswers[question.practiceQuestionId]">
                                         <span>{{ option.label }}. {{ option.text }}</span>
                                     </label>
                                 </div>
-                                <div v-else-if="question.type === 'FILL_IN_BLANK'" class="input-field">
-                                    <input type="text" v-model="studentAnswers[question.id]" placeholder="请输入答案">
+                                <div v-else-if="question.questionType === 'FILL_IN_BLANK'" class="input-field">
+                                    <input type="text" v-model="studentAnswers[question.practiceQuestionId]" placeholder="请输入答案">
                                 </div>
-                                <div v-else-if="question.type === 'SHORT_ANSWER'" class="input-field">
-                                    <textarea v-model="studentAnswers[question.id]" placeholder="请输入答案"></textarea>
+                                <div v-else-if="question.questionType === 'SHORT_ANSWER'" class="input-field">
+                                    <textarea v-model="studentAnswers[question.practiceQuestionId]" placeholder="请输入答案"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -36,10 +39,10 @@
                     <li v-for="(group, groupName) in groupedQuestions" :key="groupName" :class="{ active: currentGroup === groupName }">
                         <h3 class="group-name">{{ getGroupName(groupName) }}</h3>
                         <ul>
-                            <li v-for="(question, index) in group" :key="index" :class="{ active: currentIndex === question.id }">
-                                <a :href="'#question-' + question.id" class="nav-link" @click.prevent="scrollToQuestion(index)">
+                            <li v-for="(question, index) in group" :key="index" :class="{ active: currentIndex === question.practiceQuestionId }">
+                                <a :href="'#question-' + question.practiceQuestionId" class="nav-link" @click.prevent="scrollToQuestion(index, question.practiceQuestionId)">
                                     <div class="nav-option">
-                                        {{ question.id + 1 }}
+                                        {{ question.sequence }}
                                     </div>
                                 </a>
                             </li>
@@ -68,27 +71,20 @@ export default {
             groupedQuestions: {},
             currentIndex: 0,
             currentGroup: '',
-            observer: null
+            observer: null,
+            localPracticeId: this.practiceId, // 新增：用于存储解析后的 practiceId
+            localPracticeName: this.practiceName,
+            localMode: this.mode
         };
     },
     created() {
-        const questionsFromQuery = this.$route.query.questions;
-        if (questionsFromQuery) {
-            try {
-                this.parsedQuestions = JSON.parse(decodeURIComponent(questionsFromQuery));
-                this.groupAndReorderQuestions();
-                this.studentAnswers = this.parsedQuestions.reduce((acc, question) => {
-                    acc[question.id] = '';
-                    return acc;
-                }, {});
-            } catch (error) {
-                console.error('解析题目失败', error);
-                this.parsedQuestions = [];
-            }
-        } else {
-            console.error('questions 未定义');
-            this.parsedQuestions = [];
-        }
+        this.initialize();
+        console.log('Received parameters:', {
+            practiceId: this.practiceId,
+            mode: this.mode,
+            practiceName: this.practiceName
+        });
+        this.logQuestionsInfo();
     },
     mounted() {
         // 初始设置 IntersectionObserver 可能会失败，因此我们将其放在 updated 钩子中
@@ -102,13 +98,39 @@ export default {
         }
     },
     methods: {
+        initialize() {
+            const questionsFromQuery = this.$route.query.questions;
+            if (questionsFromQuery) {
+                try {
+                    this.parsedQuestions = JSON.parse(decodeURIComponent(questionsFromQuery));
+                    // 添加调试信息
+                    console.log('Parsed Questions:', this.parsedQuestions);
+                    this.groupAndReorderQuestions();
+                    this.parsedQuestions.forEach(question => {
+                        this.studentAnswers[question.practiceQuestionId] = question.answerContent || '';
+                    });
+                } catch (error) {
+                    console.error('解析题目失败', error);
+                    this.parsedQuestions = [];
+                }
+            } else {
+                console.error('questions 未定义');
+                this.parsedQuestions = [];
+            }
+
+            // 初始化其他属性
+            this.localPracticeId = this.$route.query.practiceId; // 使用 localPracticeId
+            this.localPracticeName = this.$route.query.practiceName || '未知练习';
+            this.localMode = this.$route.query.mode || 'unknown';
+        },
+
         groupAndReorderQuestions() {
             this.groupedQuestions = this.parsedQuestions.reduce((acc, question, originalIndex) => {
-                if (!acc[question.type]) {
-                    acc[question.type] = [];
+                if (!acc[question.questionType]) {
+                    acc[question.questionType] = [];
                 }
                 question.id = this.parsedQuestions.findIndex(q => q === question); // 为每个题目分配一个唯一的 ID
-                acc[question.type].push(question);
+                acc[question.questionType].push(question);
                 return acc;
             }, {});
 
@@ -119,6 +141,9 @@ export default {
                     question.id = currentId++;
                 }
             }
+
+            // 添加调试信息
+            console.log('Grouped Questions:', this.groupedQuestions);
         },
         async submitAnswers() {
             console.log('开始提交答案');
@@ -138,13 +163,20 @@ export default {
             answers.forEach(answer => {
                 const question = this.parsedQuestions.find(q => q.practiceQuestionId === answer.practiceQuestionId);
                 if (question && question.type === 'CHOICE' && answer.answerContent) {
-                    console.log('处理选择题:', question, answer); // 添加调试信息
-                    const options = this.getOptions(question.options);
-                    const matchedOption = options.find(option => option.text === answer.answerContent);
+                    console.log('处理选择题:', question, answer); // 调试信息
+
+                    // 解析选项
+                    const options = this.getOptions(question.questionOptions);
+
+                    // 尝试匹配选项
+                    const matchedOption = options.find(option =>
+                        option.text.trim() === answer.answerContent.trim()
+                    );
+
                     if (matchedOption) {
                         answer.answerContent = matchedOption.label; // 修正为选项字母
                     } else {
-                        console.warn(`无法匹配到选项: ${answer.answerContent} for question: ${question.content}`);
+                        console.warn(`无法匹配到选项: ${answer.answerContent} for question: ${question.questionContent}`);
                     }
                 }
             });
@@ -266,11 +298,10 @@ export default {
             let match;
             while ((match = regex.exec(optionsString)) !== null) {
                 options.push({
-                    label: match[1],
-                    text: match[2].trim()
+                    label: match[1],  // 提取字母
+                    text: match[2].trim()  // 提取选项文本
                 });
             }
-            console.log('解析的选项:', options); // 添加调试信息
             return options;
         },
         scrollToQuestion(index, id) {
@@ -278,6 +309,18 @@ export default {
             const element = this.$refs.questionElements.find(el => el.id === 'question-' + id);
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth' });
+            }
+        },
+        getGroupNameByType(type) {
+            switch (type) {
+                case 'CHOICE':
+                    return '选择题';
+                case 'FILL_IN_BLANK':
+                    return '填空题';
+                case 'SHORT_ANSWER':
+                    return '简答题';
+                default:
+                    return '其他';
             }
         },
         logQuestionsInfo() {
