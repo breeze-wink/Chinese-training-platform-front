@@ -125,7 +125,28 @@ const menuItems = computed(() => {
                 },
                 { index: '4', label: '设置', icon: Setting,  path:null  },
             ];
-        // 其他角色
+      case 'sys-adm':
+        return [
+          { index: '1', label: '首页', icon: User, path: null },
+          {
+            index: '2',
+            label: '相关管理',
+            icon: Management,
+            children: [
+              { index: '2-1', label: '课标管理', path: null },
+              { index: '2-2', label: '知识点管理', path: null },
+            ],
+          },
+          { index: '3', label: '生成学校管理员', icon: Setting, path: null },
+        ];
+      case 'schoolAdmin':
+        return [
+          { index: '1', label: '首页', icon: User, path: null },
+          { index: '2', label: '教师管理', icon: Management, path: null },
+          { index: '3', label: '学生管理', icon: Document, path: null },
+          { index: '4', label: '生成授权码', icon: Setting, path: null },
+        ];
+
         default:
             return [];
     }

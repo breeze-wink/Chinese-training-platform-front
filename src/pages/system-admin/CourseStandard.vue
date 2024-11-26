@@ -46,6 +46,7 @@ import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
 import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage } from 'element-plus';
 import axios from 'axios';
+import {useStore} from "vuex";
 
 // 定义变量
 const search = ref('');
@@ -53,6 +54,8 @@ const courseStandards = ref([]);
 const fileInput = ref(null);
 const currentItem = ref(null);
 const pdfUrl = ref('');
+const store = useStore();
+const teacherId = computed(() => store.state.user.id);
 
 // 获取所有课标信息
 const getAllCourseStandards = async () => {
@@ -157,6 +160,7 @@ const deleteItem = async (item) => {
 };
 
 onMounted(() => {
+  console.log(teacherId.value);
   getAllCourseStandards();
 });
 </script>
