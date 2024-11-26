@@ -13,17 +13,18 @@
                     <!-- 选择题标签页 -->
                     <el-tab-pane label="选择题" name="choice">
                         <div class="tab-content">
-                            <el-form :model="choiceForm" label-width="60px">
+                            <el-form :model="choiceForm" label-width="80px">
                                 <el-form-item label="问题"  class="form-item-margin" >
-                                    <div>
-                                        <quill-editor
-                                            v-model="choiceForm.question"
-                                            :options="quillOptions"
-                                            placeholder="请输入问题内容"
-                                            theme="snow"
-                                            class="ql-editor"
-                                        />
-                                    </div>
+                                  <div style="max-width: 750px; overflow: hidden;">
+                                    <quill-editor
+                                        v-model="choiceForm.question"
+                                        :options="quillOptions"
+                                        placeholder="请输入问题内容"
+                                        theme="snow"
+                                        class="ql-editor"
+                                    />
+                                  </div>
+
                                 </el-form-item>
                                 <el-form-item>
                                     <el-row>
@@ -222,11 +223,13 @@ import {computed, onMounted, ref} from 'vue';
 import axios from "axios";
 import {useStore} from "vuex";
 import KnowledgePointSelector from '@/pages/Teacher/TeacherPublicComponent/KnowledgePointSelector.vue'; // 引入知识点选择组件
-import { QuillEditor, Quill } from '@vueup/vue-quill'
+import { QuillEditor, Quill } from '@vueup/vue-quill';
 import "quill/dist/quill.snow.css";
-import '@vueup/vue-quill/dist/vue-quill.snow.css'
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import 'quill/dist/quill.core.css';
-import 'quill/dist/quill.bubble.css'
+import 'quill/dist/quill.bubble.css';
+
+
 
 const activeTab = ref('choice'); // 当前激活的标签页
 const knowledgePoints = ref([]); // 后端返回的知识点
@@ -244,11 +247,12 @@ const quillOptions = {
     modules: {
         toolbar: [
             ['bold', 'italic', 'underline'], // 文本样式
-            [{ list: 'ordered' }, { list: 'bullet' }, { align: [] }], 
+            [{ list: 'ordered' }, { list: 'bullet' }, { align: [] }],
             ['link', 'image'], // 插入链接和图片
         ],
     },
 };
+
 
 // 选择表单数据
 const choiceForm = ref({
