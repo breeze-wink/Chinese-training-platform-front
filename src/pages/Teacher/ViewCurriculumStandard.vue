@@ -24,17 +24,20 @@
 <script setup>
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import { ref } from 'vue';
+import {computed, ref} from 'vue';
 import { ElButton } from 'element-plus';
 import axios from 'axios';
+import {useStore} from "vuex";
 
 // 存储 PDF 文件的 URL
 const pdfUrl = ref('');
-
+const store = useStore();
+const teacherId = computed(() => store.state.user.id);
 // 获取课程标准的 PDF
 async function fetchCurriculumStandard() {
     try {
-        const response = await axios.get('/api/teacher/75/view-curriculum-standard', {
+
+        const response = await axios.get(`/api/teacher/${teacherId.value}/view-curriculum-standard`, {
             responseType: 'blob' // 确保返回的是二进制数据，以 Blob 形式
         });
 
