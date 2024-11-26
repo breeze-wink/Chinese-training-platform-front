@@ -177,7 +177,7 @@ export default {
                 username: '', // 昵称
                 schoolName: '',
                 grade: '',
-                accountId: '84',
+                accountId: '133',
                 email: '',
                 class: ''
             },

@@ -213,7 +213,7 @@ const updatePhoneNumber = async () => {
 
         });
 
-        if (response.status === 200 && response.data.message === '手机号修改成功') {
+        if (response.status === 200 ) {
             console.log(response.data.message);
         } else {
             console.error(response.data.message);

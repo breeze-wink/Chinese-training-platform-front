@@ -2,6 +2,11 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';  // 引入 router
 import store from './store/user.js';  // 引入 Vuex store
+import 'element-plus/dist/index.css';
+import 'quill/dist/quill.snow.css';
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
+
+
 
 //引入elementPlus
 import ElementPlus from 'element-plus';
@@ -16,6 +21,7 @@ app.use(ElementPlus);
 app.use(router);
 // 使用 Vuex store
 app.use(store);
+
 
 // 注册 Element Plus Icons
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

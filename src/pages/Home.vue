@@ -376,7 +376,7 @@ const login = async () => {
             password: password.value
         });
         // 检查响应状态码和消息
-        if (response.status === 200 && response.data.message === "success") {
+        if (response.status === 200 ) {
             console.log("登录成功:", response.data.id);
             //使用vuex更新用户信息
             await store.dispatch('login', {
@@ -393,15 +393,16 @@ const login = async () => {
             }
 
 
-        } else {
+        } else if (response.status === 401 ){
             // 处理非200状态码的情况
             console.error("登录失败:", response.data.message);
-            ElMessage.error('用户名密码不正确');
+            ElMessage.error(response.data.message);
+
         }
     } catch (error) {
         // 处理错误
         console.error('登录请求失败:', error.message);
-        ElMessage.error('登陆失败');
+        ElMessage.error('用户名密码不正确');
         // 这里可以添加更多的错误处理逻辑，比如显示错误信息等
     }
 }
