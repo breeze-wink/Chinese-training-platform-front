@@ -243,6 +243,7 @@ export default {
         viewAnswers(item) {
             try {
                 console.log('Item passed to viewAnswers:', item); // 调试日志
+
                 if (!item.practiceId) {
                     console.error('Missing required param "practiceId"', item);
                     return;
@@ -331,6 +332,7 @@ button {
 
 button:hover {
     background-color: #0056b3;
+
 }
 
 p {

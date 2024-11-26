@@ -106,7 +106,9 @@ export default {
                         id: item.id,
                         name: item.name,
                         description: item.description,
+
                         type: item.type // 保持 type 为字符串
+
                     }));
                     console.log('处理后的知识点数据:', this.knowledgePoints); // 调试信息
                 } else {
@@ -156,7 +158,9 @@ export default {
         async confirmSelection() {
             const requestBody = {
                 num: this.questionNum,
+
                 name: this.practiceName, // 使用用户输入的练习名称
+
                 data: this.checkList.map(knowledgePointId => ({ knowledgePointId })),
             };
 
@@ -185,7 +189,9 @@ export default {
                             practiceId: practiceId, // 不需要转换为字符串
                             questions: encodeURIComponent(questionsString),
                             mode: 'custom',
+
                             practiceName: this.practiceName // 使用用户输入的练习名称
+
                         },
                     });
                 } else {
@@ -357,3 +363,9 @@ button:hover {
     margin-bottom: 10px;
 }
 </style>
+
+
+
+
+
+
