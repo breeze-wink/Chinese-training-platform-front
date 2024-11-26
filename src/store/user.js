@@ -1,11 +1,12 @@
 // store/user.js
 
 import { createStore } from 'vuex';
+import router from "@/router/index.js";
 
 export default createStore({
     state: {
         user: {
-            id: 75, // 用户唯一标识符
+            id: null, // 用户唯一标识符
             role: null // 用户角色，比如 'teacher' 或 'student'
         },
         isAuthenticated: false // 登录状态
@@ -31,9 +32,12 @@ export default createStore({
             commit('setUser', user);
         },
         // 注销操作
-        logout({ commit }) {
+        async logout({commit}) {
             // 在这里可以添加登出的逻辑
             commit('clearUser');
+            await router.push('/');
+            console.log('导航成功');
+
         }
     },
     getters: {

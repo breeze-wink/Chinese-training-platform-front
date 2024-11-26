@@ -93,7 +93,6 @@
                                     </el-form-item>
                                     <el-form-item label="答案">
                                         <div v-for="(answer, index) in fillForm.answers" :key="index" class="answer-row">
-
                                             <el-input
                                                     v-model="fillForm.answers[index]"
                                                     placeholder="请输入第 {{ index + 1 }} 个填空的答案"
