@@ -14,9 +14,14 @@
                     <!-- 选择题标签页 -->
                     <el-tab-pane label="选择题" name="choice">
                         <div class="tab-content">
-                            <el-form :model="choiceForm" label-width="80px">
+                            <el-form :model="choiceForm" label-width="60px">
                                 <el-form-item label="问题"  class="form-item-margin" >
-                                    <el-input v-model="choiceForm.question" type="textarea" placeholder="请输入问题"></el-input>
+                                    <quill-editor
+                                            v-model="choiceForm.question"
+                                            placeholder="请输入问题内容"
+                                            class="quill-editor"
+                                            :options="quillOptions"
+                                    ></quill-editor>
                                 </el-form-item>
                                 <el-form-item>
                                     <el-row>
@@ -93,6 +98,7 @@
                                     </el-form-item>
                                     <el-form-item label="答案">
                                         <div v-for="(answer, index) in fillForm.answers" :key="index" class="answer-row">
+
                                             <el-input
                                                     v-model="fillForm.answers[index]"
                                                     placeholder="请输入第 {{ index + 1 }} 个填空的答案"
@@ -215,8 +221,8 @@ import {computed, onMounted, ref} from 'vue';
 import axios from "axios";
 import {useStore} from "vuex";
 import KnowledgePointSelector from '@/pages/Teacher/TeacherPublicComponent/KnowledgePointSelector.vue'; // 引入知识点选择组件
-
-
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
 const activeTab = ref('choice'); // 当前激活的标签页
 const knowledgePoints = ref([]); // 后端返回的知识点
@@ -228,6 +234,18 @@ const store = useStore();
 const teacherId = computed(() => store.state.user.id);
 const knowledgePointSelector = ref(null);
 
+// 配置 Quill 编辑器的选项
+const quillOptions = {
+    theme: 'snow', // 主题样式
+    modules: {
+        toolbar: [
+            ['bold', 'italic', 'underline'], // 文本样式
+            [{ list: 'ordered' }, { list: 'bullet' }], // 列表
+            [{ align: [] }], // 对齐方式
+            ['link', 'image'], // 插入链接和图片
+        ],
+    },
+};
 
 // 选择表单数据
 const choiceForm = ref({
@@ -290,6 +308,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
+
+.quill-editor {
+    height: 200px; /* 设置富文本编辑器高度 */
+    margin-bottom: 20px;
+}
 .page-container {
     display: flex;
     flex-direction: column;
