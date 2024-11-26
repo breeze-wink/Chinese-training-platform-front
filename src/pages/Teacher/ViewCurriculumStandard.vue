@@ -10,7 +10,7 @@
             <!-- 内容区 -->
             <div class="content">
                 <h2>课程标准</h2>
-                <el-button type="primary" @click="fetchCurriculumStandard">查看课程标准</el-button>
+
 
                 <div v-if="pdfUrl" class="pdf-container">
                     <!-- 使用 iframe 显示 PDF 文件 -->
@@ -24,7 +24,7 @@
 <script setup>
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import {computed, ref} from 'vue';
+import {computed, onMounted, ref} from 'vue';
 import { ElButton } from 'element-plus';
 import axios from 'axios';
 import {useStore} from "vuex";
@@ -48,6 +48,10 @@ async function fetchCurriculumStandard() {
         console.error('无法获取课程标准:', error);
     }
 }
+
+onMounted(() => {
+    fetchCurriculumStandard();
+});
 </script>
 
 <style scoped>

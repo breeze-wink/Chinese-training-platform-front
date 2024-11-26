@@ -49,7 +49,7 @@
 import { computed, ref } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
-import {Document, Setting, User, Management, Upload} from '@element-plus/icons-vue';
+import {Document, Setting, User, Management, Upload,EditPen} from '@element-plus/icons-vue';
 
 //获取路由
 const router = useRouter();
@@ -117,7 +117,7 @@ const menuItems = computed(() => {
                 {
                     index: '3',
                     label: '课程学习',
-                    icon: Document,
+                    icon: EditPen,
                     children: [
                         { index: '2-1', label: '练习选择',  path:'/student/question-options' },
                         { index: '2-2', label: '试卷管理',  path:'/student/manage-test' },
