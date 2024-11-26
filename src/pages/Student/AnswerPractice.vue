@@ -121,7 +121,7 @@ export default {
             }
         },
         async submitAnswers() {
-            console.log('开始提交答案'); // 添加调试信息
+            console.log('开始提交答案');
 
             if (!this.practiceId) {
                 console.error('practiceId 未定义');
@@ -134,15 +134,39 @@ export default {
                 answerContent: this.studentAnswers[question.id]
             }));
 
+            // 检查并修正 answerContent 为选项字母
+            answers.forEach(answer => {
+                const question = this.parsedQuestions.find(q => q.practiceQuestionId === answer.practiceQuestionId);
+                if (question && question.type === 'CHOICE' && answer.answerContent) {
+                    console.log('处理选择题:', question, answer); // 调试信息
+
+                    // 解析选项
+                    const options = this.getOptions(question.questionOptions);
+
+                    // 尝试匹配选项
+                    const matchedOption = options.find(option =>
+                        option.text.trim() === answer.answerContent.trim()
+                    );
+
+                    if (matchedOption) {
+                        answer.answerContent = matchedOption.label; // 修正为选项字母
+                    } else {
+                        console.warn(`无法匹配到选项: ${answer.answerContent} for question: ${question.questionContent}`);
+                    }
+                }
+            });
+
+            console.log('即将发送的答案数据:', answers);
+
             try {
                 const response = await axios.post(`/api/student/${this.practiceId}/practice/complete`, {
                     data: answers
                 });
 
-                console.log('响应数据:', response.data); // 增加日志以查看响应内容
+                console.log('响应数据:', response.data);
 
                 if (response.status === 200 && response.data.message === '练习提交成功') {
-                    const score = response.data.score; // 假设后端返回的分数字段名为 score
+                    const score = response.data.score;
 
                     if (score !== undefined && score !== null) {
                         this.$router.push({
@@ -175,6 +199,8 @@ export default {
                 practiceQuestionId: question.practiceQuestionId,
                 answerContent: this.studentAnswers[question.id]
             }));
+
+            console.log('即将发送的答案数据:', answers);
 
             try {
                 const response = await axios.post(`/api/student/${this.practiceId}/practice/save`, {
@@ -229,6 +255,7 @@ export default {
                     text: match[2].trim()
                 });
             }
+            console.log('解析的选项:', options); // 添加调试信息
             return options;
         },
         scrollToQuestion(index) {
