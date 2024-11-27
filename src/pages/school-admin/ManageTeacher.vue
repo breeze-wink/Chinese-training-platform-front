@@ -16,12 +16,12 @@
           <el-button type="warning" @click="resetSearch">重置</el-button>
         </div>
 
-        <el-table :data="filteredData" style="width: 100%; margin-top: 20px;">
+        <el-table :data="paginatedData" style="width: 100%; margin-top: 20px;">
           <el-table-column prop="id" label="序号" width="80"></el-table-column>
-          <el-table-column prop="name" label="姓名"></el-table-column>
-          <el-table-column prop="email" label="邮箱"></el-table-column>
+          <el-table-column prop="name" label="姓名" width="150"></el-table-column>
+          <el-table-column prop="email" label="邮箱" width="250"></el-table-column>
           <el-table-column prop="phoneNumber" label="联系方式"></el-table-column>
-          <el-table-column prop="schoolId" label="学校ID"></el-table-column>
+          <el-table-column prop="schoolId" label="学校ID" width="120"></el-table-column>
 
           <el-table-column label="操作">
             <template #default="{ row }">
@@ -36,7 +36,7 @@
             :current-page="currentPage"
             :page-size="pageSize"
             layout="prev, pager, next"
-            :total="totalItems"
+            :total="filteredData.length"
         />
       </div>
     </div>
@@ -49,29 +49,31 @@ import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
 import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination } from 'element-plus';
 import axios from 'axios';
+import { useStore } from 'vuex'; // 引入 Vuex
+
+// 获取 Vuex 状态
+const store = useStore();
+
+// 计算属性获取用户 ID (动态获取)
+const adminId = computed(() => store.state.user.id);
 
 // 定义变量
-onMounted(async () => {
-  await getTeachers();
-});
 const search = ref('');
 const currentPage = ref(1);
-const pageSize = ref(10);
+const pageSize = ref(10);  // 每页显示 7 行
 const totalItems = ref(0);
 const teachers = ref([]);
-const adminId = 9; // 默认管理员ID
 
 // 获取教师数据
 const getTeachers = async () => {
   try {
-    const response = await axios.get(`/api/school-admin/${adminId}/query-all-teachers`);
+    const response = await axios.get(`/api/school-admin/${adminId.value}/query-all-teachers`);
     if (response.status === 200) {
       teachers.value = response.data.data;
       totalItems.value = response.data.data.length;
     } else {
       ElMessage({ message: '教师账号信息查询失败：' + response.data.message, type: 'error' });
     }
-
   } catch (error) {
     // 捕获错误并显示提示
     console.error(error);
@@ -79,11 +81,22 @@ const getTeachers = async () => {
   }
 };
 
-// 过滤搜索结果
+// 页面加载时获取教师数据
+onMounted(() => {
+  getTeachers(); // 使用动态的 adminId 获取信息
+});
+
 const filteredData = computed(() => {
   return teachers.value.filter(teacher =>
       teacher.name.includes(search.value)
   );
+});
+
+// 根据当前页和每页的行数来获取显示的数据
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredData.value.slice(start, end);
 });
 
 // 查询教师
@@ -107,8 +120,6 @@ const deleteTeacher = (teacher) => {
 const handlePageChange = (page) => {
   currentPage.value = page;
 };
-
-
 </script>
 
 <style scoped>
@@ -146,4 +157,3 @@ const handlePageChange = (page) => {
   -moz-appearance: auto;
 }
 </style>
-

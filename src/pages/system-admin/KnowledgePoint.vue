@@ -21,6 +21,9 @@
             <el-form-item label="标题">
               <el-input v-model="currentItem.name"></el-input>
             </el-form-item>
+            <el-form-item label="类型">
+              <el-input v-model="currentItem.type"></el-input>
+            </el-form-item>
             <el-form-item label="描述">
               <el-input type="textarea" v-model="currentItem.description"></el-input>
             </el-form-item>
@@ -31,24 +34,14 @@
           </el-form>
         </div>
 
-        <el-table :data="filteredData" style="width: 100%; margin-top: 20px;">
-          <el-table-column prop="id" label="ID" width="180"></el-table-column>
-          <el-table-column prop="name" label="标题"></el-table-column>
-          <el-table-column prop="description" label="描述"></el-table-column>
-          <el-table-column label="操作">
-            <template #default="{ row }">
-              <el-button size="small" @click="viewKnowledgePoint(row)">查看</el-button>
-              <el-button size="small" @click="editKnowledgePoint(row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="deleteItem(row)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-
         <!-- 查看知识点详情 -->
         <div class="view-knowledge-container" v-if="viewMode">
           <el-form :model="currentItem" label-width="80px">
             <el-form-item label="标题">
               <el-input v-model="currentItem.name" disabled></el-input>
+            </el-form-item>
+            <el-form-item label="类型">
+              <el-input v-model="currentItem.type" disabled></el-input>
             </el-form-item>
             <el-form-item label="描述">
               <el-input type="textarea" v-model="currentItem.description" disabled></el-input>
@@ -65,6 +58,9 @@
             <el-form-item label="标题">
               <el-input v-model="currentItem.name"></el-input>
             </el-form-item>
+            <el-form-item label="类型">
+              <el-input v-model="currentItem.type"></el-input>
+            </el-form-item>
             <el-form-item label="描述">
               <el-input type="textarea" v-model="currentItem.description"></el-input>
             </el-form-item>
@@ -74,13 +70,27 @@
             </el-form-item>
           </el-form>
         </div>
+
+        <!-- 知识点列表 -->
+        <el-table :data="filteredData" style="width: 100%; margin-top: 20px; max-height: 400px; overflow-y: auto;">
+          <el-table-column prop="id" label="ID" width="180"></el-table-column>
+          <el-table-column prop="name" label="标题"></el-table-column>
+          <el-table-column prop="type" label="类型"></el-table-column>
+          <el-table-column label="操作">
+            <template #default="{ row }">
+              <el-button size="small" @click="viewKnowledgePoint(row)">查看详情</el-button>
+              <el-button size="small" @click="editKnowledgePoint(row)">编辑</el-button>
+              <el-button size="small" type="danger" @click="deleteItem(row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
 import { ElButton, ElInput, ElTable, ElTableColumn, ElForm, ElFormItem, ElMessage } from 'element-plus';
@@ -91,7 +101,7 @@ const search = ref('');
 const addMode = ref(false);
 const viewMode = ref(false);
 const editMode = ref(false);
-const currentItem = ref({ id: null, name: '', description: '' });
+const currentItem = ref({ id: null, name: '', type: '', description: '' });
 const items = ref([]);
 
 // 过滤搜索结果
@@ -116,7 +126,7 @@ const fetchKnowledgePoints = async () => {
 
 // 新增知识点
 const addKnowledgePoint = () => {
-  currentItem.value = { id: null, name: '', description: '' };
+  currentItem.value = { id: null, name: '', type: '', description: '' };
   addMode.value = true;
 };
 
@@ -128,27 +138,24 @@ const editKnowledgePoint = (item) => {
 
 // 保存项目
 const saveItem = async () => {
-  if (!currentItem.value.name || !currentItem.value.description) {
-    ElMessage({ message: '请填写所有必填项', type: 'warning' });
+  if (!currentItem.value.name || !currentItem.value.type || !currentItem.value.description) {
+    ElMessage({ message: '标题、类型和描述不能为空', type: 'error' });
     return;
   }
+
+  const url = currentItem.value.id
+      ? `/api/system-admin/edit-knowledge-point/${currentItem.value.id}`
+      : '/api/system-admin/add-knowledge-point';
+
+  const method = currentItem.value.id ? 'put' : 'post';
+
   try {
-    if (currentItem.value.id) {
-      // 编辑知识点
-      await axios.put(`/api/system-admin/update-knowledge-point/${currentItem.value.id}`, currentItem.value);
-      const index = items.value.findIndex(i => i.id === currentItem.value.id);
-      if (index !== -1) {
-        items.value.splice(index, 1, currentItem.value);
-      }
-    } else {
-      // 新增知识点
-      const response = await axios.post('/api/system-admin/create-knowledge-point', currentItem.value);
-      currentItem.value.id = response.data.knowledgePointId;
-      items.value.push(currentItem.value);
+    const response = await axios[method](url, currentItem.value);
+    if (response.status === 200) {
+      ElMessage({ message: response.data.message, type: 'success' });
+      fetchKnowledgePoints();  // Refresh the list
+      cancelAdd();  // Close the form after saving
     }
-    addMode.value = false;
-    editMode.value = false;
-    ElMessage({ message: '保存成功', type: 'success' });
   } catch (error) {
     ElMessage({ message: '保存失败', type: 'error' });
   }
@@ -157,39 +164,36 @@ const saveItem = async () => {
 // 取消新增
 const cancelAdd = () => {
   addMode.value = false;
+  currentItem.value = { id: null, name: '', type: '', description: '' };
 };
 
 // 取消编辑
 const cancelEdit = () => {
   editMode.value = false;
-};
-
-// 查看知识点
-const viewKnowledgePoint = (item) => {
-  currentItem.value = { ...item };
-  viewMode.value = true;
+  currentItem.value = { id: null, name: '', type: '', description: '' };
 };
 
 // 关闭查看
 const closeView = () => {
   viewMode.value = false;
+  currentItem.value = { id: null, name: '', type: '', description: '' };
 };
 
-// 删除项目
+// 删除知识点
 const deleteItem = async (item) => {
   try {
-    await axios.delete(`/api/system-admin/delete-knowledge-point/${item.id}`);
-    items.value = items.value.filter(i => i.id !== item.id);
-    ElMessage({ message: '删除成功', type: 'success' });
+    const response = await axios.delete(`/api/system-admin/delete-knowledge-point/${item.id}`);
+    if (response.status === 200) {
+      ElMessage({ message: response.data.message, type: 'success' });
+      fetchKnowledgePoints();  // Refresh the list after deletion
+    }
   } catch (error) {
     ElMessage({ message: '删除失败', type: 'error' });
   }
 };
 
-// 组件挂载时获取所有知识点
-onMounted(() => {
-  fetchKnowledgePoints();
-});
+// 初始化加载知识点数据
+fetchKnowledgePoints();
 </script>
 
 <style scoped>
