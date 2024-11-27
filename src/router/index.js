@@ -23,6 +23,7 @@ import QuestionOptions from '@/pages/Student/QuestionOptions.vue';
 import AnswerPractice from "@/pages/Student/AnswerPractice.vue";
 import AnswerDetail from "@/pages/Student/AnswerDetail.vue";
 import ManageTest from "@/pages/Student/ManageTest.vue";
+import AnswerTemporary from "@/pages/Student/AnswerTemporary.vue";
 
 
 const routes = [
@@ -105,6 +106,17 @@ const routes = [
         name: 'AnswerDetail',
         component: AnswerDetail,
         props: true
+    },
+    {
+        path: '/student/answer-temporary',
+        name: 'AnswerTemporary',
+        component: AnswerTemporary,
+        props: route => ({
+            practiceId: route.query.practiceId,
+            questions: route.query.questions,
+            mode: route.query.mode,
+            practiceName: route.query.practiceName,
+        }),
     },
     // 试卷管理
     { path: '/student/manage-test', name: 'ManageTest', component: ManageTest},
