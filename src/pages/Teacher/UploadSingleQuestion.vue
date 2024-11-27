@@ -226,14 +226,16 @@
 <script setup>
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import {computed, nextTick, onMounted, reactive, ref} from 'vue';
+import {computed, nextTick, onMounted, ref} from 'vue';
 import axios from "axios";
 import {useStore} from "vuex";
 import KnowledgePointSelector from '@/pages/Teacher/TeacherPublicComponent/KnowledgePointSelector.vue'; // 引入知识点选择组件
-import { QuillEditor } from '@vueup/vue-quill'
+import {QuillEditor} from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import {ElMessage} from "element-plus";
 import Quill from "quill";
+import {ImageDrop} from 'quill-image-drop-module'
+import BlotFormatter from 'quill-blot-formatter/dist/BlotFormatter';
 
 const activeTab = ref('CHOICE'); // 当前激活的标签页
 const store = useStore();
@@ -246,14 +248,12 @@ const onPointSelected = (pointId) => {
 };
 
 
-import { ImageDrop } from 'quill-image-drop-module'
 Quill.register('modules/imageDrop', ImageDrop)
 
-import BlotFormatter from 'quill-blot-formatter/dist/BlotFormatter';
 Quill.register('modules/blotFormatter', BlotFormatter)
 
 
-const questionForms = reactive({
+const questionForms = ref({
     CHOICE: {
         problem: null, // 问题描述
         options: ['', '', '', ''], // 选项
@@ -308,25 +308,31 @@ const submitQuestion = async () => {
     // 从知识点选择器组件中获取数据
     console.log('caonima');
     console.log(KnowledgePointId.value);
+    // 获取当前激活标签的表单数据
+    console.log(activeTab.value);
+    const currentForm = questionForms.value[activeTab.value];
+
 
     // 检查知识点是否选择
     if (!KnowledgePointId) {
         return ElMessage.warning('请先选择分类和知识点！');
     }
-    const content = editor.value.getHTML() || editor.value.container.firstChild.innerHTML;
+    let content = editor.value.getHTML() || editor.value.container.firstChild.innerHTML;
 
+    const base64Images = extractBase64ImagesFromContent(content);
 
-    // 获取当前激活标签的表单数据
-    const currentForm = questionForms.value[activeTab.value];
-
+    for (const base64Image of base64Images) {
+        const mimeType = base64Image.split(';')[0].split(':')[1];  // 获取图片的MIME类型，例如 image/png
+        const blob = base64ToBlob(base64Image, mimeType);
+        const file = new File([blob], 'image.png', { type: mimeType });  // 可以通过文件名调整，使用适当的扩展名
+        const newImageUrl = await uploadImage(file);
+        if (newImageUrl) {
+            content = replaceImagePlaceholder(content, base64Image, newImageUrl);
+        }
+    }
     currentForm.problem = content;
     console.log(currentForm);
 
-
-    // // 校验通用字段
-    // if (!currentForm.problem) {
-    //     return ElMessage.warning('请填写问题描述！');
-    // }
 
     // 构造请求数据
     const requestData = {
@@ -350,20 +356,99 @@ const submitQuestion = async () => {
     };
 
     // 提交数据
+    // try {
+    //     const response = await axios.post(
+    //             `/api/teacher/${teacherId.value}/upload-question`,
+    //             requestData
+    //     );
+    //     if (response.status === 200 && response.data.message === '上传成功') {
+    //         ElMessage.success('题目上传成功！');
+    //     } else {
+    //         ElMessage.error(response.data.message || '题目上传失败');
+    //     }
+    // } catch (error) {
+    //     console.error('上传失败:', error);
+    //     ElMessage.error('上传失败，请稍后重试');
+    // }
+};
+// 从富文本内容中提取图片
+const extractBase64ImagesFromContent = (content) => {
+    // 使用正则提取图片标签中的 src 属性
+    const imgRegex = /<img[^>]*src=["']([^"']+)["'][^>]*>/g;
+    const images = [];
+    let match;
+    while ((match = imgRegex.exec(content)) !== null) {
+        images.push(match[1]);  // match[1] 是图片的 src 属性值
+    }
+
+    return images;
+};
+
+// 将Base64数据转换为Blob对象
+const base64ToBlob = (base64, mimeType) => {
+    const byteCharacters = atob(base64.split(',')[1]); // 解码Base64数据
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset++) {
+        const byte = byteCharacters.charCodeAt(offset);
+        byteArrays.push(byte);
+    }
+
+    const byteArray = new Uint8Array(byteArrays);
+    return new Blob([byteArray], { type: mimeType });
+};
+const uploadImage = async (imageSrc) => {
     try {
-        const response = await axios.post(
-                `/api/teacher/${teacherId.value}/upload-question`,
-                requestData
-        );
-        if (response.status === 200 && response.data.message === '上传成功') {
-            ElMessage.success('题目上传成功！');
+        const formData = new FormData();
+        formData.append("image", imageSrc);  // 假设 imageSrc 是一个 File 对象
+        formData.append("type", "content");  // 固定图片类型为 "content"
+
+        const response = await axios.post('/uploads/image', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        if (response.status === 200) {
+            console.log(response.data.imageUrl);
+            return response.data.imageUrl;  // 服务器返回的图片 URL
+
         } else {
-            ElMessage.error(response.data.message || '题目上传失败');
+            console.error('图片上传失败');
         }
     } catch (error) {
-        console.error('上传失败:', error);
-        ElMessage.error('上传失败，请稍后重试');
+        console.error('上传图片失败:', error);
+        return null;
     }
+};
+// 处理包含Base64图片的内容
+const handleContentImages = async () => {
+    let content = editor.value.getHTML() || editor.value.container.firstChild.innerHTML;
+
+    // 确保 content 是有效的字符串
+    if (!content || typeof content !== 'string') {
+        console.error("Content is invalid or empty");
+        return;
+    }
+
+    const base64Images = extractBase64ImagesFromContent(content);
+
+    for (const base64Image of base64Images) {
+        const mimeType = base64Image.split(';')[0].split(':')[1];  // 获取图片的MIME类型，例如 image/png
+        const blob = base64ToBlob(base64Image, mimeType);
+        const file = new File([blob], 'image.png', { type: mimeType });  // 可以通过文件名调整，使用适当的扩展名
+
+        const newImageUrl = await uploadImage(file);
+        if (newImageUrl) {
+            content = replaceImagePlaceholder(content, base64Image, newImageUrl);
+        }
+    }
+
+    currentForm.problem = content;
+    console.log(currentForm);
+};
+//替换富文本中
+const replaceImagePlaceholder = (content, oldSrc, newSrc) => {
+    const imgRegex = new RegExp(`(<img[^>]*src=["'])${oldSrc}(["'][^>]*>)`, 'g');
+    return content.replace(imgRegex, `$1${newSrc}$2`);
 };
 
 // 初始化获取知识点数据

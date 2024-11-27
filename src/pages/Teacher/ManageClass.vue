@@ -300,7 +300,7 @@ const newGroupForm = ref({
 // 班级成员列表
 const classMembers = ref([]);
 const groupMembers = ref([]);
-
+const removeClassId =ref();
 // 获取班级信息列表的函数
 const fetchClassList = async () => {
     try {
