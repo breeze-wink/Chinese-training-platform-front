@@ -18,8 +18,7 @@
                                 <el-form-item label="问题"  class="form-item-margin" >
                                     <div style="max-width: 750px; overflow: hidden;">
                                     <quill-editor
-                                            v-model="questionForms.CHOICE.problem"
-                                            @input="updateProblem"
+                                            ref="editor"
                                             placeholder="请输入问题内容"
                                             class="quill-editor"
                                             :options="quillOptions"
@@ -227,6 +226,7 @@ import KnowledgePointSelector from '@/pages/Teacher/TeacherPublicComponent/Knowl
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import {ElMessage} from "element-plus";
+import Quill from "quill";
 
 const activeTab = ref('CHOICE'); // 当前激活的标签页
 const store = useStore();
@@ -260,10 +260,8 @@ const questionForms = ref({
     },
 });
 
-const updateProblem = (value) => {
-    questionForms.CHOICE.problem = value;
-    console.log(questionForms.CHOICE.problem);
-};
+const editor = ref(null)
+
 
 // 更新填空答案数组
 const updateFillAnswers = (count) => {
@@ -314,15 +312,18 @@ const submitQuestion = async () => {
     if (!KnowledgePointId) {
         return ElMessage.warning('请先选择分类和知识点！');
     }
+    const content = editor.value.getHTML() || editor.value.container.firstChild.innerHTML;
+
 
     // 获取当前激活标签的表单数据
     const currentForm = questionForms.value[activeTab.value];
+    currentForm.problem = content;
     console.log(currentForm);
 
-    // 校验通用字段
-    if (!currentForm.problem) {
-        return ElMessage.warning('请填写问题描述！');
-    }
+    // // 校验通用字段
+    // if (!currentForm.problem) {
+    //     return ElMessage.warning('请填写问题描述！');
+    // }
 
     // 构造请求数据
     const requestData = {
@@ -331,7 +332,7 @@ const submitQuestion = async () => {
         questions: [
             {
                 type: activeTab.value, // 当前题型
-                problem: currentForm.problem, // 问题描述
+                problem: content, // 问题描述
                 choices: activeTab.value === 'CHOICE' ? currentForm.options : [], // 选项（选择题需要）
                 answer:
                         activeTab.value === 'CHOICE'
@@ -340,7 +341,7 @@ const submitQuestion = async () => {
                                         ? currentForm.answers
                                         : currentForm.answer, // 答案
                 analysis: currentForm.explanation, // 解析
-                knowledgePointId: selectedPointId, // 知识点 ID
+                knowledgePointId: KnowledgePointId.value, // 知识点 ID
             },
         ],
     };
@@ -364,7 +365,14 @@ const submitQuestion = async () => {
 
 // 初始化获取知识点数据
 onMounted(async () => {
-    await nextTick(); // 确保 DOM 完全挂载
+
+    await nextTick(() => {
+      // 通过 ref 获取 Quill 编辑器实例
+      // 这里假设你的 quill-editor 组件的 ref 已经设置为 "editor"
+      editor.value = document.querySelector('.quill-editor').getQuill();
+      // 现在你可以使用 quillInstance 来做你需要的操作，例如获取内容等
+    });
+
 });
 
 const quillOptions = {
@@ -376,8 +384,11 @@ const quillOptions = {
             [{ 'list': 'ordered'}, { 'list': 'bullet' }],
             ['bold', 'italic', 'underline'],
             [{ 'align': [] }],
-            ['link']
-        ]
+            ['link', 'image', 'video'], // 超链接 图片 视频
+        ],
+        imageResize: {
+          parchment: Quill.import('parchment'),
+        },
     }
 };
 
