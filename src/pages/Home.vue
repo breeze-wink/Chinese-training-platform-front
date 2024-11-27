@@ -390,7 +390,11 @@ const login = async () => {
                 await router.push({name: 'TeacherPersonalInfo'}); // 跳转到教师管理页面
             } else if (Identity.value === 'student') {
                 await router.push({name: 'StudentPersonalInfo'}); // 跳转到学生学习页面
-            }
+            }else if (Identity.value === 'sys-adm') {
+              await router.push({name: 'name'});
+            }else if (Identity.value === 'sch-adm') {
+              await router.push({name: 'AuthorizationCode'}); }
+              // 跳转到学管学习页面
 
 
         } else {
@@ -398,12 +402,13 @@ const login = async () => {
             console.error("登录失败:", response.data.message);
             ElMessage.error('用户名密码不正确');
         }
-    } catch (error) {
+    } catch (error){
         // 处理错误
         console.error('登录请求失败:', error.message);
         ElMessage.error('登陆失败');
         // 这里可以添加更多的错误处理逻辑，比如显示错误信息等
     }
+
 }
 const sendVerification = async () => {
     try {

@@ -127,27 +127,34 @@ const menuItems = computed(() => {
             ];
       case 'sys-adm':
         return [
-          { index: '1', label: '首页', icon: User, path: null },
+          { index: '1', label: '用户名', icon: User, path: '/system-admin/name' },
           {
             index: '2',
             label: '相关管理',
             icon: Management,
             children: [
-              { index: '2-1', label: '课标管理', path: null },
-              { index: '2-2', label: '知识点管理', path: null },
+              { index: '2-1', label: '课标管理', path: '/system-admin/CourseStandard' },
+              { index: '2-2', label: '知识点管理', path: '/system-admin/KnowledgePoint' },
             ],
           },
-          { index: '3', label: '生成学校管理员', icon: Setting, path: null },
-        ];
-      case 'schoolAdmin':
-        return [
-          { index: '1', label: '首页', icon: User, path: null },
-          { index: '2', label: '教师管理', icon: Management, path: null },
-          { index: '3', label: '学生管理', icon: Document, path: null },
-          { index: '4', label: '生成授权码', icon: Setting, path: null },
+          { index: '3', label: '生成学校管理员', icon: Setting, path: '/system-admin/GenerateSchadm' },
         ];
 
-        default:
+      case 'sch-adm':
+        return [
+          { index: '1', label: '首页', icon: User, path: '/school-admin/AuthorizationCode' },
+          {
+            index: '2',
+            label: '相关管理',
+            icon: Management,
+            children: [
+              { index: '2-1', label: '教师管理', path: '/school-admin/ManageTeacher' },
+              { index: '2-2', label: '学生管理', path: '/school-admin/ManageStudent' },
+            ],
+          },
+        ];
+
+      default:
             return [];
     }
 });

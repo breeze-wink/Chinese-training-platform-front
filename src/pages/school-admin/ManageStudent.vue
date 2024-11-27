@@ -16,14 +16,14 @@
           <el-button type="warning" @click="resetSearch">重置</el-button>
         </div>
 
-        <el-table :data="filteredData" style="width: 100%; margin-top: 20px;">
+        <!-- 表格显示数据 -->
+        <el-table :data="paginatedData" style="width: 100%; margin-top: 20px;">
           <el-table-column prop="id" label="序号" width="80"></el-table-column>
-          <el-table-column prop="name" label="姓名"></el-table-column>
-          <el-table-column prop="email" label="邮箱"></el-table-column>
+          <el-table-column prop="name" label="姓名" width="150"></el-table-column> <!-- Shortened width for name -->
+          <el-table-column prop="email" label="邮箱" width="250"></el-table-column> <!-- Increased width for email -->
           <el-table-column prop="username" label="用户名"></el-table-column>
           <el-table-column prop="grade" label="年级"></el-table-column>
           <el-table-column prop="schoolId" label="学校ID"></el-table-column>
-
 
           <el-table-column label="操作">
             <template #default="{ row }">
@@ -32,13 +32,14 @@
           </el-table-column>
         </el-table>
 
+        <!-- 分页 -->
         <el-pagination
             style="margin-top: 20px;"
             @current-change="handlePageChange"
             :current-page="currentPage"
             :page-size="pageSize"
             layout="prev, pager, next"
-            :total="totalItems"
+            :total="filteredData.length"
         />
       </div>
     </div>
@@ -46,67 +47,79 @@
 </template>
 
 <script setup>
-import {ref, computed, onMounted} from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import {ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination} from 'element-plus';
+import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination } from 'element-plus';
 import axios from 'axios';
+import { useStore } from 'vuex'; // 使用 Vuex 进行状态管理
+
+// 获取 Vuex 状态
+const store = useStore();
+
+// 计算属性获取用户 ID (动态获取)
+const adminId = computed(() => store.state.user.id);
 
 // 定义变量
-
-onMounted(async () => {
-  await getStudents();
-});
 const search = ref('');
 const currentPage = ref(1);
-const pageSize = ref(10);
+const pageSize = ref(10);  // 每页显示 7 行
 const totalItems = ref(0);
 const students = ref([]);
-const adminId = 9; // 默认管理员ID为9
-
-
 
 // 获取学生数据
 const getStudents = async () => {
   try {
-    const response = await axios.get(`/api/school-admin/${adminId}/query-all-students`);
+    const response = await axios.get(`/api/school-admin/${adminId.value}/query-all-students`);
     if (response.status === 200 && response.data.message === '全校学生信息查询成功') {
       // 更新学生列表和总数
       students.value = response.data.data;
       totalItems.value = response.data.data.length;
     } else {
       // 如果响应不符合预期，提示用户
-      ElMessage({message: '学生账号信息查询失败：' + response.data.message, type: 'error'});
+      ElMessage({ message: '学生账号信息查询失败：' + response.data.message, type: 'error' });
     }
   } catch (error) {
     // 捕获错误并显示提示
     console.error(error);
-    ElMessage({message: '获取学生信息失败，请稍后再试', type: 'error'});
+    ElMessage({ message: '获取学生信息失败，请稍后再试', type: 'error' });
   }
 };
 
+// 页面加载时获取学生数据
+onMounted(() => {
+  getStudents(); // 使用动态的 adminId 获取信息
+});
 
+// 过滤后的数据
 const filteredData = computed(() => {
   return students.value.filter(student =>
       student.name && student.name.includes(search.value)
   );
 });
 
+// 根据当前页和每页的行数来获取显示的数据
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredData.value.slice(start, end);
+});
+
 // 查询学生
 const searchStudent = () => {
-  ElMessage({message: '查询成功', type: 'success'});
+  ElMessage({ message: '查询成功', type: 'success' });
 };
 
 // 重置搜索
 const resetSearch = () => {
   search.value = '';
-  ElMessage({message: '重置成功', type: 'success'});
+  ElMessage({ message: '重置成功', type: 'success' });
 };
 
 // 删除学生
 const deleteStudent = (student) => {
   students.value = students.value.filter(s => s.id !== student.id);
-  ElMessage({message: '删除成功', type: 'success'});
+  ElMessage({ message: '删除成功', type: 'success' });
 };
 
 // 处理分页变化
