@@ -13,6 +13,13 @@ import UploadCombinedQuestion from "@/pages/Teacher/UploadCombinedQuestion.vue"
 //知识点
 import KnowledgePoint from '@/pages/system-admin/KnowledgePoint.vue';
 import CourseStandard from '@/pages/system-admin/CourseStandard.vue';
+import name from '@/pages/system-admin/name.vue';
+import GenerateSchadm from '@/pages/system-admin/GenerateSchadm.vue';
+
+//学管
+import ManageStudent from '@/pages/school-admin/ManageStudent.vue';
+import ManageTeacher from '@/pages/school-admin/ManageTeacher.vue';
+import AuthorizationCode from '@/pages/school-admin/AuthorizationCode.vue';
 
 // 学生
 import StudentPersonalInfo from '../pages/Student/PersonalInfo.vue';
@@ -23,6 +30,7 @@ import QuestionOptions from '@/pages/Student/QuestionOptions.vue';
 import AnswerPractice from "@/pages/Student/AnswerPractice.vue";
 import AnswerDetail from "@/pages/Student/AnswerDetail.vue";
 import ManageTest from "@/pages/Student/ManageTest.vue";
+import AnswerTemporary from "@/pages/Student/AnswerTemporary.vue";
 
 
 const routes = [
@@ -79,6 +87,14 @@ const routes = [
     //系统管理员
     { path: '/system-admin/KnowledgePoint', component: KnowledgePoint },
     { path: '/system-admin/CourseStandard', component: CourseStandard },
+    { path: '/system-admin/name', name:'name',component: name},
+    { path: '/system-admin/GenerateSchadm',component: GenerateSchadm},
+
+    // 学管
+    { path: '/school-admin/ManageStudent', component: ManageStudent },
+    { path: '/school-admin/Manageteacher', component: ManageTeacher },
+    { path: '/school-admin/authorization-code', name:'AuthorizationCode',component: AuthorizationCode },
+
 
     // 学生的个人页面
     { path: '/student/personal-info', name: 'StudentPersonalInfo',component: StudentPersonalInfo},
@@ -105,6 +121,17 @@ const routes = [
         name: 'AnswerDetail',
         component: AnswerDetail,
         props: true
+    },
+    {
+        path: '/student/answer-temporary',
+        name: 'AnswerTemporary',
+        component: AnswerTemporary,
+        props: route => ({
+            practiceId: route.query.practiceId,
+            questions: route.query.questions,
+            mode: route.query.mode,
+            practiceName: route.query.practiceName,
+        }),
     },
     // 试卷管理
     { path: '/student/manage-test', name: 'ManageTest', component: ManageTest},

@@ -79,13 +79,11 @@ export default {
             const groups = {};
             this.knowledgePoints.forEach(item => {
                 const type = item.type; // 直接使用字符串类型的 type
-                console.log('Processing type:', type); // 调试信息
                 if (!groups[type]) {
                     groups[type] = [];
                 }
                 groups[type].push(item);
             });
-            console.log('分组后的知识点数据:', groups); // 调试信息
             return groups;
         }
     },
@@ -101,16 +99,12 @@ export default {
                 const response = await axios.get(`/api/student/${this.studentId}/practice/get-knowledge-points`);
                 if (response.status === 200) {
                     const rawKnowledgePoints = response.data.data;
-                    console.log('原始知识点数据:', rawKnowledgePoints); // 调试信息
                     this.knowledgePoints = rawKnowledgePoints.map(item => ({
                         id: item.id,
                         name: item.name,
                         description: item.description,
-
                         type: item.type // 保持 type 为字符串
-
                     }));
-                    console.log('处理后的知识点数据:', this.knowledgePoints); // 调试信息
                 } else {
                     console.error('获取知识点失败', response.data.message);
                 }
@@ -128,24 +122,21 @@ export default {
         async generateAutoQuestions() {
             try {
                 const url = `/api/student/${this.studentId}/practice/generate-auto`;
-                console.log('Request URL:', url); // 打印请求 URL
                 const response = await axios.post(url, {}, {
                     headers: {
                         'Content-Type': 'application/json',
                     },
                 });
-                console.log('题目发送成功', response.data);
-                const practiceId = response.data.practiceId; // 提取 practiceId
+                const practiceId = response.data.practiceId;
                 if (practiceId !== undefined) {
-                    console.log('PracticeId:', practiceId); // 打印 practiceId
                     const questions = response.data.data;
                     this.$router.push({
                         name: 'AnswerPractice',
                         query: {
-                            practiceId: practiceId, // 不需要转换为字符串
+                            practiceId: practiceId,
                             questions: encodeURIComponent(JSON.stringify(questions)),
                             mode: 'auto',
-                            practiceName: '自动练习' // 添加练习名称
+                            practiceName: '自动练习'
                         },
                     });
                 } else {
@@ -158,40 +149,27 @@ export default {
         async confirmSelection() {
             const requestBody = {
                 num: this.questionNum,
-
-                name: this.practiceName, // 使用用户输入的练习名称
-
+                name: this.practiceName,
                 data: this.checkList.map(knowledgePointId => ({ knowledgePointId })),
             };
 
             try {
                 const url = `/api/student/${this.studentId}/practice/generate-define`;
-                console.log('Request URL:', url); // 打印请求 URL
-                console.log('Request Body:', requestBody); // 打印请求体
                 const response = await axios.post(url, requestBody, {
                     headers: {
                         'Content-Type': 'application/json',
                     },
                 });
-                console.log('题目发送成功', response.data);
-                const practiceId = response.data.practiceId; // 提取 practiceId
+                const practiceId = response.data.practiceId;
                 if (practiceId !== undefined) {
-                    console.log('PracticeId:', practiceId); // 打印 practiceId
                     const questions = response.data.data;
-
-                    // 确保 questions 是一个有效的 JSON 字符串
-                    const questionsString = JSON.stringify(questions);
-                    console.log('Questions String:', questionsString); // 打印 questions 字符串
-
                     this.$router.push({
                         name: 'AnswerPractice',
                         query: {
-                            practiceId: practiceId, // 不需要转换为字符串
-                            questions: encodeURIComponent(questionsString),
+                            practiceId: practiceId,
+                            questions: encodeURIComponent(JSON.stringify(questions)),
                             mode: 'custom',
-
-                            practiceName: this.practiceName // 使用用户输入的练习名称
-
+                            practiceName: this.practiceName
                         },
                     });
                 } else {
