@@ -173,13 +173,14 @@
                             <div class="tab-content">
                                 <el-form :model="essayForm" label-width="80px">
                                     <el-form-item label="题目">
-                                        <quill-editor
-                                                v-model="questionForms.ESSAY.problem"
-
-                                                placeholder="请输入问题内容"
-                                                class="quill-editor"
-                                                :options="quillOptions"
-                                        ></quill-editor>
+                                        <div style="max-width: 750px; overflow: hidden;">
+                                            <quill-editor
+                                                    v-model="questionForms.SHORT_ANSWER.problem"
+                                                    placeholder="请输入问题内容"
+                                                    class="quill-editor"
+                                                    :options="quillOptions"
+                                            ></quill-editor>
+                                        </div>
 
                                     </el-form-item>
                                     <el-form-item label="解析">
