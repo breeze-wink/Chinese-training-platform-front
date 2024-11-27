@@ -17,14 +17,32 @@ export default createStore({
             state.user.id = user.id;
             state.user.role = user.role;
             state.isAuthenticated = true; // 用户登录后，设置为已认证
+
+            // 保存用户信息到 localStorage
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('isAuthenticated', 'true');
+
         },
         // 清除用户信息（用于注销等操作）
         clearUser(state) {
             state.user.id = null;
             state.user.role = null;
             state.isAuthenticated = false;
+
+            // 清除 localStorage 中的用户信息
+            localStorage.removeItem('user');
+            localStorage.removeItem('isAuthenticated');
+        },
+        initializeUser(state) {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+            if (user && isAuthenticated) {
+              state.user = user;
+              state.isAuthenticated = true;
+            }
         }
     },
+
     actions: {
         // 登录操作，通常需要从服务器获取用户信息后调用
         login({ commit }, user) {
@@ -38,6 +56,9 @@ export default createStore({
             await router.push('/');
             console.log('导航成功');
 
+        },
+        initializeUser({ commit }) {
+            commit('initializeUser');
         }
     },
     getters: {
