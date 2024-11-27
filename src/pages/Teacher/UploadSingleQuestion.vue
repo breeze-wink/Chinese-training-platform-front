@@ -18,8 +18,8 @@
                                 <el-form-item label="问题"  class="form-item-margin" >
                                     <div style="max-width: 750px; overflow: hidden;">
                                     <quill-editor
-                                            v-model="questionForms.CHOICE.problem"
-                                            @input="updateProblem"
+                                            :modelValue="questionForms.CHOICE.problem"
+                                            @update:modelValue="updateProblem"
                                             placeholder="请输入问题内容"
                                             class="quill-editor"
                                             :options="quillOptions"
@@ -43,11 +43,8 @@
                                                 ></el-input>
                                             </div>
                                         </el-col>
-
                                     </el-row>
                                 </el-form-item>
-
-
 
                                 <el-form-item label="答案">
                                     <el-select v-model="questionForms.CHOICE.answer" placeholder="请选择答案"  class="answer-select">
@@ -63,7 +60,6 @@
                                 <!-- 所属知识点下拉框 -->
 
                                 <KnowledgePointSelector @point-selected="onPointSelected" />
-
 
                                 <el-form-item label="解析">
                                     <el-input
@@ -84,12 +80,16 @@
                             <div class="tab-content">
                                 <el-form :model="questionForms.FILL_IN_THE_BLANK" label-width="80px">
                                     <el-form-item label="问题" class="form-item-margin">
-                                        <el-input
-                                                v-model="questionForms.FILL_IN_THE_BLANK.problem"
-                                                type="textarea"
-                                                placeholder="请输入问题"
-                                                :autosize="{ minRows: 3, maxRows: 10 }"
-                                        ></el-input>
+                                        <div style="max-width: 750px; overflow: hidden;">
+                                            <quill-editor
+                                                    v-model="questionForms.FILL_IN_THE_BLANK.problem"
+
+                                                    placeholder="请输入问题内容"
+                                                    class="quill-editor"
+                                                    :options="quillOptions"
+                                            ></quill-editor>
+                                        </div>
+
                                     </el-form-item>
                                     <el-form-item label="填空个数" class="form-item-spacing">
                                         <el-input-number
@@ -132,12 +132,15 @@
                             <div class="tab-content">
                                 <el-form :model="questionForms.SHORT_ANSWER" label-width="80px">
                                     <el-form-item label="问题" class="form-item-spacing">
-                                        <el-input
-                                                v-model="questionForms.SHORT_ANSWER.problem"
-                                                type="textarea"
-                                                placeholder="请输入问题"
-                                                :autosize="{ minRows: 3, maxRows: 10 }"
-                                        ></el-input>
+                                        <div style="max-width: 750px; overflow: hidden;">
+                                            <quill-editor
+                                                    v-model="questionForms.SHORT_ANSWER.problem"
+
+                                                    placeholder="请输入问题内容"
+                                                    class="quill-editor"
+                                                    :options="quillOptions"
+                                            ></quill-editor>
+                                        </div>
                                     </el-form-item>
                                     <el-form-item label="答案" class="form-item-spacing">
                                         <el-input
@@ -170,12 +173,14 @@
                             <div class="tab-content">
                                 <el-form :model="essayForm" label-width="80px">
                                     <el-form-item label="题目">
-                                        <el-input
-                                                v-model="essayForm.title"
-                                                placeholder="请输入作文题目"
-                                                type="textarea"
-                                                :autosize="{ minRows: 3, maxRows: 10 }"
-                                        ></el-input>
+                                        <quill-editor
+                                                v-model="questionForms.ESSAY.problem"
+
+                                                placeholder="请输入问题内容"
+                                                class="quill-editor"
+                                                :options="quillOptions"
+                                        ></quill-editor>
+
                                     </el-form-item>
                                     <el-form-item label="解析">
                                         <el-input
@@ -220,7 +225,7 @@
 <script setup>
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import {computed, nextTick, onMounted, ref} from 'vue';
+import {computed, nextTick, onMounted, reactive, ref} from 'vue';
 import axios from "axios";
 import {useStore} from "vuex";
 import KnowledgePointSelector from '@/pages/Teacher/TeacherPublicComponent/KnowledgePointSelector.vue'; // 引入知识点选择组件
@@ -240,9 +245,9 @@ const onPointSelected = (pointId) => {
 
 
 
-const questionForms = ref({
+const questionForms = reactive({
     CHOICE: {
-        problem: '', // 问题描述
+        problem: null, // 问题描述
         options: ['', '', '', ''], // 选项
         answer: null, // 正确答案
         explanation: '', // 解析
@@ -258,12 +263,13 @@ const questionForms = ref({
         answer: '', // 简答答案
         explanation: '', // 解析
     },
+    ESSAY: {
+        problem: '', // 问题描述
+        explanation: '', // 解析
+    },
 });
 
-const updateProblem = (value) => {
-    questionForms.CHOICE.problem = value;
-    console.log(questionForms.CHOICE.problem);
-};
+
 
 // 更新填空答案数组
 const updateFillAnswers = (count) => {
@@ -280,27 +286,9 @@ const essayForm = ref({
 const handleUploadSuccess = (response, file) => {
     console.log('范文上传成功:', response, file);
 };
-// 表单验证
-const validateForm = () => {
-    let isValid = true;
-    if (activeTab.value === 'choice') {
-        if (!questionForms.CHOICE.problem ||
-                !questionForms.CHOICE.options.every(opt => opt.trim()) ||
-                questionForms.CHOICE.answer === null) {
-            isValid = false;
-        }
-    } else if (activeTab.value === 'FILL_IN_THE_BLANK') {
-        if (!questionForms.FILL_IN_THE_BLANK.problem ||
-                questionForms.FILL_IN_THE_BLANK.fillCount <= 0 ||
-                questionForms.FILL_IN_THE_BLANK.answers.some(ans => !ans.trim())) {
-            isValid = false;
-        }
-    } else if (activeTab.value === 'SHORT_ANSWER') {
-        if (!questionForms.SHORT_ANSWER.problem) {
-            isValid = false;
-        }
-    }
-    return isValid;
+// 手动更新问题描述
+const updateProblem = (value) => {
+    questionForms.CHOICE.problem = value;
 };
 // 提交函数
 const submitQuestion = async () => {
@@ -317,7 +305,8 @@ const submitQuestion = async () => {
 
     // 获取当前激活标签的表单数据
     const currentForm = questionForms.value[activeTab.value];
-    console.log(currentForm);
+    console.log(currentForm.problem);
+
 
     // 校验通用字段
     if (!currentForm.problem) {
