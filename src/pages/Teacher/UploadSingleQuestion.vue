@@ -12,16 +12,19 @@
                 <h2>单题上传</h2>
                 <el-tabs v-model="activeTab">
                     <!-- 选择题标签页 -->
-                    <el-tab-pane label="选择题" name="choice">
+                    <el-tab-pane label="选择题" name="CHOICE">
                         <div class="tab-content">
                             <el-form :model="questionForms.CHOICE" label-width="80px">
                                 <el-form-item label="问题"  class="form-item-margin" >
+                                    <div style="max-width: 750px; overflow: hidden;">
                                     <quill-editor
                                             v-model="questionForms.CHOICE.problem"
+                                            @input="updateProblem"
                                             placeholder="请输入问题内容"
                                             class="quill-editor"
                                             :options="quillOptions"
                                     ></quill-editor>
+                                    </div>
                                 </el-form-item>
                                 <el-form-item>
                                     <el-row>
@@ -225,7 +228,7 @@ import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import {ElMessage} from "element-plus";
 
-const activeTab = ref('choice'); // 当前激活的标签页
+const activeTab = ref('CHOICE'); // 当前激活的标签页
 const store = useStore();
 const teacherId = computed(() => store.state.user.id);
 const knowledgePointSelector = ref(null);
@@ -235,7 +238,8 @@ const onPointSelected = (pointId) => {
     KnowledgePointId.value = pointId;
 };
 
-// 配置 Quill 编辑器的选项
+
+
 const questionForms = ref({
     CHOICE: {
         problem: '', // 问题描述
@@ -256,6 +260,11 @@ const questionForms = ref({
     },
 });
 
+const updateProblem = (value) => {
+    questionForms.CHOICE.problem = value;
+    console.log(questionForms.CHOICE.problem);
+};
+
 // 更新填空答案数组
 const updateFillAnswers = (count) => {
     questionForms.value.FILL_IN_THE_BLANK.answers = Array.from({ length: count }, () => '');
@@ -271,7 +280,28 @@ const essayForm = ref({
 const handleUploadSuccess = (response, file) => {
     console.log('范文上传成功:', response, file);
 };
-
+// 表单验证
+const validateForm = () => {
+    let isValid = true;
+    if (activeTab.value === 'choice') {
+        if (!questionForms.CHOICE.problem ||
+                !questionForms.CHOICE.options.every(opt => opt.trim()) ||
+                questionForms.CHOICE.answer === null) {
+            isValid = false;
+        }
+    } else if (activeTab.value === 'FILL_IN_THE_BLANK') {
+        if (!questionForms.FILL_IN_THE_BLANK.problem ||
+                questionForms.FILL_IN_THE_BLANK.fillCount <= 0 ||
+                questionForms.FILL_IN_THE_BLANK.answers.some(ans => !ans.trim())) {
+            isValid = false;
+        }
+    } else if (activeTab.value === 'SHORT_ANSWER') {
+        if (!questionForms.SHORT_ANSWER.problem) {
+            isValid = false;
+        }
+    }
+    return isValid;
+};
 // 提交函数
 const submitQuestion = async () => {
     // 确保子组件已挂载完成
@@ -287,6 +317,7 @@ const submitQuestion = async () => {
 
     // 获取当前激活标签的表单数据
     const currentForm = questionForms.value[activeTab.value];
+    console.log(currentForm);
 
     // 校验通用字段
     if (!currentForm.problem) {
@@ -335,6 +366,21 @@ const submitQuestion = async () => {
 onMounted(async () => {
     await nextTick(); // 确保 DOM 完全挂载
 });
+
+const quillOptions = {
+    placeholder: '请输入问题内容',
+    theme: 'snow',
+    modules: {
+        toolbar: [
+            [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['bold', 'italic', 'underline'],
+            [{ 'align': [] }],
+            ['link']
+        ]
+    }
+};
+
 </script>
 
 <style scoped>
