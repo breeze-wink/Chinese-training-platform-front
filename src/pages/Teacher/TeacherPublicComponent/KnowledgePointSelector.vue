@@ -56,14 +56,19 @@ const knowledgePoints = ref({}); // 知识点数据（分类为键，知识点�
 const store = useStore();
 const teacherId = computed(() => store.state.user.id);
 
+
+const emit = defineEmits(['point-selected']);
+
 // 初始化知识点数据
 const fetchKnowledgePoints = async () => {
     try {
         const response = await axios.get(`/api/teacher/${teacherId.value}/list-knowledge-point`);
+
         if (response.status === 200 && response.data) {
             const responseData = response.data.knowledgePoints || {};
             knowledgePoints.value = responseData;
             categories.value = Object.keys(responseData); // 提取所有分类
+            console.log(knowledgePoints.value);
         } else {
             console.error('获取知识点失败：', response.data.message);
         }
@@ -94,7 +99,15 @@ defineExpose({
 
 // 监听知识点 ID 的变化
 watch(selectedPointId, updateSelectedPointName);
-
+// 监听知识点选择，更新名称并触发事件
+watch(selectedPointId, (newVal) => {
+    if (newVal !== null) {
+        console.log('选择的知识点 ID:', newVal);
+        // 通知父组件
+        emit('point-selected', newVal);
+    }
+    updateSelectedPointName();
+});
 // 初始加载知识点
 fetchKnowledgePoints();
 
