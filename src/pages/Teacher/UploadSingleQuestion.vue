@@ -239,6 +239,12 @@ const onPointSelected = (pointId) => {
 };
 
 
+import { ImageDrop } from 'quill-image-drop-module'
+Quill.register('modules/imageDrop', ImageDrop)
+
+import BlotFormatter from 'quill-blot-formatter/dist/BlotFormatter';
+Quill.register('modules/blotFormatter', BlotFormatter)
+
 
 const questionForms = ref({
     CHOICE: {
@@ -386,9 +392,19 @@ const quillOptions = {
             [{ 'align': [] }],
             ['link', 'image', 'video'], // 超链接 图片 视频
         ],
-        imageResize: {
-          parchment: Quill.import('parchment'),
-        },
+        blotFormatter: {
+            // overlay: {
+            //    style: {
+            //        border: '2px solid red',
+            //    }
+            // },
+            toolbar: {
+                mainClassName: 'blot-formatter__toolbar'
+            }
+        }
+
+
+
     }
 };
 
