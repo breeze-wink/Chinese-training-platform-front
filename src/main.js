@@ -21,14 +21,22 @@ app.use(ElementPlus);
 app.use(router);
 // 使用 Vuex store
 app.use(store);
-
-
-// 注册 Element Plus Icons
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component);
 }
+// 在 Vuex 初始化后恢复用户信息
+async function initializeApp() {
+    // 在应用启动时从 localStorage 恢复用户信息
+    await store.dispatch('initializeUser'); // 等待 initializeUser 动作完成
+}
+
+initializeApp().then(() => {
+    app.mount('#app'); // 在初始化完成后再挂载应用
+});
+// 注册 Element Plus Icons
+
 
 // 挂载应用
-app.mount('#app');
+
 
 
