@@ -18,7 +18,6 @@
                 <el-form-item label="问题"  class="form-item-margin" >
                   <div style="max-width: 750px; overflow: hidden;">
                     <quill-editor
-
                         ref="editor"
                         placeholder="请输入问题内容"
                         class="quill-editor"
@@ -500,18 +499,11 @@ const quillOptions = {
       ['link', 'image', 'video'], // 超链接 图片 视频
     ],
     blotFormatter: {
-      // overlay: {
-      //    style: {
-      //        border: '2px solid red',
-      //    }
-      // },
+
       toolbar: {
         mainClassName: 'blot-formatter__toolbar'
       }
     }
-
-
-
   }
 };
 
