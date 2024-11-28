@@ -314,30 +314,26 @@ export default {
             },
 
             async saveEditedUserInfo() {
+                const requestBody = {};
+
+                // 检查哪个字段被编辑并添加到请求体
+                if (this.editNickname) {
+                    requestBody.username = this.studentInfo.username;
+                }
+                if (this.editName) {
+                    requestBody.name = this.studentInfo.name;
+                }
+                if (this.editGrade) {
+                    requestBody.grade = this.studentInfo.grade;
+                }
+
+                // 如果没有任何字段被编辑，则不发送请求
+                if (Object.keys(requestBody).length === 0) {
+                    ElMessage.warning("没有需要更新的信息");
+                    return;
+                }
+
                 try {
-                    // 构建请求体
-                    const requestBody = {
-                        username: this.studentInfo.username,
-                        name: this.studentInfo.name,
-                        grade: this.studentInfo.grade
-                    };
-
-                    if (typeof requestBody.grade === 'string') {
-                        switch (requestBody.grade) {
-                            case '七年级':
-                                requestBody.grade = 7;
-                                break;
-                            case '八年级':
-                                requestBody.grade = 8;
-                                break;
-                            case '九年级':
-                                requestBody.grade = 9;
-                                break;
-                            default:
-                                requestBody.grade = null; // 或者其他默认值
-                        }
-                    }
-
                     // 发送请求
                     const response = await axios.post(`/api/student/${this.studentInfo.accountId}/editInformation`, requestBody, {
                         headers: {
@@ -350,9 +346,15 @@ export default {
                         const responseData = response.data;
                         if (responseData.message === "个人信息修改成功") {
                             // 更新成功，更新本地数据
-                            this.studentInfo.username = responseData.data.username;
-                            this.studentInfo.name = responseData.data.name;
-                            this.studentInfo.grade = responseData.data.grade;
+                            if (requestBody.username) {
+                                this.studentInfo.username = responseData.data.username;
+                            }
+                            if (requestBody.name) {
+                                this.studentInfo.name = responseData.data.name;
+                            }
+                            if (requestBody.grade) {
+                                this.studentInfo.grade = responseData.data.grade;
+                            }
                             ElMessage.success("个人信息更新成功");
                             this.toggleEdit('nickname');
                             this.toggleEdit('name');
@@ -590,13 +592,11 @@ export default {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background: linear-gradient(180deg, #f7f7f7 0%, #eaeaea 100%);
 }
 
 .main-container {
     display: flex;
     flex: 1;
-    padding: 20px;
 }
 
 .content {

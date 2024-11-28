@@ -30,7 +30,7 @@
         </div>
 
         <!-- 考点选择对话框 -->
-        <el-dialog title="考点选择" v-model="dialogVisible" width="50%">
+        <el-dialog title="考点选择" v-model="dialogVisible" width="50%" :close-on-click-modal="false" :before-close="handleClose">
             <el-checkbox-group v-model="checkList">
                 <div v-for="(group, type) in groupedKnowledgePoints" :key="type" class="knowledge-group">
                     <h4 @click="logGroupType(type)">{{ type }}</h4>
@@ -42,11 +42,11 @@
                 </div>
             </el-checkbox-group>
             <span slot="footer" class="dialog-footer">
-        <div class="button-container">
-          <el-button @click="dialogVisible = false" class="submit-button">取 消</el-button>
-          <el-button type="primary" @click="confirmSelection" class="submit-button">确 定</el-button>
-        </div>
-      </span>
+                <div class="button-container">
+                    <el-button @click="dialogVisible = false" class="submit-button">取 消</el-button>
+                    <el-button type="primary" @click="confirmSelection" class="submit-button" :loading="isProcessing">确 定</el-button>
+                </div>
+            </span>
         </el-dialog>
 
         <!-- 加载提示 -->
@@ -162,6 +162,7 @@ export default {
         },
         async confirmSelection() {
             this.isProcessing = true; // 显示加载提示和遮罩层
+            this.dialogVisible = false; // 立即关闭考点选择对话框
 
             const requestBody = {
                 num: this.questionNum,
@@ -195,7 +196,6 @@ export default {
                 console.error('考点和题目发送失败', error.response ? error.response.data : error.message);
             } finally {
                 this.isProcessing = false; // 处理完成后隐藏加载提示和遮罩层
-                this.dialogVisible = false; // 关闭对话框
             }
         },
         logGroupType(type) {
@@ -422,9 +422,3 @@ button:hover {
     100% { transform: rotate(360deg); }
 }
 </style>
-
-
-
-
-
-

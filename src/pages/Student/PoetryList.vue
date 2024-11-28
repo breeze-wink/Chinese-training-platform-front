@@ -170,22 +170,21 @@ export default {
 <style scoped>
 .page-container {
     display: flex;
-    flex-wrap: wrap;
-    grid-template-columns: auto minmax(auto, 800px);
-    gap: 2rem;
+    flex-direction: column;
+    height: 100vh;
 }
 
 .main-container {
     display: flex;
-    flex-grow: 1;
-    flex-basis: calc(100% - 200px); /* 减去 sidebar 宽度 */
+    flex: 1;
 }
 
 /* 主要内容区域 */
 .content {
     background-color: #f4f4f9;
     border-radius: 5px;
-    padding: 2rem;
+    flex: 1;
+    padding: 20px;
 }
 
 /* 古诗词网格布局 */
