@@ -101,7 +101,12 @@
                     </div>
                     <div class="info-item">
                         <label>加入班级：</label>
-                        <el-button @click="showJoinClassModal" class="action-button">加入班级</el-button>
+                        <el-button
+                            @click="showJoinClassModal"
+                            :disabled="isJoinedClass"
+                            class="action-button"
+                            :title="isJoinedClass ? '您已加入班级' : ''"
+                        >{{ isJoinedClass ? '已加入班级' : '加入班级' }}</el-button>
                     </div>
                 </el-card>
             </div>
@@ -169,7 +174,7 @@
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import axios from 'axios';
-import { ElMessage } from 'element-plus';
+import { ElMessageBox, ElMessage } from 'element-plus';
 import { Edit } from '@element-plus/icons-vue';
 import { mapGetters } from 'vuex';
 
@@ -228,6 +233,7 @@ export default {
             isJoinClassModalVisible: false,
             inviteCode: '',
             joinClassResultMessage: '',
+            isJoinedClass: false,
 
             passwordRules: {
                 oldPassword: [
@@ -261,231 +267,243 @@ export default {
             return this.getUserId;
         },
     },
-        methods: {
-            async fetchStudentInfo() {
-                const accountId = this.accountId;
+    methods: {
+        async fetchStudentInfo() {
+            const accountId = this.accountId;
 
-                if (!accountId) {
-                    this.showError('账号ID必须是一个有效的数字。');
-                    return;
-                }
+            if (!accountId) {
+                this.showError('账号ID必须是一个有效的数字。');
+                return;
+            }
 
-                console.log('Fetching student info for account ID:', accountId); // 打印 accountId 以确认其值
+            console.log('Fetching student info for account ID:', accountId); // 打印 accountId 以确认其值
 
-                try {
-                    const response = await axios.get(`/api/student/${accountId}`);
-                    if (response.status === 200) {
-                        const studentData = response.data.data;
-                        this.studentInfo = {
-                            ...studentData,
-                            class: studentData.className || '', // 确保 className 存在
-                            accountId: accountId, // 不需要转换为字符串，因为 accountId 已经是字符串
-                            name: studentData.name
-                        };
-                    } else {
-                        console.error('获取学生信息失败: 未知状态码', response.status);
-                        this.showError(`获取学生信息失败: 未知状态码 ${response.status}`);
-                    }
-                } catch (error) {
-                    if (error.response && error.response.status === 404) {
-                        console.error('获取学生信息失败: 用户信息未找到');
-                        this.showError('用户信息未找到，请检查账号ID是否正确。');
-                    } else {
-                        console.error('获取学生信息失败:', error);
-                        this.showError('获取学生信息时发生错误，请稍后再试。');
-                    }
-                }
-            },
+            try {
+                const response = await axios.get(`/api/student/${accountId}`);
+                if (response.status === 200) {
+                    const studentData = response.data.data;
+                    this.studentInfo = {
+                        ...studentData,
+                        class: studentData.className || '', // 确保 className 存在
+                        accountId: accountId, // 不需要转换为字符串，因为 accountId 已经是字符串
+                        name: studentData.name
+                    };
 
-            showError(message) {
-                // 显示错误提示的方法
-                this.errorMessage = message;
-                ElMessage.error(message);
-            },
-
-            toggleEdit(field) {
-                if (field === 'nickname') {
-                    this.editNickname = !this.editNickname;
-                } else if (field === 'name') { // 添加对姓名的编辑支持
-                    this.editName = !this.editName;
-                } else if (field === 'grade') {
-                    this.editGrade = !this.editGrade;
-                }
-            },
-
-            async saveEditedUserInfo() {
-                const requestBody = {};
-
-                // 检查哪个字段被编辑并添加到请求体
-                requestBody.username = this.studentInfo.username;
-                requestBody.name = this.studentInfo.name;
-                requestBody.grade = this.studentInfo.grade;
-
-                // 如果没有任何字段被编辑，则不发送请求
-                if (Object.keys(requestBody).length === 0) {
-                    ElMessage.warning("没有需要更新的信息");
-                    return;
-                }
-
-                try {
-                    // 发送请求
-                    const response = await axios.post(`/api/student/${this.studentInfo.accountId}/editInformation`, requestBody, {
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (response.status === 200) {
-                        // 更新成功
-                        const responseData = response.data;
-                        if (responseData.message === "个人信息修改成功") {
-                            // 更新成功，更新本地数据
-                            this.studentInfo.username = responseData.data.username;
-                            this.studentInfo.name = responseData.data.name;
-                            this.studentInfo.grade = responseData.data.grade;
-                            ElMessage.success("个人信息更新成功");
-                            if(this.editGrade){
-                              this.toggleEdit('grade');
-                            }
-                        } else {
-                            // 后端返回的其他消息
-                            ElMessage.warning(responseData.message);
-                        }
-                    } else {
-                        // 请求失败
-                        ElMessage.error("个人信息更新失败");
-                    }
-                } catch (error) {
-                    console.error("个人信息更新出错:", error);
-                    ElMessage.error("个人信息更新过程中出现错误，请稍后再试");
-                }
-            },
-
-            showChangeEmailModal() {
-                this.isChangeEmailModalVisible = true;
-            },
-            hideChangeEmailModal() {
-                this.isChangeEmailModalVisible = false;
-                this.emailForm.newEmail = '';
-                this.emailForm.verificationCode = '';
-                this.errorMessage = '';
-                this.successMessage = '';
-            },
-            async sendVerificationCode() {
-                try {
-                    const response = await axios.post(`/api/student/${this.studentInfo.accountId}/change-email/send-verification`, {
-                        email: this.emailForm.newEmail
-                    }, {
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    if (response.status === 200) {
-                        this.successMessage = '验证码已发送，请查收您的邮箱';
-                    }
-                } catch (error) {
-                    this.errorMessage = '验证码发送失败，请稍后再试';
-                    console.error('验证码发送失败:', error.response ? error.response.data : error.message);
-                }
-            },
-            async handleChangeEmail() {
-                this.$refs.emailFormRef.validate(async (valid) => {
-                    if (valid) {
-                        try {
-                            const response = await axios.post(`/api/student/${this.studentInfo.accountId}/changeEmail`, {
-                                email: this.emailForm.newEmail,
-                                verificationCode: this.emailForm.verificationCode
-                            }, {
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                }
-                            });
-
-                            if (response.status === 200) {
-                                this.successMessage = '邮箱更换成功';
-                                this.studentInfo.email = this.emailForm.newEmail;
-                                this.hideChangeEmailModal();
-                            } else {
-                                this.errorMessage = '邮箱更换失败，状态码: ' + response.status;
-                                if (response.data && response.data.message) {
-                                    this.errorMessage += ' - ' + response.data.message;
-                                }
-                            }
-                        } catch (error) {
-                            this.errorMessage = '邮箱更换失败，请稍后再试';
-                            if (error.response && error.response.data && error.response.data.message) {
-                                this.errorMessage += ' - ' + error.response.data.message;
-                            }
-                            console.error('邮箱更换失败:', error.response ? error.response.data : error.message);
-                        }
-                    } else {
-                        console.log('表单验证失败');
-                        return false;
-                    }
-                });
-            },
-
-            showChangePasswordModal() {
-                console.log('showChangePasswordModal called');
-                this.isChangePasswordModalVisible = true;
-            },
-            hideChangePasswordModal() {
-                console.log('hideChangePasswordModal called');
-                this.isChangePasswordModalVisible = false;
-            },
-            resetPasswordForm() {
-                console.log('resetPasswordForm called');
-                this.passwordForm = {
-                    oldPassword: '',
-                    newPassword: '',
-                    confirmNewPassword: ''
-                };
-                // 清理错误和成功消息
-                this.passwordErrorMessage = '';
-                this.passwordSuccessMessage = '';
-            },
-            validateConfirmPassword(rule, value, callback) {
-                if (value !== this.passwordForm.newPassword) {
-                    callback(new Error('两次输入的新密码不一致'));
+                    // 检查学生是否已经加入了班级
+                    this.isJoinedClass = Boolean(studentData.className);
                 } else {
-                    callback();
+                    console.error('获取学生信息失败: 未知状态码', response.status);
+                    this.showError(`获取学生信息失败: 未知状态码 ${response.status}`);
                 }
-            },
-            async handlePasswordChange() {
-                this.$refs.passwordForm.validate(async (valid) => {
-                    if (valid) {
-                        try {
-                            const response = await axios.post(
-                                `/api/student/${this.studentInfo.accountId}/change-password`,
-                                {
-                                    oldPassword: this.passwordForm.oldPassword,
-                                    newPassword: this.passwordForm.newPassword,
-                                },
-                                {
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                }
-                            );
+            } catch (error) {
+                if (error.response && error.response.status === 404) {
+                    console.error('获取学生信息失败: 用户信息未找到');
+                    this.showError('用户信息未找到，请检查账号ID是否正确。');
+                } else {
+                    console.error('获取学生信息失败:', error);
+                    this.showError('获取学生信息时发生错误，请稍后再试。');
+                }
+            }
+        },
 
-                            if (response.status === 200) {
-                                this.passwordSuccessMessage = '密码更改成功';
-                                this.hideChangePasswordModal();
-                            } else {
-                                this.passwordErrorMessage = '密码更改失败，请稍后再试';
-                            }
-                        } catch (error) {
-                            this.passwordErrorMessage = '密码更改失败，请检查网络连接或稍后再试';
-                            console.error('密码更改失败:', error.response ? error.response.data : error.message);
-                        }
-                    } else {
-                        console.log('表单验证失败');
-                        return false;
+        showError(message) {
+            // 显示错误提示的方法
+            this.errorMessage = message;
+            ElMessage.error(message);
+        },
+
+        toggleEdit(field) {
+            if (field === 'nickname') {
+                this.editNickname = !this.editNickname;
+            } else if (field === 'name') { // 添加对姓名的编辑支持
+                this.editName = !this.editName;
+            } else if (field === 'grade') {
+                this.editGrade = !this.editGrade;
+            }
+        },
+
+        async saveEditedUserInfo() {
+            const requestBody = {};
+
+            // 检查哪个字段被编辑并添加到请求体
+            requestBody.username = this.studentInfo.username;
+            requestBody.name = this.studentInfo.name;
+            requestBody.grade = this.studentInfo.grade;
+
+            // 如果没有任何字段被编辑，则不发送请求
+            if (Object.keys(requestBody).length === 0) {
+                ElMessage.warning("没有需要更新的信息");
+                return;
+            }
+
+            try {
+                // 发送请求
+                const response = await axios.post(`/api/student/${this.studentInfo.accountId}/editInformation`, requestBody, {
+                    headers: {
+                        'Content-Type': 'application/json'
                     }
                 });
-            },
 
-            async requestAccountDeactivation() {
+                if (response.status === 200) {
+                    // 更新成功
+                    const responseData = response.data;
+                    if (responseData.message === "个人信息修改成功") {
+                        // 更新成功，更新本地数据
+                        this.studentInfo.username = responseData.data.username;
+                        this.studentInfo.name = responseData.data.name;
+                        this.studentInfo.grade = responseData.data.grade;
+                        ElMessage.success("个人信息更新成功");
+                        if (this.editGrade) {
+                            this.toggleEdit('grade');
+                        }
+                    } else {
+                        // 后端返回的其他消息
+                        ElMessage.warning(responseData.message);
+                    }
+                } else {
+                    // 请求失败
+                    ElMessage.error("个人信息更新失败");
+                }
+            } catch (error) {
+                console.error("个人信息更新出错:", error);
+                ElMessage.error("个人信息更新过程中出现错误，请稍后再试");
+            }
+        },
+
+        showChangeEmailModal() {
+            this.isChangeEmailModalVisible = true;
+        },
+        hideChangeEmailModal() {
+            this.isChangeEmailModalVisible = false;
+            this.emailForm.newEmail = '';
+            this.emailForm.verificationCode = '';
+            this.errorMessage = '';
+            this.successMessage = '';
+        },
+        async sendVerificationCode() {
+            try {
+                const response = await axios.post(`/api/student/${this.studentInfo.accountId}/change-email/send-verification`, {
+                    email: this.emailForm.newEmail
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (response.status === 200) {
+                    this.successMessage = '验证码已发送，请查收您的邮箱';
+                }
+            } catch (error) {
+                this.errorMessage = '验证码发送失败，请稍后再试';
+                console.error('验证码发送失败:', error.response ? error.response.data : error.message);
+            }
+        },
+        async handleChangeEmail() {
+            this.$refs.emailFormRef.validate(async (valid) => {
+                if (valid) {
+                    try {
+                        const response = await axios.post(`/api/student/${this.studentInfo.accountId}/changeEmail`, {
+                            email: this.emailForm.newEmail,
+                            verificationCode: this.emailForm.verificationCode
+                        }, {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (response.status === 200) {
+                            this.successMessage = '邮箱更换成功';
+                            this.studentInfo.email = this.emailForm.newEmail;
+                            this.hideChangeEmailModal();
+                        } else {
+                            this.errorMessage = '邮箱更换失败，状态码: ' + response.status;
+                            if (response.data && response.data.message) {
+                                this.errorMessage += ' - ' + response.data.message;
+                            }
+                        }
+                    } catch (error) {
+                        this.errorMessage = '邮箱更换失败，请稍后再试';
+                        if (error.response && error.response.data && error.response.data.message) {
+                            this.errorMessage += ' - ' + error.response.data.message;
+                        }
+                        console.error('邮箱更换失败:', error.response ? error.response.data : error.message);
+                    }
+                } else {
+                    console.log('表单验证失败');
+                    return false;
+                }
+            });
+        },
+
+        showChangePasswordModal() {
+            console.log('showChangePasswordModal called');
+            this.isChangePasswordModalVisible = true;
+        },
+        hideChangePasswordModal() {
+            console.log('hideChangePasswordModal called');
+            this.isChangePasswordModalVisible = false;
+        },
+        resetPasswordForm() {
+            console.log('resetPasswordForm called');
+            this.passwordForm = {
+                oldPassword: '',
+                newPassword: '',
+                confirmNewPassword: ''
+            };
+            // 清理错误和成功消息
+            this.passwordErrorMessage = '';
+            this.passwordSuccessMessage = '';
+        },
+        validateConfirmPassword(rule, value, callback) {
+            if (value !== this.passwordForm.newPassword) {
+                callback(new Error('两次输入的新密码不一致'));
+            } else {
+                callback();
+            }
+        },
+        async handlePasswordChange() {
+            this.$refs.passwordForm.validate(async (valid) => {
+                if (valid) {
+                    try {
+                        const response = await axios.post(
+                            `/api/student/${this.studentInfo.accountId}/change-password`,
+                            {
+                                oldPassword: this.passwordForm.oldPassword,
+                                newPassword: this.passwordForm.newPassword,
+                            },
+                            {
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                            }
+                        );
+
+                        if (response.status === 200) {
+                            this.passwordSuccessMessage = '密码更改成功';
+                            this.hideChangePasswordModal();
+                        } else {
+                            this.passwordErrorMessage = '密码更改失败，请稍后再试';
+                        }
+                    } catch (error) {
+                        this.passwordErrorMessage = '密码更改失败，请检查网络连接或稍后再试';
+                        console.error('密码更改失败:', error.response ? error.response.data : error.message);
+                    }
+                } else {
+                    console.log('表单验证失败');
+                    return false;
+                }
+            });
+        },
+
+        async requestAccountDeactivation() {
+            ElMessageBox.confirm(
+                '您确定要注销您的账号吗？这将永久删除您的账号信息。',
+                '警告',
+                {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }
+            ).then(async () => {
                 try {
                     const response = await axios.delete(
                         `/api/student/${this.studentInfo.accountId}/account-deactivation`,
@@ -496,11 +514,12 @@ export default {
                         }
                     );
 
-                    console.log('Account deactivation response:', response);
                     if (response.status === 200) {
                         this.accountDeactivationSuccessMessage = '账号注销成功';
                         this.accountDeactivationErrorMessage = ''; // 清除错误消息
                         this.navigateToHome();
+                    } else if (response.status === 409) { // 冲突状态码
+                        this.accountDeactivationErrorMessage = '账号注销失败：存在关联数据，请先解除关联后再试';
                     } else {
                         this.accountDeactivationErrorMessage = '账号注销失败，请稍后再试';
                         if (response.data && response.data.message) {
@@ -511,71 +530,79 @@ export default {
                     this.accountDeactivationErrorMessage = '账号注销失败，请检查网络连接或稍后再试';
                     if (error.response && error.response.data && error.response.data.message) {
                         this.accountDeactivationErrorMessage += ' - ' + error.response.data.message;
+                    } else if (error.response) {
+                        // 如果服务器返回了500错误或其他错误状态码
+                        this.accountDeactivationErrorMessage += ' - 服务器内部错误';
                     }
                     console.error('账号注销失败:', error.response ? error.response.data : error.message);
                 }
-            },
-            navigateToHome() {
-                // 使用 Vue Router 进行页面重定向
-                this.$router.push({name: 'Home'});
-            },
+            }).catch(() => {
+                // 用户点击了取消
+                ElMessage.info('已取消注销账号');
+            });
+        },
+        navigateToHome() {
+            // 使用 Vue Router 进行页面重定向
+            this.$router.push({name: 'Home'});
+        },
 
-            showJoinClassModal() {
-                this.isJoinClassModalVisible = true;
-            },
+        showJoinClassModal() {
+            this.isJoinClassModalVisible = true;
+        },
 
-            hideJoinClassModal() {
-                this.isJoinClassModalVisible = false;
-                this.inviteCode = '';
-                this.joinClassResultMessage = '';
-            },
+        hideJoinClassModal() {
+            this.isJoinClassModalVisible = false;
+            this.inviteCode = '';
+            this.joinClassResultMessage = '';
+        },
 
-            async joinClass() {
-                try {
-                    const response = await axios.post(`/api/student/${this.studentInfo.accountId}/join-class`, {
-                        inviteCode: this.inviteCode
-                    }, {
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    });
-
-                    if (response.status === 200) {
-                        this.joinClassResultMessage = response.data.message;
-                        this.studentInfo.class = response.data.data.className;
-                        this.fetchStudentInfo(); // 重新获取学生信息
-                        this.hideJoinClassModal();
-                    } else {
-                        this.joinClassResultMessage = '加入班级失败';
+        async joinClass() {
+            try {
+                const response = await axios.post(`/api/student/${this.studentInfo.accountId}/join-class`, {
+                    inviteCode: this.inviteCode
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
                     }
-                } catch (error) {
+                });
+
+                if (response.status === 200) {
+                    this.joinClassResultMessage = response.data.message;
+                    this.studentInfo.class = response.data.data.className; // 如果响应中有新的班级名称，更新学生信息
+                    this.fetchStudentInfo(); // 重新获取学生信息
+                    this.isJoinedClass = true; // 设置已加入班级
+                    ElMessage.success('您已成功加入班级！'); // 显示成功提示
+                    this.hideJoinClassModal();
+                } else if (response.status === 400 && response.data && response.data.message === '请勿重复发送申请') {
+                    this.joinClassResultMessage = '您已经提交过入班申请，请勿重复发送。';
+                    this.isJoinedClass = true; // 设置已加入班级
+                    ElMessage.warning('您已经提交过入班申请，请勿重复发送。');
+                    this.hideJoinClassModal();
+                } else {
+                    this.joinClassResultMessage = '加入班级失败';
+                    ElMessage.error('加入班级失败，请稍后再试');
+                }
+            } catch (error) {
+                if (error.response && error.response.status === 400 && error.response.data && error.response.data.message === '请勿重复发送申请') {
+                    this.joinClassResultMessage = '您已经提交过入班申请，请勿重复发送。';
+                    this.isJoinedClass = true; // 设置已加入班级
+                    ElMessage.warning('您已经提交过入班申请，请勿重复发送。');
+                    this.hideJoinClassModal();
+                } else {
                     this.joinClassResultMessage = '加入班级失败，请检查您的网络连接或稍后再试';
                     console.error('加入班级失败:', error.response ? error.response.data : error.message);
+                    ElMessage.error('加入班级失败，请检查您的网络连接或稍后再试');
                 }
-            },
+            }
+        }
+    },
 
-            showRealNameVerificationModal() {
-                this.isRealNameVerificationModalVisible = true;
-            },
-
-            hideRealNameVerificationModal() {
-                this.isRealNameVerificationModalVisible = false;
-                this.realNameForm = {
-                    name: '',
-                    idCard: ''
-                };
-                this.realNameErrorMessage = '';
-                this.realNameSuccessMessage = '';
-            },
-        },
-
-        created() {
-            this.fetchStudentInfo(); // 在组件创建时获取学生信息
-        },
+    created() {
+        this.fetchStudentInfo(); // 在组件创建时获取学生信息
+    },
 }
 
 </script>
-
 <style scoped>
 .page-container {
     display: flex;
@@ -665,7 +692,6 @@ export default {
     color: #67c23a;
     background-color: #f0f9eb;
 }
-
 .result-message {
     color: #909399;
     background-color: #f4f4f5;
