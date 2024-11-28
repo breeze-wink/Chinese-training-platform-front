@@ -12,7 +12,7 @@
                         <h2>{{ practiceName }} 练习答案</h2>
                         <p class="score-text"><strong>客观题得分: {{ score }}</strong></p>
                         <div v-for="(answer, index) in answers" :key="index" :id="'question-' + answer.sequence" class="answer">
-                            <p v-if="answer.showQuestionContent">
+                            <p v-if="answer.showQuestionContent" class="question-body">
                                 <span class="question-prefix">{{ getMainQuestionNumber(answer.sequence) }}.</span>
                                 {{ answer.questionBody }}
                             </p>
@@ -31,7 +31,9 @@
                                 </span>
                             </p>
                             <p><strong class="highlight">正确答案:</strong> <span class="answer-text">{{ answer.answer }}</span></p>
-                            <p v-if="answer.analysis"><strong class="highlight">解析:</strong> {{ answer.analysis }}</p>
+                            <p v-if="answer.analysis" class="analysis">
+                                <strong class="highlight">解析:</strong> {{ answer.analysis }}
+                            </p>
                         </div>
                     </div>
                     <div v-else-if="!isLoading && answers.length === 0">
@@ -208,15 +210,13 @@ body {
 .page-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    padding: 20px;
     box-sizing: border-box;
+    height: 100vh;
 }
 
 .main-container {
     display: flex;
     flex: 1;
-    padding: 20px; /* 为主要内容区域添加内边距 */
     background: linear-gradient(135deg, #e0eafc, #cfdef3); /* 渐变背景 */
     border-radius: 16px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
@@ -291,7 +291,7 @@ body {
     margin-bottom: 20px;
 }
 
-h2, h3, h4, .option-label, .option, .highlight, .answer-text {
+h2, h3, h4, .option-label, .option, .highlight, .answer-text, .question-body, .analysis {
     font-family: 'Georgia', serif; /* 优雅的衬线字体 */
 }
 
@@ -307,7 +307,7 @@ h3 {
     margin-bottom: 10px;
 }
 
-h4 {
+h4, .question-body, .analysis {
     font-size: 1.5em;
     color: #333;
     margin-bottom: 10px;
