@@ -11,12 +11,26 @@
       <div class="content">
         <h2>首页</h2> <!-- 修改为首页 -->
 
-        <!-- 管理员和学校信息展示 -->
-        <div class="admin-info-container">
-          <p>管理员名称: {{ adminName }}</p>
-          <p>学校名称: {{ schoolName }}</p>
-          <p>管理员邮箱: {{ email ? email : '邮箱未绑定' }}</p>
-        </div>
+        <!-- 个人信息卡片 -->
+        <el-card class="info-card">
+          <div class="info-item">
+            <label>用户名：</label>
+            <span v-if="!editNickname">{{ adminName }}</span>
+            <el-input
+                v-else
+                v-model="adminName"
+                size="small"
+                class="edit-input"
+                @blur="toggleEdit('nickname'); updateUsername()"/>
+            <el-icon @click="toggleEdit('nickname')">
+              <Edit/>
+            </el-icon>
+          </div>
+          <div class="info-item">
+            <label>学校名称：</label>
+            <span>{{ schoolName }}</span>
+          </div>
+        </el-card>
 
         <!-- 授权码展示和操作 -->
         <div class="authorization-code-container">
@@ -119,7 +133,19 @@ const generateOrUpdateCode = async () => {
   display: flex;
   flex: 1;
 }
+.info-card {
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
 
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
 .content {
   max-width: 1000px;
   width: 100%;
