@@ -94,7 +94,8 @@
             <el-dialog v-model="loginDialogVisible"
                        title="登录"
                        width="500px"
-                       align-center>
+                       align-center
+                       :close-on-click-modal="false">
 
                 <el-form label-position="top" class="login-form">
                     <el-radio-group v-model="Identity" style="margin-bottom: 30px">
@@ -188,7 +189,7 @@
 
 
             <!-- 注册浮窗 -->
-            <el-dialog v-model="registerDialogVisible" title="注册" width="500px" align-center>
+            <el-dialog v-model="registerDialogVisible" title="注册" width="500px" align-center :close-on-click-modal="false">
                 <el-tabs v-model="activeTab">
                     <el-tab-pane label="学生" name="student">
                         <el-form :model="registerForm.student" :rules="rules" ref="registerFormStudent"
@@ -276,7 +277,7 @@ import {User} from "@element-plus/icons-vue";
 import {useStore} from 'vuex'; // 引入 useStore 来使用 Vuex
 import { ref, watch, onMounted, reactive, getCurrentInstance, computed } from 'vue';
 
-import {ElMessage} from "element-plus"; 
+import {ElMessage} from "element-plus";
 import {useRouter} from 'vue-router'; //引入路由
 import { poems_seven_upper, poems_seven_lower, poems_eight_upper, poems_eight_lower, poems_nine_upper, poems_nine_lower } from '@/store/poems';
 
