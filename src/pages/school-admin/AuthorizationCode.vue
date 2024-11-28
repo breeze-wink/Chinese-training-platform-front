@@ -35,7 +35,7 @@
             <span :class="{'text-danger': !name}" v-if="!editName">{{ name ? name: '还未设定' }}</span>
             <el-input
                 v-else
-                v-model="Name"
+                v-model="name"
                 size="small"
                 class="edit-input"
                 @blur="toggleEdit('name'); updateName()"/>
@@ -65,27 +65,36 @@
             <el-button text bg v-if="!email" type="primary" @click="showBindEmailDialog = true">绑定邮箱</el-button>
           </div>
         </el-card>
-      </div>
 
-      <!-- 授权码展示和操作 -->
-      <div class="authorization-code-container">
-        <p>授权码: {{ authorizationCode || '暂无绑定授权码' }}</p> <!-- 显示授权码 -->
-        <el-button type="primary" @click="generateOrUpdateCode">
-          {{ authorizationCode ? '更新授权码' : '生成授权码' }} <!-- 根据是否有授权码显示按钮文字 -->
-        </el-button>
+         <!-- 授权码信息卡片 -->
+         <h2>授权码信息</h2>
+        <el-card class="info-card" style="margin-top: 20px;">
+          <div class="info-item">
+            <label>教师授权码：</label>
+            <span :class="{'text-danger': !authorizationCode}">{{ authorizationCode || '暂无' }}</span>
+            <el-button size="large" @click="generateOrUpdateCode" style="margin-left: auto;">
+            {{ authorizationCode ? '更新授权码' : '生成授权码' }} <!-- 根据是否有授权码显示按钮文字 -->
+          </el-button>
+          </div>
+          <div class="info-item">
+            <label>创建时间：</label>
+            <span>{{ createDate || ''}}</span>
+          </div>
+          
+        </el-card>
       </div>
     </div>
 
     <!-- 绑定邮箱对话框 -->
-    <el-dialog title="绑定邮箱" v-model="showBindEmailDialog" width="30%" align-center>
+    <el-dialog title="绑定邮箱" v-model="showBindEmailDialog" width="25%" align-center>
       <el-form :model="bindEmailForm" label-width="100px">
         <el-form-item label="邮箱地址">
-          <el-input v-model="bindEmailForm.email" placeholder="请输入邮箱地址"></el-input>
+          <el-input v-model="bindEmailForm.email" placeholder="请输入邮箱地址" style="width: 95%;"></el-input>
         </el-form-item>
         <el-form-item label="验证码">
           <el-input v-model="bindEmailForm.verificationCode" placeholder="请输入验证码" style="width: 60%;"></el-input>
           <el-button type="primary" @click="sendVerificationCode" :disabled="isSendingCode" style="margin-left: 10px;">
-            {{ isSendingCode ? `${countdown}秒后重新发送` : '获取验证码' }}
+            {{ isSendingCode ? `${countdown}s` : '获取验证码' }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -106,7 +115,6 @@ import Sidebar from '../../components/Sidebar.vue';
 import { ElButton, ElMessage, ElDialog, ElForm, ElFormItem, ElInput } from 'element-plus';
 import axios from 'axios';
 import { useStore } from 'vuex'; // 使用 Vuex 进行状态管理
-import Name from '../system-admin/name.vue';
 
 // 定义变量
 const adminName = ref('');
@@ -114,6 +122,7 @@ const schoolName = ref('');
 const name = ref('')
 const email = ref(null);
 const authorizationCode = ref(''); // 存储授权码
+const createDate = ref('')
 const schoolAdminId = ref(null);
 const errorMessage = ref('');
 const showBindEmailDialog = ref(false); // 控制绑定邮箱对话框的显示
@@ -121,6 +130,9 @@ const bindEmailForm = ref({
   email: '',
   verificationCode: ''
 });
+
+const correctCode = ref('');
+
 const isSendingCode = ref(false);
 const countdown = ref(0);
 const editNickname = ref('');
@@ -144,6 +156,7 @@ const getAdminInfo = async (id) => {
       name.value = response.data.data.name;
       email.value = response.data.data.email;
       authorizationCode.value = response.data.data.authorizationCode || ''; // 获取授权码
+      createDate.value = response.data.data.createDate || '';
     } else {
       errorMessage.value = '获取管理员信息失败：' + response.data.message;
       console.error(errorMessage.value);
@@ -169,16 +182,11 @@ const generateOrUpdateCode = async () => {
 
   try {
     let response;
-    if (authorizationCode.value) {
-      // 如果已经有授权码，更新授权码
-      response = await axios.get(`/api/school-admin/${schoolAdminId.value}/generate-authorization-code`);
-    } else {
-      // 如果没有授权码，生成授权码
-      response = await axios.get(`/api/school-admin/${schoolAdminId.value}/generate-authorization-code`);
-    }
+    response = await axios.get(`/api/school-admin/${schoolAdminId.value}/generate-authorization-code`);
 
     if (response.status === 200) {
       authorizationCode.value = response.data.code; // 更新授权码
+      createDate.value = response.data.createDate;
       ElMessage({ message: response.data.message, type: 'success' });
     } else {
       ElMessage({ message: '授权码操作失败', type: 'error' });
@@ -188,7 +196,6 @@ const generateOrUpdateCode = async () => {
   }
 };
 
-// 发送验证码
 const sendVerificationCode = async () => {
   if (isSendingCode.value) return;
 
@@ -204,11 +211,13 @@ const sendVerificationCode = async () => {
       }
     }, 1000);
 
-    const response = await axios.post('/api/school-admin/send-verification-code', {
+    const response = await axios.post(`/api/school-admin/${schoolAdminId.value}/send-verification-code`, {
       email: bindEmailForm.value.email
     });
 
-    if (response.status === 200 && response.data.message === 'success') {
+    if (response.status === 200) {
+      const verificationCode = response.data.verificationCode;
+      correctCode.value = verificationCode; // 存储验证码
       ElMessage({ message: '验证码已发送，请查收邮件', type: 'success' });
     } else {
       ElMessage({ message: '发送验证码失败', type: 'error' });
@@ -218,22 +227,25 @@ const sendVerificationCode = async () => {
   }
 };
 
-// 确认绑定邮箱
 const confirmBindEmail = async () => {
   if (!bindEmailForm.value.email || !bindEmailForm.value.verificationCode) {
     ElMessage({ message: '请填写完整信息', type: 'error' });
     return;
   }
 
+  if (correctCode.value !== bindEmailForm.value.verificationCode) {
+    ElMessage({ message: '验证码错误', type: 'error' });
+    return;
+  }
+
   try {
-    const response = await axios.post('/api/school-admin/bind-email', {
-      adminId: schoolAdminId.value,
+    const response = await axios.post(`/api/school-admin/${schoolAdminId.value}/bind-email`, {
       email: bindEmailForm.value.email,
-      verificationCode: bindEmailForm.value.verificationCode
     });
 
-    if (response.status === 200 && response.data.message === 'success') {
+    if (response.status === 200) {
       email.value = bindEmailForm.value.email; // 更新邮箱
+      
       ElMessage({ message: '绑定邮箱成功', type: 'success' });
       showBindEmailDialog.value = false; // 关闭对话框
     } else {
@@ -264,13 +276,15 @@ const updateUsername = async () => {
     // 处理错误
     ElMessage({ message: '请求失败' + error.message, type: 'error' });
   }
-  // 更新负责人
+};
+
+// 更新负责人
 const updateName = async () => {
   try {
     const url = `/api/school-admin/${schoolAdminId.value}/update-name`;
 
     // 发送 POST 请求
-    const response = await axios.post(url, {
+    const response = await axios.put(url, {
       name: name.value
     });
 
@@ -284,7 +298,6 @@ const updateName = async () => {
     // 处理错误
     ElMessage({ message: '请求失败' + error.message, type: 'error' });
   }
-};
 };
 
 // 切换编辑状态

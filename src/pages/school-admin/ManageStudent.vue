@@ -18,12 +18,10 @@
 
         <!-- 表格显示数据 -->
         <el-table :data="paginatedData" style="width: 100%; margin-top: 20px;">
-          <el-table-column prop="id" label="序号" width="80"></el-table-column>
           <el-table-column prop="name" label="姓名" width="150"></el-table-column>
           <el-table-column prop="email" label="邮箱" width="250"></el-table-column>
           <el-table-column prop="username" label="用户名"></el-table-column>
           <el-table-column prop="grade" label="年级"></el-table-column>
-          <el-table-column prop="schoolId" label="学校ID"></el-table-column>
 
           <el-table-column label="操作">
             <template #default="{ row }">

@@ -399,7 +399,7 @@ const login = async () => {
             }else if (Identity.value === 'sys-adm') {
               await router.push({name: 'name'});
             }else if (Identity.value === 'sch-adm') {
-              await router.push({name: 'AuthorizationCode'}); }
+              await router.push({name: 'name'}); }
               // 跳转到学管学习页面
 
 

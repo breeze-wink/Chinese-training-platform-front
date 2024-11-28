@@ -17,11 +17,11 @@
         </div>
 
         <el-table :data="paginatedData" style="width: 100%; margin-top: 20px;">
-          <el-table-column prop="id" label="序号" width="80"></el-table-column>
           <el-table-column prop="name" label="姓名" width="150"></el-table-column>
           <el-table-column prop="email" label="邮箱" width="250"></el-table-column>
-          <el-table-column prop="phoneNumber" label="联系方式"></el-table-column>
-          <el-table-column prop="schoolId" label="学校ID" width="120"></el-table-column>
+          <el-table-column prop="username" label="用户名" width="150"></el-table-column>
+          <el-table-column prop="phoneNumber" label="联系电话"></el-table-column>
+          
 
           <el-table-column label="操作">
             <template #default="{ row }">

@@ -16,9 +16,10 @@
         </div>
         <!-- 学校管理员账号列表 -->
         <el-table :data="admins" height="true" style="max-width: 100%;">
-          <el-table-column prop="schoolName" label="学校" width="280"></el-table-column>
-          <el-table-column prop="userName" label="用户名" width="300"></el-table-column>
-          <el-table-column prop="email" label="邮箱" width="300"></el-table-column>
+          <el-table-column prop="schoolName" label="学校" width="240"></el-table-column>
+          <el-table-column prop="userName" label="用户名" width="200"></el-table-column>
+          <el-table-column prop="name" label="负责人" width="200"></el-table-column>
+          <el-table-column prop="email" label="邮箱" width="240"></el-table-column>
           <el-table-column label="操作" width="120">
             <template #default="{ row }">
               <el-button @click="deleteAdmin(row.schoolAdminId)" type="danger" size="large">删除</el-button>
