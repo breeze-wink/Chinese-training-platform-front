@@ -93,7 +93,7 @@ const routes = [
     // 学管
     { path: '/school-admin/ManageStudent', component: ManageStudent },
     { path: '/school-admin/Manageteacher', component: ManageTeacher },
-    { path: '/school-admin/authorization-code', name:'AuthorizationCode',component: AuthorizationCode },
+    { path: '/school-admin/AuthorizationCode', name:'AuthorizationCode',component: AuthorizationCode },
 
 
     // 学生的个人页面
