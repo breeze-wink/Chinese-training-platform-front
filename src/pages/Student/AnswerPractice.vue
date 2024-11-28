@@ -6,24 +6,37 @@
                 <div class="generated-questions">
                     <h2 class="practice-name">{{ practiceName }}</h2>
                     <form @submit.prevent="submitAnswers">
-                        <div v-for="(group, groupName) in groupedQuestions" :key="groupName" class="question-group">
-                            <h3 class="group-name">{{ getGroupName(groupName) }}</h3>
-                            <div v-for="(question, index) in group" :key="index" class="question" :id="'question-' + question.id" ref="questionElements">
-                                <h4>{{ question.id + 1 }}. {{ question.questionContent }}</h4>
+                        <!-- 显示问题 -->
+                        <template v-for="(question, index) in displayedQuestions" :key="question.practiceQuestionId">
+                            <!-- 显示问题内容 -->
+                            <div :id="'question-' + question.practiceQuestionId" ref="questionElements" class="question">
+                                <!-- 显示 questionBody -->
+                                <div v-if="question.showBody" class="question-body">
+                                    <strong>{{ question.number }}. {{ question.questionBody }}</strong>
+                                </div>
+                                <!-- 显示 questionContent -->
+                                <h4>{{ question.sequence }}. {{ question.questionContent }}</h4>
+
+                                <!-- 选择题 -->
                                 <div v-if="question.type === 'CHOICE'" class="options">
                                     <label v-for="(option, optionIndex) in getOptions(question.questionOptions)" :key="optionIndex" class="option">
-                                        <input type="radio" :name="`question-${question.id}`" :value="option.text" v-model="studentAnswers[question.id]">
+                                        <input type="radio" :name="`question-${question.practiceQuestionId}`" :value="option.text" v-model="studentAnswers[question.practiceQuestionId]" @change="logQuestionsInfo">
                                         <span>{{ option.label }}. {{ option.text }}</span>
                                     </label>
                                 </div>
-                                <div v-else-if="question.type === 'FILL_IN_BLANK'" class="input-field">
-                                    <input type="text" v-model="studentAnswers[question.id]" placeholder="请输入答案">
-                                </div>
-                                <div v-else-if="question.type === 'SHORT_ANSWER'" class="input-field">
-                                    <textarea v-model="studentAnswers[question.id]" placeholder="请输入答案"></textarea>
+
+                                <!-- 填空题或简答题 -->
+                                <div v-else-if="question.type === 'FILL_IN_BLANK' || question.type === 'SHORT_ANSWER'" class="input-field">
+                                    <!-- 创建独立的 Quill 编辑器容器 -->
+                                    <div
+                                        :id="`quill-editor-${question.practiceQuestionId}`"
+                                        ref="quillEditors"
+                                        class="quill-editor"
+                                    ></div>
                                 </div>
                             </div>
-                        </div>
+                        </template>
+
                         <div class="button-group">
                             <button type="submit" class="submit-button">提交答案</button>
                             <button type="button" class="save-button" @click="saveAnswers">暂存答案</button>
@@ -33,21 +46,27 @@
             </div>
             <div class="navigation">
                 <ul>
-                    <li v-for="(group, groupName) in groupedQuestions" :key="groupName" :class="{ active: currentGroup === groupName }">
-                        <h3 class="group-name">{{ getGroupName(groupName) }}</h3>
-                        <ul>
-                            <li v-for="(question, index) in group" :key="index" :class="{ active: currentIndex === question.id }">
-                                <a :href="'#question-' + question.id" class="nav-link" @click.prevent="scrollToQuestion(index)">
-                                    <div class="nav-option">
-                                        {{ question.id + 1 }}
-                                    </div>
-                                </a>
-                            </li>
-                        </ul>
+                    <li v-for="(question, index) in displayedQuestions" :key="question.practiceQuestionId" :class="{ active: currentIndex === question.practiceQuestionId }">
+                        <a :href="'#question-' + question.practiceQuestionId" class="nav-link" @click.prevent="scrollToQuestion(question.practiceQuestionId)">
+                            <div class="nav-option">
+                                {{ question.sequence }}
+                            </div>
+                        </a>
                     </li>
                 </ul>
             </div>
         </div>
+
+        <!-- 加载提示 -->
+        <div v-if="isProcessing" class="loading-modal">
+            <div class="modal-content">
+                <p>正在处理，请稍候...</p>
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- 遮罩层 -->
+        <div v-if="isProcessing" class="overlay"></div>
     </div>
 </template>
 
@@ -55,6 +74,7 @@
 import Header from '@/components/Header.vue';
 import axios from 'axios';
 import { nextTick } from 'vue';
+import Quill from 'quill';
 
 export default {
     components: {
@@ -65,81 +85,69 @@ export default {
         return {
             studentAnswers: {},
             parsedQuestions: [],
-            groupedQuestions: {},
             currentIndex: 0,
-            currentGroup: '',
-            observer: null
+            observer: null,
+            quillEditors: {},
+            isProcessing: false  // 新增的状态变量
         };
     },
     created() {
         const questionsFromQuery = this.$route.query.questions;
+        const mode = this.$route.query.mode || 'default';  // 获取mode参数，如果没有则设置为'default'
+
         if (questionsFromQuery) {
             try {
                 this.parsedQuestions = JSON.parse(decodeURIComponent(questionsFromQuery));
-                this.groupAndReorderQuestions();
+
+                // 初始化学生答案对象，如果有预设答案则使用预设答案
                 this.studentAnswers = this.parsedQuestions.reduce((acc, question) => {
-                    acc[question.id] = '';
+                    acc[question.practiceQuestionId] = question.answerContent || '';  // 使用预设答案或空字符串
                     return acc;
                 }, {});
+
+                console.log('Parsed Questions:', this.parsedQuestions);  // 增加调试信息
+                console.log('Mode:', mode);  // 增加调试信息
+                console.log('Student Answers Updated:', this.studentAnswers);  // 增加调试信息
             } catch (error) {
                 console.error('解析题目失败', error);
                 this.parsedQuestions = [];
             }
         } else {
             console.error('questions 未定义');
-            this.parsedQuestions = [];
         }
+
+        // 其他初始化逻辑
     },
     mounted() {
-        // 初始设置 IntersectionObserver 可能会失败，因此我们将其放在 updated 钩子中
-    },
-    updated() {
         this.setupIntersectionObserver();
+        this.initQuillEditors();
     },
     beforeDestroy() {
-        if (this.observer) {
-            this.observer.disconnect();
-        }
+        if (this.observer) this.observer.disconnect();
+        Object.values(this.quillEditors).forEach((editor) => editor.destroy());
     },
     methods: {
-        groupAndReorderQuestions() {
-            this.groupedQuestions = this.parsedQuestions.reduce((acc, question, originalIndex) => {
-                if (!acc[question.type]) {
-                    acc[question.type] = [];
-                }
-                question.id = this.parsedQuestions.findIndex(q => q === question); // 为每个题目分配一个唯一的 ID
-                acc[question.type].push(question);
-                return acc;
-            }, {});
-
-            // 重新分配连续的 ID
-            let currentId = 0;
-            for (const group of Object.values(this.groupedQuestions)) {
-                for (const question of group) {
-                    question.id = currentId++;
-                }
-            }
-        },
         async submitAnswers() {
+            this.isProcessing = true;  // 请求开始前设置为 true
+
             console.log('开始提交答案');
 
             if (!this.practiceId) {
                 console.error('practiceId 未定义');
                 this.$message.error('练习ID未定义，请重试。');
+                this.isProcessing = false;  // 请求结束时设置为 false
                 return;
             }
 
             const answers = this.parsedQuestions.map((question) => ({
                 practiceQuestionId: question.practiceQuestionId,
-                answerContent: this.studentAnswers[question.id]
+                answerContent: this.studentAnswers[question.practiceQuestionId]  // 使用 practiceQuestionId 作为键
             }));
 
-            // 检查并修正 answerContent 为选项字母
             answers.forEach(answer => {
                 const question = this.parsedQuestions.find(q => q.practiceQuestionId === answer.practiceQuestionId);
                 if (question && question.type === 'CHOICE' && answer.answerContent) {
-                    console.log('处理选择题:', question, answer); // 添加调试信息
-                    const options = this.getOptions(question.options);
+                    const options = this.getOptions(question.questionOptions);
                     const matchedOption = options.find(option => option.text === answer.answerContent);
                     if (matchedOption) {
                         answer.answerContent = matchedOption.label; // 修正为选项字母
@@ -154,9 +162,11 @@ export default {
             try {
                 const response = await axios.post(`/api/student/${this.practiceId}/practice/complete`, {
                     data: answers
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
-
-                console.log('响应数据:', response.data);
 
                 if (response.status === 200 && response.data.message === '练习提交成功') {
                     const score = response.data.score;
@@ -181,34 +191,37 @@ export default {
                     this.$message.error(`提交答案失败: ${response.data.message}`);
                 }
             } catch (error) {
-                console.error('提交答案失败', error.response ? error.response.data : error.message);
-                this.$message.error(`提交答案失败: ${error.response ? error.response.data.message : error.message}`);
+                if (error.response) {
+                    console.error('提交答案失败', error.response.data);
+                    this.$message.error(`提交答案失败: ${error.response.data.message || '未知错误'}`);
+                } else {
+                    console.error('提交答案失败', error.message);
+                    this.$message.error(`提交答案失败: ${error.message}`);
+                }
+            } finally {
+                this.isProcessing = false;  // 请求结束后设置为 false
             }
         },
-        async saveAnswers() {
-            console.log('开始保存答案'); // 添加调试信息
 
+        async saveAnswers() {
+            this.isProcessing = true;  // 请求开始前设置为 true
+
+            console.log('开始保存答案');
+
+            // 构建答案数组，使用 practiceQuestionId 作为键
             const answers = this.parsedQuestions.map((question) => ({
                 practiceQuestionId: question.practiceQuestionId,
-                answerContent: this.studentAnswers[question.id]
+                answerContent: this.studentAnswers[question.practiceQuestionId]
             }));
 
-            console.log('即将发送的答案数据:', answers);
-
-            // 检查并修正 answerContent 为选项字母
+            // 对于选择题，转换为选项字母
             answers.forEach(answer => {
                 const question = this.parsedQuestions.find(q => q.practiceQuestionId === answer.practiceQuestionId);
                 if (question && question.type === 'CHOICE' && answer.answerContent) {
-                    console.log('处理选择题:', question, answer); // 调试信息
-
-                    // 解析选项
                     const options = this.getOptions(question.questionOptions);
-
-                    // 尝试匹配选项
                     const matchedOption = options.find(option =>
                         option.text.trim() === answer.answerContent.trim()
                     );
-
                     if (matchedOption) {
                         answer.answerContent = matchedOption.label; // 修正为选项字母
                     } else {
@@ -220,19 +233,26 @@ export default {
             try {
                 const response = await axios.post(`/api/student/${this.practiceId}/practice/save`, {
                     data: answers
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
 
                 if (response.status === 200) {
                     this.$message.success('暂存成功');
-                    this.$router.push({name: 'QuestionOptions'});
+                    this.$router.push({ name: 'QuestionOptions' });
                 } else {
                     this.$message.error('暂存失败');
                 }
             } catch (error) {
                 console.error('暂存答案失败', error.response ? error.response.data : error.message);
                 this.$message.error('暂存答案失败');
+            } finally {
+                this.isProcessing = false;  // 请求结束后设置为 false
             }
         },
+
         setupIntersectionObserver() {
             if (this.observer) {
                 this.observer.disconnect();
@@ -243,14 +263,10 @@ export default {
                 if (firstVisibleEntry) {
                     const targetElement = firstVisibleEntry.target;
                     this.currentIndex = parseInt(targetElement.id.split('-')[1], 10);
-                    this.currentGroup = Object.keys(this.groupedQuestions).find(groupName =>
-                        this.groupedQuestions[groupName].some(q => q.id === this.currentIndex)
-                    );
                 }
-            }, { threshold: 0.5 });
+            }, {threshold: 0.5});
 
             nextTick(() => {
-                console.log('Checking $refs:', this.$refs.questionElements); // 调试日志
                 if (this.$refs.questionElements && this.$refs.questionElements.length > 0) {
                     this.$refs.questionElements.forEach(question => {
                         this.observer.observe(question);
@@ -260,47 +276,135 @@ export default {
                 }
             });
         },
+
         getOptions(optionsString) {
             const options = [];
             const regex = /([A-Z])\.\s*(.*?)(?=[A-Z]\.|$)/g;
             let match;
             while ((match = regex.exec(optionsString)) !== null) {
+                // 去掉选项文本中的逗号
+                const textWithoutCommas = match[2].replace(/,/g, '').trim();
                 options.push({
                     label: match[1],
-                    text: match[2].trim()
+                    text: textWithoutCommas
                 });
             }
-            console.log('解析的选项:', options); // 添加调试信息
             return options;
         },
-        scrollToQuestion(index, id) {
+
+        scrollToQuestion(id) {
             this.currentIndex = id;
             const element = this.$refs.questionElements.find(el => el.id === 'question-' + id);
             if (element) {
-                element.scrollIntoView({ behavior: 'smooth' });
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 改为居中滚动
+                this.currentIndex = id;
             }
         },
+
         logQuestionsInfo() {
             this.parsedQuestions.forEach((question, index) => {
                 console.log(`Question ${index + 1}:`, question);
             });
+            console.log('Student Answers Updated:', this.studentAnswers);
+            console.log('Event:', event.target.value);  // 打印事件值以供调试
+        },
+
+        getTypeTitle(type) {
+            switch (type) {
+                case 'CHOICE':
+                    return '一、选择题';
+                case 'FILL_IN_BLANK':
+                    return '二、填空题';
+                case 'SHORT_ANSWER':
+                    return '三、简答题';
+                default:
+                    return type;
+            }
+        },
+
+        initQuillEditors() {
+            nextTick(() => {
+                this.parsedQuestions.forEach((question) => {
+                    if (question.type === 'FILL_IN_BLANK' || question.type === 'SHORT_ANSWER') {
+                        const editorId = `quill-editor-${question.practiceQuestionId}`;
+                        const editorContainer = document.getElementById(editorId);
+
+                        if (!editorContainer) {
+                            console.error(`未找到 Quill 容器: ${editorId}`);
+                            return;
+                        }
+
+                        const quill = new Quill(editorContainer, {
+                            theme: 'snow',
+                            modules: {
+                                toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['link', 'image']],
+                            },
+                        });
+
+                        // 同步答案数据，直接更新 studentAnswers
+                        quill.on('text-change', () => {
+                            const richText = quill.root.innerHTML;
+                            this.studentAnswers[question.practiceQuestionId] = this.getSimpleText(richText);
+                        });
+
+                        // 恢复已保存的答案
+                        if (this.studentAnswers[question.practiceQuestionId]) {
+                            quill.root.innerHTML = this.studentAnswers[question.practiceQuestionId];
+                        }
+
+                        // 存储 Quill 实例
+                        this.quillEditors[question.practiceQuestionId] = quill;
+                    }
+                });
+            });
+        },
+        // 提取富文本中的纯文本
+        getSimpleText(html) {
+            var re1 = new RegExp("<.+?>", "g"); // 匹配HTML标签的正则表达式
+            var msg = html.replace(re1, ''); // 执行替换成空字符
+            return msg;
         }
     },
     computed: {
-        getGroupName() {
-            return (groupName) => {
-                switch (groupName) {
-                    case 'CHOICE':
-                        return '选择题';
-                    case 'FILL_IN_BLANK':
-                        return '填空题';
-                    case 'SHORT_ANSWER':
-                        return '简答题';
-                    default:
-                        console.warn(`未知的题目类型: ${groupName}`);
-                        return '未知类型'; // 默认值
+        displayedQuestions() {
+            const seenNumbers = new Set();
+            const seenTypes = new Set();
+
+            return this.parsedQuestions.map(question => {
+                const [number, subNumber] = question.sequence.split('.');
+                const showBody = subNumber ? !seenNumbers.has(number) : false;
+                if (showBody && subNumber) {
+                    seenNumbers.add(number);
                 }
-            };
+
+                // 检查是否是同类型题目的第一个
+                const isFirstOfType = !seenTypes.has(question.type);
+                if (isFirstOfType) {
+                    seenTypes.add(question.type);
+                }
+
+                // 检查是否是第一个组合题
+                const isCombination = subNumber !== undefined;
+                const showCombinationTitle = isCombination;
+
+                return {
+                    ...question,
+                    showBody,
+                    number,
+                    isFirstOfType,
+                    isCombination,
+                    showCombinationTitle,
+                    typeTitle: this.getTypeTitle(question.type)
+                };
+            });
+        }
+    },
+    watch: {
+        studentAnswers: {
+            handler(newVal, oldVal) {
+                console.log('Student Answers Updated:', newVal);
+            },
+            deep: true
         }
     }
 };
@@ -341,16 +445,6 @@ export default {
     font-size: 28px;
     margin-bottom: 20px;
     font-family: 'SimHei', sans-serif; /* 黑体 */
-}
-
-.question-group {
-    margin-bottom: 20px;
-}
-
-.group-name {
-    font-size: 24px;
-    margin-bottom: 10px;
-    font-family: 'KaiTi', sans-serif; /* 楷体 */
 }
 
 .question {
@@ -471,10 +565,13 @@ input[type="text"]:focus, textarea:focus {
     list-style-type: none;
     padding: 0;
     margin: 0;
+    display: flex; /* 使用Flexbox布局 */
+    flex-wrap: wrap; /* 允许换行 */
+    gap: 10px; /* 项目之间的间距 */
 }
 
 .navigation li {
-    margin-bottom: 10px;
+    margin: 0; /* 移除默认的margin */
 }
 
 .nav-link {
@@ -498,34 +595,68 @@ input[type="text"]:focus, textarea:focus {
     cursor: pointer;
 }
 
-.nav-option:hover {
-    background-color: #0056b3; /* 鼠标悬停时背景颜色变暗 */
+.nav-option:hover,
+.nav-link:hover .nav-option,
+.navigation li.active .nav-option {
+    background-color: #0056b3; /* 更深的蓝色背景 */
     transform: scale(1.1); /* 鼠标悬停时放大效果 */
 }
 
-.nav-link:hover .nav-option {
-    background: #0056b3; /* 更深的蓝色背景 */
-}
-
-.navigation li.active .nav-option {
-    background: #0056b3; /* 更深的蓝色背景 */
-    color: white; /* 白色文字 */
-}
-
-/* 新增样式：使导航栏内的数字并排放置 */
-.navigation ul ul {
+/* 遮罩层样式 */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+    z-index: 999; /* 确保遮罩层在最上层 */
     display: flex;
-    flex-wrap: wrap; /* 允许换行 */
-    gap: 10px; /* 项目之间的间距 */
+    justify-content: center;
+    align-items: center;
 }
 
-.navigation ul ul li {
-    margin: 0;
+/* 加载提示模态窗样式 */
+.loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* 确保模态窗在遮罩层之上 */
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 300px;
+    width: 100%;
+}
+
+.modal-content p {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 </style>
-
-
-
-
-
-
