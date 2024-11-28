@@ -270,11 +270,11 @@
 
 <script setup>
 
-import {ref, onMounted, reactive, getCurrentInstance, computed} from 'vue'
+
 import axios from 'axios'
 import {User} from "@element-plus/icons-vue";
 import {useStore} from 'vuex'; // 引入 useStore 来使用 Vuex
-
+import { ref, watch, onMounted, reactive, getCurrentInstance, computed } from 'vue';
 
 import {ElMessage} from "element-plus"; 
 import {useRouter} from 'vue-router'; //引入路由
@@ -306,6 +306,12 @@ const urls = {
     'sys-adm': '/api/system-admin/login',
 }
 
+watch(Identity, (newValue, oldValue) => {
+  if (newValue !== oldValue) {
+    account.value = '';
+    password.value = '';
+  }
+});
 const registerForm = ref({
     student: {
         email: '',
