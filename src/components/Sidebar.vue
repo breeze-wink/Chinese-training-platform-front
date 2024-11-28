@@ -128,7 +128,7 @@ const menuItems = computed(() => {
             ];
       case 'sys-adm':
         return [
-          { index: '1', label: '学校管理员信息', icon: Avatar, path: '/system-admin/GenerateSchadm' },
+          { index: '1', label: '账号信息', icon: User, path: '/system-admin/name' },
           {
             index: '2',
             label: '相关管理',
@@ -138,7 +138,8 @@ const menuItems = computed(() => {
               { index: '2-2', label: '知识点管理', path: '/system-admin/KnowledgePoint' },
             ],
           },
-          { index: '3', label: '账号信息', icon: User, path: '/system-admin/name' },
+          { index: '3', label: '学校管理员信息', icon: Avatar, path: '/system-admin/GenerateSchadm' },
+          
         ];
 
       case 'sch-adm':
