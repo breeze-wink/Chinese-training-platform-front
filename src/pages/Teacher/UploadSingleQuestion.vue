@@ -74,15 +74,14 @@
 
 
           <!-- 填空题标签页 -->
-          <el-tab-pane label="填空题"  name="FILL_IN_THE_BLANK">
+          <el-tab-pane label="填空题"  name="FILL_IN_BLANK">
             <template #default>
               <div class="tab-content">
                 <el-form :model="questionForms.FILL_IN_BLANK" label-width="80px">
                   <el-form-item label="问题" class="form-item-margin">
                     <div style="max-width: 750px; overflow: hidden;">
                       <quill-editor
-                          v-model="questionForms.FILL_IN_BLANK.problem"
-
+                          ref="editor"
                           placeholder="请输入问题内容"
                           class="quill-editor"
                           :options="quillOptions"
@@ -133,8 +132,7 @@
                   <el-form-item label="问题" class="form-item-spacing">
                     <div style="max-width: 750px; overflow: hidden;">
                       <quill-editor
-                          v-model="questionForms.SHORT_ANSWER.problem"
-
+                              ref="editor"
                           placeholder="请输入问题内容"
                           class="quill-editor"
                           :options="quillOptions"
@@ -167,14 +165,14 @@
           </el-tab-pane>
 
           <!-- 作文标签页 -->
-          <el-tab-pane label="作文" name="essay">
+          <el-tab-pane label="作文" name="ESSAY">
             <template #default>
               <div class="tab-content">
-                <el-form :model="essayForm" label-width="80px">
+                <el-form :model="questionForms.ESSAY" label-width="80px">
                   <el-form-item label="题目">
                     <div style="max-width: 750px; overflow: hidden;">
                       <quill-editor
-                          v-model="questionForms.SHORT_ANSWER.problem"
+                              ref="editor"
                           placeholder="请输入问题内容"
                           class="quill-editor"
                           :options="quillOptions"
@@ -184,7 +182,7 @@
                   </el-form-item>
                   <el-form-item label="解析">
                     <el-input
-                        v-model="essayForm.explanation"
+                        v-model="questionForms.ESSAY.explanation"
                         type="textarea"
                         placeholder="请输入解析"
                         :autosize="{ minRows: 4, maxRows: 10 }"
@@ -194,16 +192,16 @@
                   <!-- 所属知识点下拉框 -->
                   <KnowledgePointSelector @point-selected="onPointSelected" />
 
-                  <el-form-item label="上传范文">
-                    <el-upload
-                        action="/api/upload/essay-sample"
-                        :on-success="handleUploadSuccess"
-                        :limit="1"
-                        accept=".pdf,.doc,.docx"
-                    >
-                      <el-button type="primary">点击上传</el-button>
-                    </el-upload>
-                  </el-form-item>
+<!--                  <el-form-item label="上传范文">-->
+<!--                    <el-upload-->
+<!--                        action="/api/upload/essay-sample"-->
+<!--                        :on-success="handleUploadSuccess"-->
+<!--                        :limit="1"-->
+<!--                        accept=".pdf,.doc,.docx"-->
+<!--                    >-->
+<!--                      <el-button type="primary">点击上传</el-button>-->
+<!--                    </el-upload>-->
+<!--                  </el-form-item>-->
                 </el-form>
               </div>
             </template>
@@ -246,7 +244,6 @@ const onPointSelected = (pointId) => {
   KnowledgePointId.value = pointId;
 };
 
-
 Quill.register('modules/imageDrop', ImageDrop)
 
 Quill.register('modules/blotFormatter', BlotFormatter)
@@ -260,18 +257,18 @@ const questionForms = ref({
     explanation: '', // 解析
   },
   FILL_IN_BLANK: {
-    problem: '', // 问题描述
+    problem: null, // 问题描述
     fillCount: 1,
     answers: [''], // 填空答案
     explanation: '', // 解析
   },
   SHORT_ANSWER: {
-    problem: '', // 问题描述
+    problem: null, // 问题描述
     answer: '', // 简答答案
     explanation: '', // 解析
   },
   ESSAY: {
-    problem: '', // 问题描述
+    problem: null, // 问题描述
     explanation: '', // 解析
   },
 });
@@ -310,7 +307,6 @@ const submitQuestion = async () => {
   // 获取当前激活标签的表单数据
   console.log(activeTab.value);
   const currentForm = questionForms.value[activeTab.value];
-
 
   // 检查知识点是否选择
   if (!KnowledgePointId) {
@@ -351,7 +347,7 @@ const submitQuestion = async () => {
         answer:
             activeTab.value === 'CHOICE'
                 ? String.fromCharCode(65 + parseInt(currentForm.answer))  // 将数字转换成字母（A、B、C、D等）
-                : activeTab.value === 'FILL_IN_THE_BLANK'
+                : activeTab.value === 'FILL_IN_BLANK'
                     ? currentForm.answers
                     : currentForm.answer, // 答案
         analysis: currentForm.explanation, // 解析
@@ -476,7 +472,6 @@ const replaceImagePlaceholder = (content, oldSrc, newSrc) => {
       img.setAttribute('src', newSrc); // 替换 src
     }
   });
-
   // 返回修改后的 HTML 字符串
   return doc.body.innerHTML;
 };
