@@ -192,9 +192,9 @@ export default {
             },
 
             gradeOptions: [
-                { value: '七年级', label: '七年级' },
-                { value: '八年级', label: '八年级' },
-                { value: '九年级', label: '九年级' }
+                { value: '7', label: '7' },
+                { value: '8', label: '8' },
+                { value: '9', label: '9' }
             ],
 
             emailForm: {
@@ -317,15 +317,9 @@ export default {
                 const requestBody = {};
 
                 // 检查哪个字段被编辑并添加到请求体
-                if (this.editNickname) {
-                    requestBody.username = this.studentInfo.username;
-                }
-                if (this.editName) {
-                    requestBody.name = this.studentInfo.name;
-                }
-                if (this.editGrade) {
-                    requestBody.grade = this.studentInfo.grade;
-                }
+                requestBody.username = this.studentInfo.username;
+                requestBody.name = this.studentInfo.name;
+                requestBody.grade = this.studentInfo.grade;
 
                 // 如果没有任何字段被编辑，则不发送请求
                 if (Object.keys(requestBody).length === 0) {
@@ -346,19 +340,13 @@ export default {
                         const responseData = response.data;
                         if (responseData.message === "个人信息修改成功") {
                             // 更新成功，更新本地数据
-                            if (requestBody.username) {
-                                this.studentInfo.username = responseData.data.username;
-                            }
-                            if (requestBody.name) {
-                                this.studentInfo.name = responseData.data.name;
-                            }
-                            if (requestBody.grade) {
-                                this.studentInfo.grade = responseData.data.grade;
-                            }
+                            this.studentInfo.username = responseData.data.username;
+                            this.studentInfo.name = responseData.data.name;
+                            this.studentInfo.grade = responseData.data.grade;
                             ElMessage.success("个人信息更新成功");
-                            this.toggleEdit('nickname');
-                            this.toggleEdit('name');
-                            this.toggleEdit('grade');
+                            if(this.editGrade){
+                              this.toggleEdit('grade');
+                            }
                         } else {
                             // 后端返回的其他消息
                             ElMessage.warning(responseData.message);
@@ -508,6 +496,7 @@ export default {
                         }
                     );
 
+                    console.log('Account deactivation response:', response);
                     if (response.status === 200) {
                         this.accountDeactivationSuccessMessage = '账号注销成功';
                         this.accountDeactivationErrorMessage = ''; // 清除错误消息
