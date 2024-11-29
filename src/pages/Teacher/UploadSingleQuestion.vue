@@ -186,7 +186,7 @@
                   </el-form-item>
 
                   <!-- 所属知识点下拉框 -->
-                  <KnowledgePointSelector @point-selected="onPointSelected" />
+<!--                  <KnowledgePointSelector @point-selected="onPointSelected" />-->
                 </el-form>
               </div>
             </template>
@@ -290,7 +290,13 @@ const updateProblem = (value) => {
 // 提交函数
 const submitQuestion = async () => {
     // 检查知识点是否选择
-    if (!KnowledgePointId.value) {
+    const pointId =ref();
+    if(activeTab.value==='ESSAY'){
+      pointId.value=17;
+    }else{
+      pointId.value=KnowledgePointId.value
+    }
+    if (!pointId.value) {
         return ElMessage.warning('请先选择分类和知识点！');
     }
 
@@ -329,7 +335,7 @@ const submitQuestion = async () => {
                             ? currentForm.value.answer
                             : [currentForm.value.answer],
                 analysis: currentForm.value.explanation,
-                knowledgePointId: KnowledgePointId.value,
+                knowledgePointId: pointId.value,
             },
         ],
     };
