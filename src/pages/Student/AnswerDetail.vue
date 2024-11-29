@@ -13,10 +13,13 @@
                         <p class="score-text"><strong>客观题得分: {{ score }}</strong></p>
                         <div v-for="(answer, index) in answers" :key="index" :id="'question-' + answer.sequence" class="answer">
                             <p v-if="answer.showQuestionContent" class="question-body">
-                                <span class="question-prefix">{{ getMainQuestionNumber(answer.sequence) }}.</span>
+                                <span class="question-prefix">{{ getMainQuestionNumber(answer.sequence) }}</span>
                                 {{ answer.questionBody }}
                             </p>
-                            <h4>{{ answer.sequence }}. {{ answer.questionContent }}</h4>
+                            <div class="question-sequence-content">
+                                <span class="sequence">{{ answer.sequence }}. </span>
+                                <span v-html="answer.questionContent" class="question-content"></span>
+                            </div>
                             <ul v-if="answer.questionOptions" class="options-list">
                                 <li v-for="option in getOptions(answer.questionOptions)" :key="option.text" class="option">
                                     {{ option.text }}
@@ -163,6 +166,9 @@ export default {
                         }
                     });
 
+                    // 调用 loadImagesInContent 方法
+                    this.loadImagesInContent();
+
                     this.isLoading = false;
                 } else {
                     console.error('获取答案失败', response.data.message);
@@ -192,10 +198,268 @@ export default {
                 return sequence.split('.')[0];
             }
             return '';
+        },
+        async loadImagesInContent() {
+            console.log('开始加载题目中的图片');
+            for (let i = 0; i < this.answers.length; i++) {
+                const answer = this.answers[i];
+                // 确保 question.questionContent 是一个字符串
+                if (typeof answer.questionContent !== 'string' || !answer.questionContent) {
+                    console.error(`问题 ${answer.practiceQuestionId} 的 questionContent 不是有效的字符串:`, typeof answer.questionContent);
+                    continue;
+                }
+
+                // 使用DOMParser来解析HTML字符串
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(answer.questionContent, 'text/html');
+                const imgTags = doc.querySelectorAll('img');
+                let hasImage = false;  // 添加标志变量
+                for (const img of imgTags) {
+                    const src = img.getAttribute('src');
+                    if (src) {
+                        hasImage = true;  // 设置为true表示至少有一个图片
+
+                        // 将图片放入一个新的 <p> 标签中
+                        const newImgTag = document.createElement('p');
+                        newImgTag.appendChild(img.cloneNode(true));
+                        img.parentNode.replaceChild(newImgTag, img);
+
+                        // 如果是Base64图片，上传并替换为服务器上的图片URL
+                        if (src.startsWith('data:image/')) {
+                            const base64Image = src;
+                            const mimeType = base64Image.split(';')[0].split(':')[1];
+                            const blob = this.base64ToBlob(base64Image, mimeType);
+                            const file = new File([blob], 'image.png', {type: mimeType});
+                            const newImageUrl = await this.uploadImage(file);
+                            if (newImageUrl) {
+                                const imgElement = newImgTag.querySelector('img');
+                                imgElement.setAttribute('src', newImageUrl);
+                            }
+                        } else { // 否则直接替换为新的后端接口路径
+                            const imageName = src.split('/').pop(); // 获取文件名
+                            const newSrc = `/api/uploads/images/content/${imageName}`;
+                            const imgElement = newImgTag.querySelector('img');
+                            imgElement.setAttribute('src', newSrc);
+                        }
+                    }
+                }
+
+                // 如果没有图片，移除可能存在的空行
+                if (!hasImage) {
+                    answer.questionContent = answer.questionContent.replace(/<p><\/p>/g, '');
+                } else {
+                    // 确保图片总是放在新的 <p> 标签中
+                    answer.questionContent = doc.body.innerHTML;
+                }
+            }
+        },
+        base64ToBlob(base64, mimeType) {
+            const byteCharacters = atob(base64.split(',')[1]); // 解码Base64数据
+            const byteArrays = [];
+            for (let offset = 0; offset < byteCharacters.length; offset++) {
+                const byte = byteCharacters.charCodeAt(offset);
+                byteArrays.push(byte);
+            }
+
+            const byteArray = new Uint8Array(byteArrays);
+            return new Blob([byteArray], { type: mimeType });
+        },
+        async uploadImage(file) {
+            try {
+                const formData = new FormData();
+                formData.append("image", file);  // 假设 imageSrc 是一个 File 对象
+                formData.append("type", "content");  // 固定图片类型为 "content"
+
+                const response = await axios.post('/api/uploads/image', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+
+                if (response.status === 200) {
+                    console.log(response.data.imageUrl);
+                    return response.data.imageUrl;
+                } else {
+                    console.error('图片上传失败');
+                    return null;
+                }
+            } catch (error) {
+                console.error('上传图片失败:', error);
+                return null;
+            }
         }
     }
-};
+}
 </script>
+
+<style scoped>
+/* 使用柔和的色调和优雅的字体 */
+body {
+    font-family: 'Georgia', serif; /* 优雅的衬线字体 */
+    background-color: #f5f5f5; /* 浅灰色背景 */
+    color: #333; /* 深灰色文字 */
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0ibm9uZSI+PC9yZWN0PjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSJub25lIiBzdHlsZT0ic3Ryb2tlOiAjZmZmOyBzdHJva2Utd2lkdGg6IDE7IHN0cm9rZS1vcGFjaXR5OiAxLjA7IHN0cm9rZS1kYXNoYXJyYXk6IDEwOyBzdHJva2UtbGluZWNhcDpyb3VuZCI+PC9yZWN0Pjwvc3ZnPg=='); /* 轻微的网格背景 */
+    background-size: 20px 20px;
+}
+
+.page-container {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    height: 100vh;
+}
+
+.main-container {
+    display: flex;
+    flex: 1;
+    background: linear-gradient(135deg, #e0eafc, #cfdef3); /* 渐变背景 */
+    border-radius: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
+}
+
+.content-and-nav {
+    display: flex;
+    width: 100%;
+}
+
+.content {
+    width: 75%;
+    background-color: #fff;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
+    background: linear-gradient(135deg, #ffffff, #f5f5f5); /* 内容区域的渐变背景 */
+}
+
+.sidebar-nav {
+    width: 25%;
+    background-color: #f9f9f9;
+    border-radius: 16px;
+    padding: 20px;
+    margin-left: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
+    background: linear-gradient(135deg, #f9f9f9, #eaeaea); /* 侧边栏的渐变背景 */
+}
+
+.sidebar-nav h3 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    color: #555; /* 更柔和的文字颜色 */
+}
+
+.questions-list {
+    display: flex;
+    flex-wrap: wrap; /* 自动换行 */
+    gap: 10px; /* 项目之间的间距 */
+}
+
+.questions-list a {
+    text-decoration: none;
+    color: #333;
+    font-size: 1.2em;
+    transition: all 0.3s ease; /* 平滑过渡效果 */
+    padding: 5px 10px;
+    border: 1px solid #ddd; /* 添加边框 */
+    border-radius: 8px; /* 圆角边框 */
+    background: linear-gradient(135deg, #ffffff, #f5f5f5); /* 题号链接的渐变背景 */
+}
+
+.questions-list a:hover {
+    background-color: #e0eafc; /* 链接悬停时的背景颜色 */
+    border-color: #007bff; /* 链接悬停时的边框颜色 */
+    color: #007bff; /* 链接悬停时的文字颜色 */
+}
+
+.loading {
+    margin-top: 20px;
+    text-align: center;
+    animation: fadeIn 2s infinite;
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.answers-container {
+    margin-bottom: 20px;
+}
+
+h2, h3, h4, .option-label, .option, .highlight, .answer-text, .question-body, .analysis {
+    font-family: 'Georgia', serif; /* 优雅的衬线字体 */
+}
+
+h2 {
+    font-size: 2em;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+h3 {
+    font-size: 1.75em;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+h4, .question-body, .analysis {
+    font-size: 1.5em;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.option-label {
+    font-size: 1.4em;
+    margin-right: 5px;
+    color: #555;
+}
+
+.options-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.option {
+    margin-bottom: 10px;
+    font-size: 1.4em;
+    color: #555;
+}
+
+.highlight {
+    font-size: 1.4em;
+    color: #555;
+}
+
+.answer-text {
+    font-size: 1.4em;
+    color: #555;
+}
+
+/* 增加得分文本的字体大小 */
+.score-text {
+    font-size: 1.8em; /* 调整字体大小 */
+    color: #333; /* 保持深灰色文字 */
+    margin-bottom: 10px; /* 增加底部间距 */
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+    .main-container {
+        flex-direction: column;
+    }
+
+    .content-and-nav {
+        flex-direction: column;
+    }
+
+    .content, .sidebar-nav {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .sidebar-nav {
+        margin-top: 20px;
+    }
+}
+</style>
 
 <style scoped>
 /* 使用柔和的色调和优雅的字体 */

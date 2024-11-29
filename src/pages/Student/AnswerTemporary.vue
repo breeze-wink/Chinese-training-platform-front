@@ -10,7 +10,11 @@
                             <div v-if="shouldShowQuestionBody(question)" class="question-body">
                                 {{ getPrefixOfSequence(question.sequence) }} {{ question.questionBody }}
                             </div>
-                            <h4>{{ question.sequence }}. {{ question.questionContent }}</h4>
+                            <!-- 显示问题序号和内容 -->
+                            <div class="question-sequence-content">
+                                <span class="sequence">{{ question.sequence }}. </span>
+                                <span v-html="question.questionContent" class="question-content"></span>
+                            </div>
                             <div v-if="question.questionType === 'CHOICE'" class="options">
                                 <label v-for="option in getOptions(question.questionOptions)" :key="option.label" class="option">
                                     <input type="radio"
@@ -55,7 +59,7 @@
 import Header from '@/components/Header.vue';
 import axios from 'axios';
 import { nextTick } from 'vue';
-import Quill from "quill";
+import Quill from 'quill';
 
 export default {
     components: {
@@ -68,9 +72,6 @@ export default {
             parsedQuestions: [],
             currentIndex: 0,
             observer: null,
-            localPracticeId: this.practiceId,
-            localPracticeName: this.practiceName,
-            localMode: this.mode,
             quillEditors: {}
         };
     },
@@ -86,6 +87,7 @@ export default {
     mounted() {
         this.setupIntersectionObserver();
         this.initQuillEditors();
+        this.loadImagesInContent(); // 确保DOM更新完成后再加载图片
     },
     updated() {
         this.setupIntersectionObserver();
@@ -95,6 +97,97 @@ export default {
         Object.values(this.quillEditors).forEach((editor) => editor.destroy());
     },
     methods: {
+        loadImagesInContent() {
+            console.log('开始加载题目中的图片');
+            this.parsedQuestions.forEach(question => {
+                console.log(`处理问题 ${question.practiceQuestionId}:`, question);
+
+                // 确保 question.questionContent 是一个字符串
+                if (typeof question.questionContent !== 'string' || !question.questionContent) {
+                    console.error(`问题 ${question.practiceQuestionId} 的 questionContent 不是有效的字符串:`, typeof question.questionContent);
+                    return;
+                }
+
+                // 使用DOMParser来解析HTML字符串
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(question.questionContent, 'text/html');
+
+                // 查找所有 img 标签
+                const imgTags = doc.querySelectorAll('img');
+                let hasImage = false;
+
+                // 移除原有的图片标签
+                for (const img of imgTags) {
+                    img.remove();
+                    hasImage = true;
+                }
+
+                // 将图片插入到新的行中
+                if (hasImage) {
+                    const contentDiv = doc.createElement('div');
+                    imgTags.forEach(img => {
+                        const src = img.getAttribute('src');
+                        if (src) {
+                            // 如果是Base64图片，上传并替换为服务器上的图片URL
+                            if (src.startsWith('data:image/')) {
+                                const base64Image = src;
+                                const mimeType = base64Image.split(';')[0].split(':')[1];
+                                const blob = this.base64ToBlob(base64Image, mimeType);
+                                const file = new File([blob], 'image.png', { type: mimeType });
+                                this.uploadImage(file).then(newImageUrl => {
+                                    if (newImageUrl) {
+                                        img.setAttribute('src', newImageUrl);
+                                    }
+                                }).catch(error => {
+                                    console.error('上传图片失败:', error);
+                                });
+                            } else { // 否则直接替换为新的后端接口路径
+                                const imageName = src.split('/').pop(); // 获取文件名
+                                const newSrc = `/api/uploads/images/content/${imageName}`;
+                                img.setAttribute('src', newSrc);
+                            }
+                        }
+                        contentDiv.appendChild(img);
+                    });
+                    doc.body.appendChild(contentDiv);
+                }
+
+                // 更新question.questionContent
+                question.questionContent = doc.body.innerHTML;
+            });
+        },
+        base64ToBlob(base64, mimeType) {
+            const byteCharacters = atob(base64.split(',')[1]);
+            const byteArrays = [];
+
+            for (let offset = 0; offset < byteCharacters.length; offset++) {
+                const byte = byteCharacters.charCodeAt(offset);
+                byteArrays.push(byte);
+            }
+
+            const byteArray = new Uint8Array(byteArrays);
+            return new Blob([byteArray], {type: mimeType});
+        },
+        uploadImage(file) {
+            const formData = new FormData();
+            formData.append("image", file);
+            formData.append("type", "content");
+
+            return axios.post('/api/uploads/image', formData, {
+                headers: {'Content-Type': 'multipart/form-data'},
+            }).then(response => {
+                if (response.status === 200) {
+                    console.log(response.data.imageUrl);
+                    return response.data.imageUrl;
+                } else {
+                    console.error('图片上传失败');
+                    return null;
+                }
+            }).catch(error => {
+                console.error('上传图片失败:', error);
+                return null;
+            });
+        },
         initialize() {
             const questionsFromQuery = this.$route.query.questions;
             if (questionsFromQuery) {
@@ -117,7 +210,6 @@ export default {
             this.localPracticeName = this.$route.query.practiceName || '未知练习';
             this.localMode = this.$route.query.mode || 'unknown';
         },
-
         async submitAnswers() {
             console.log('开始提交答案');
 
@@ -156,7 +248,8 @@ export default {
                     const score = response.data.score;
                     if (score !== undefined && score !== null) {
                         this.$router.push({
-                            name: 'AnswerDetail',
+                            name:
+                                'AnswerDetail',
                             params: {
                                 practiceId: this.practiceId
                             },
@@ -171,17 +264,15 @@ export default {
                     }
                 } else {
                     console.error('提交答案失败', response.data.message);
-                    this.$message.error(`提交答案失败: ${response.data.message}`);
+                    this.$message.error('提交答案失败: ${response.data.message}');
                 }
             } catch (error) {
                 console.error('提交答案失败', error.response ? error.response.data : error.message);
-                this.$message.error(`提交答案失败: ${error.response ? error.response.data.message : error.message}`);
+                this.$message.error('提交答案失败: ${error.response ? error.response.data.message : error.message}');
             }
         },
-
         async saveAnswers() {
             console.log('开始保存答案');
-
             const answers = this.parsedQuestions.map((question) => ({
                 practiceQuestionId: question.practiceQuestionId,
                 answerContent: this.studentAnswers[question.practiceQuestionId]
@@ -218,7 +309,6 @@ export default {
                 this.$message.error('暂存答案失败');
             }
         },
-
         setupIntersectionObserver() {
             if (this.observer) {
                 this.observer.disconnect();
@@ -230,7 +320,7 @@ export default {
                     const targetElement = firstVisibleEntry.target;
                     this.currentIndex = parseInt(targetElement.id.split('-')[1], 10);
                 }
-            }, { threshold: 0.5 });
+            }, {threshold: 0.5});
 
             nextTick(() => {
                 if (this.$refs.questionElements && this.$refs.questionElements.length > 0) {
@@ -242,7 +332,6 @@ export default {
                 }
             });
         },
-
         getOptions(optionsString) {
             const options = [];
             const regex = /([A-Z])\.\s*(.*?)(?=[A-Z]\.|$)/g;
@@ -255,26 +344,22 @@ export default {
             }
             return options;
         },
-
         scrollToQuestion(index, id) {
             this.currentIndex = id;
             const element = this.$refs.questionElements.find(el => el.id === 'question-' + id);
             if (element) {
-                element.scrollIntoView({ behavior: 'smooth' });
+                element.scrollIntoView({behavior: 'smooth'});
             }
         },
-
         logQuestionsInfo() {
             this.parsedQuestions.forEach((question, index) => {
                 console.log(`Question ${index + 1}:`, question);
             });
         },
-
         shouldShowQuestionBody(question) {
             if (question.sequence.includes('.')) {
                 const [base, sub] = question.sequence.split('.');
                 const baseNumber = parseInt(base, 10);
-                // 查找是否有相同基础序号的题目已经显示过
                 for (let i = 0; i < this.parsedQuestions.length; i++) {
                     const q = this.parsedQuestions[i];
                     if (q.sequence.startsWith(`${baseNumber}.`) && i < this.parsedQuestions.indexOf(question)) {
@@ -286,7 +371,6 @@ export default {
             return false;
         },
         getPrefixOfSequence(sequence) {
-            // 提取 sequence 中点号前的部分
             const parts = sequence.split('.');
             return parts[0];
         },
@@ -307,24 +391,21 @@ export default {
                             modules: {
                                 toolbar: [
                                     ['bold', 'italic', 'underline'],
-                                    [{ list: 'ordered' }, { list: 'bullet' }],
+                                    [{list: 'ordered'}, {list: 'bullet'}],
                                     ['link', 'image']
                                 ],
                             },
                         });
 
-                        // 同步答案数据，直接更新 studentAnswers
                         quill.on('text-change', () => {
                             const richText = quill.root.innerHTML;
                             this.studentAnswers[question.practiceQuestionId] = this.getSimpleText(richText);
                         });
 
-                        // 恢复已保存的答案
                         if (this.studentAnswers[question.practiceQuestionId]) {
                             quill.root.innerHTML = this.studentAnswers[question.practiceQuestionId];
                         }
 
-                        // 存储 Quill 实例
                         this.quillEditors[question.practiceQuestionId] = quill;
                     }
                 });
@@ -346,8 +427,6 @@ export default {
     }
 };
 </script>
-
-
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
@@ -549,4 +628,5 @@ input[type="text"]:focus, textarea:focus {
     background-color: #0056b3; /* 更深的蓝色背景 */
     transform: scale(1.1); /* 鼠标悬停时放大效果 */
 }
+
 </style>
