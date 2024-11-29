@@ -101,8 +101,8 @@
                     <div v-for="(answer, index) in questionForms.FILL_IN_BLANK.answers" :key="index" class="answer-row">
 
                       <el-input
-                          v-model="questionForms.FILL_IN_BLANK.answers[index]"
-                          placeholder="请输入第 {{ index + 1 }} 个填空的答案"
+                        v-model="questionForms.FILL_IN_BLANK.answers[index]"
+                        :placeholder="'请输入第 ' + (index + 1) + ' 个填空的答案'"
                       ></el-input>
 
                     </div>
@@ -346,10 +346,12 @@ const submitQuestion = async () => {
         choices: activeTab.value === 'CHOICE' ? currentForm.options : [], // 选项（选择题需要）
         answer:
             activeTab.value === 'CHOICE'
-                ? String.fromCharCode(65 + parseInt(currentForm.answer))  // 将数字转换成字母（A、B、C、D等）
+                ? [String.fromCharCode(65 + parseInt(currentForm.answer))]  // 将数字转换成字母（A、B、C、D等）
                 : activeTab.value === 'FILL_IN_BLANK'
-                    ? currentForm.answers
-                    : currentForm.answer, // 答案
+                ? currentForm.answers
+                : Array.isArray(currentForm.answer)
+                    ? currentForm.answer
+                    : [currentForm.answer], // 答案
         analysis: currentForm.explanation, // 解析
         knowledgePointId: KnowledgePointId.value, // 知识点 ID
       },
