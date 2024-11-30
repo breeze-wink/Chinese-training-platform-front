@@ -17,11 +17,11 @@
         </div>
 
         <el-table :data="paginatedData" style="width: 100%; margin-top: 20px;">
-          <el-table-column prop="id" label="序号" width="80"></el-table-column>
           <el-table-column prop="name" label="姓名" width="150"></el-table-column>
           <el-table-column prop="email" label="邮箱" width="250"></el-table-column>
-          <el-table-column prop="phoneNumber" label="联系方式"></el-table-column>
-          <el-table-column prop="schoolId" label="学校ID" width="120"></el-table-column>
+          <el-table-column prop="username" label="用户名" width="150"></el-table-column>
+          <el-table-column prop="phoneNumber" label="联系电话"></el-table-column>
+          
 
           <el-table-column label="操作">
             <template #default="{ row }">
@@ -63,6 +63,7 @@ const currentPage = ref(1);
 const pageSize = ref(10);  // 每页显示 7 行
 const totalItems = ref(0);
 const teachers = ref([]);
+const filteredData = ref([]);  // 用来存储筛选后的数据
 
 // 获取教师数据
 const getTeachers = async () => {
@@ -71,25 +72,19 @@ const getTeachers = async () => {
     if (response.status === 200) {
       teachers.value = response.data.data;
       totalItems.value = response.data.data.length;
+      filteredData.value = teachers.value;  // 默认加载所有数据
     } else {
       ElMessage({ message: '教师账号信息查询失败：' + response.data.message, type: 'error' });
     }
   } catch (error) {
-    // 捕获错误并显示提示
     console.error(error);
-    ElMessage({message: '获取教师信息失败，请稍后再试', type: 'error'});
+    ElMessage({ message: '获取教师信息失败，请稍后再试', type: 'error' });
   }
 };
 
 // 页面加载时获取教师数据
 onMounted(() => {
   getTeachers(); // 使用动态的 adminId 获取信息
-});
-
-const filteredData = computed(() => {
-  return teachers.value.filter(teacher =>
-      teacher.name.includes(search.value)
-  );
 });
 
 // 根据当前页和每页的行数来获取显示的数据
@@ -101,24 +96,37 @@ const paginatedData = computed(() => {
 
 // 查询教师
 const searchTeacher = () => {
+  // 执行筛选操作
+  filteredData.value = teachers.value.filter(teacher =>
+      teacher.name.includes(search.value)
+  );
   ElMessage({ message: '查询成功', type: 'success' });
 };
 
 // 重置搜索
 const resetSearch = () => {
   search.value = '';
+  filteredData.value = teachers.value;  // 重置筛选结果为所有教师
   ElMessage({ message: '重置成功', type: 'success' });
 };
 
 // 删除教师
-const deleteTeacher = (teacher) => {
-  teachers.value = teachers.value.filter(t => t.id !== teacher.id);
-  ElMessage({ message: '删除成功', type: 'success' });
-};
-
-// 处理分页变化
-const handlePageChange = (page) => {
-  currentPage.value = page;
+const deleteTeacher = async (teacher) => {
+  try {
+    const response = await axios.delete(`/api/school-admin/${adminId.value}/delete-teacher/${teacher.id}`);
+    if (response.status === 200) {
+      // 删除成功后，从 teachers 数组中移除该教师
+      teachers.value = teachers.value.filter(t => t.id !== teacher.id);
+      filteredData.value = filteredData.value.filter(t => t.id !== teacher.id); // 更新筛选后的数据
+      totalItems.value -= 1;  // 更新总条目数
+      ElMessage({ message: '教师删除成功', type: 'success' });
+    } else {
+      ElMessage({ message: '删除失败：' + response.data.message, type: 'error' });
+    }
+  } catch (error) {
+    console.error(error);
+    ElMessage({ message: '删除教师失败，请稍后再试', type: 'error' });
+  }
 };
 </script>
 
