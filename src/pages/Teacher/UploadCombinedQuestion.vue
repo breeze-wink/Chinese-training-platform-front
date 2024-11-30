@@ -14,12 +14,25 @@
                 <!-- 题干输入区域 -->
                 <el-form :model="stemForm" label-width="80px" class="form-container">
                     <el-form-item label="题干">
-                        <el-input
-                                v-model="stemForm.stem"
-                                type="textarea"
-                                placeholder="请输入题干"
-                                :autosize="{ minRows: 3, maxRows: 10 }"
-                        ></el-input>
+                        <div style="max-width: 750px; overflow: hidden;">
+                            <quill-editor
+                                    ref="bodyEditor"
+                                    placeholder="请输入问题内容"
+                                    class="quill-editor"
+                                    :options="quillOptions"
+                            ></quill-editor>
+                        </div>
+
+                    </el-form-item>
+                    <el-form-item label="选择类型">
+                        <el-select v-model="stemForm.questionType" placeholder="请选择类型">
+                            <el-option label="文言文阅读" value="文言文阅读"></el-option>
+                            <el-option label="记叙文阅读" value="记叙文阅读"></el-option>
+                            <el-option label="非连续性文本阅读" value="非连续性文本阅读"></el-option>
+                            <el-option label="古诗词曲鉴赏" value="古诗词曲鉴赏"></el-option>
+                            <el-option label="名著阅读" value="名著阅读"></el-option>
+                            <el-option label="基础" value="基础"></el-option>
+                        </el-select>
                     </el-form-item>
 
 
@@ -27,9 +40,9 @@
                     <!-- 题型选择与添加按钮 -->
                     <div class="add-section">
                         <el-select v-model="selectedType" placeholder="请选择题型" class="question-type-select">
-                            <el-option label="选择题" value="choice"></el-option>
-                            <el-option label="填空题" value="fill"></el-option>
-                            <el-option label="问答题" value="qa"></el-option>
+                            <el-option label="选择题" value="CHOICE"></el-option>
+                            <el-option label="填空题" value="FILL_IN_BLANK"></el-option>
+                            <el-option label="问答题" value="SHORT_ANSWER"></el-option>
                         </el-select>
                         <el-button type="primary" @click="addQuestion">添加</el-button>
                     </div>
@@ -49,14 +62,13 @@
                                 <el-button
                                         type="danger"
                                         icon="el-icon-delete"
-
                                         @click="removeQuestion(index)"
                                 ></el-button>
                             </div>
 
                             <!-- 动态子题表单 -->
                             <el-form :model="question.data" label-width="80px">
-                                <template v-if="question.type === 'choice'">
+                                <template v-if="question.type === 'CHOICE'">
                                     <!-- 选择题表单 -->
                                     <el-form-item label="问题" class="form-item-margin">
                                         <el-input
@@ -111,7 +123,7 @@
                                     </el-form-item>
                                 </template>
 
-                                <template v-else-if="question.type === 'fill'">
+                                <template v-else-if="question.type === 'FILL_IN_BLANK'">
                                     <!-- 填空题表单 -->
                                     <el-form-item label="问题" class="form-item-margin">
                                         <el-input
@@ -154,7 +166,7 @@
                                     </el-form-item>
                                 </template>
 
-                                <template v-else-if="question.type === 'qa'">
+                                <template v-else-if="question.type === 'SHORT_ANSWER'">
                                     <!-- 问答题表单 -->
                                     <el-form-item label="问题" class="form-item-spacing">
                                         <el-input
@@ -199,16 +211,26 @@
     </div>
 </template>
 
-
 <script setup>
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import { ref } from "vue";
+import {computed, nextTick, onMounted, ref} from 'vue';
+
 import { nanoid } from "nanoid"; // 用于生成唯一 ID
+import Quill from "quill";
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
+import {ImageDrop} from 'quill-image-drop-module'
+import BlotFormatter from 'quill-blot-formatter/dist/BlotFormatter';
+import KnowledgePointSelector from '@/pages/Teacher/TeacherPublicComponent/KnowledgePointSelector.vue';
+
+import axios from "axios";
+import {QuillEditor} from "@vueup/vue-quill";
+import BodyEditor from "quill/blots/break.js";
 
 // 题干数据
 const stemForm = ref({
     stem: "",
+    questionType: "", // 题干类型
 });
 
 // 当前选中的题型
@@ -216,29 +238,134 @@ const selectedType = ref(null);
 
 // 子题数组
 const questions = ref([]);
-import KnowledgePointSelector from '@/pages/Teacher/TeacherPublicComponent/KnowledgePointSelector.vue'; // 引入知识点选择组件
-
 
 // 题型标签
 const questionTypeLabels = {
-    choice: "选择",
-    fill: "填空",
-    qa: "问答",
+    CHOICE: "选择",
+    FILL_IN_BLANK: "填空",
+    SHORT_ANSWER: "问答",
 };
+// 初始化获取知识点数据
+onMounted(async () => {
+
+    await nextTick(() => {
+        // 通过 ref 获取 Quill 编辑器实例
+        // 这里假设你的 quill-editor 组件的 ref 已经设置为 "editor"
+        BodyEditor.value = document.querySelector('.quill-editor').getQuill();
+        // 现在你可以使用 quillInstance 来做你需要的操作，例如获取内容等
+    });
+
+});
+// ***************************************************************************
+// 富文本注释：从此开始
+const bodyEditor = ref(null)
+Quill.register('modules/imageDrop', ImageDrop)
+Quill.register('modules/blotFormatter', BlotFormatter)
+//富文本选项配置
+const quillOptions = {
+    placeholder: '请输入问题内容',
+    theme: 'snow',
+    modules: {
+        toolbar: [
+            [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['bold', 'italic', 'underline'],
+            [{ 'align': [] }],
+            ['link', 'image', 'video'], // 超链接 图片 视频
+        ],
+        blotFormatter: {
+
+            toolbar: {
+                mainClassName: 'blot-formatter__toolbar'
+            }
+        }
+    }
+};
+const extractBase64ImagesFromContent = (content) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+    const images = [];
+
+    // 查找所有 img 标签
+    const imgTags = doc.querySelectorAll('img');
+    imgTags.forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && src.startsWith('data:image/')) {  // 判断是否为Base64图像
+            images.push(src);
+        }
+    });
+
+    return images;
+};
+
+// 将Base64数据转换为Blob对象
+const base64ToBlob = (base64, mimeType) => {
+    const byteCharacters = atob(base64.split(',')[1]); // 解码Base64数据
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset++) {
+        const byte = byteCharacters.charCodeAt(offset);
+        byteArrays.push(byte);
+    }
+
+    const byteArray = new Uint8Array(byteArrays);
+    return new Blob([byteArray], { type: mimeType });
+};
+//图片上传并接受返回的url
+const uploadImage = async (imageSrc) => {
+    try {
+        const formData = new FormData();
+        formData.append("image", imageSrc);  // 假设 imageSrc 是一个 File 对象
+        formData.append("type", "content");  // 固定图片类型为 "content"
+
+        const response = await axios.post('/api/uploads/image', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        if (response.status === 200) {
+            console.log(response.data.imageUrl);
+            return response.data.imageUrl;
+
+
+        } else {
+            console.error('图片上传失败');
+        }
+    } catch (error) {
+        console.error('上传图片失败:', error);
+        return null;
+    }
+};
+//使用DOM替换富文本中的图片部分
+const replaceImagePlaceholder = (content, oldSrc, newSrc) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+
+    // 查找所有 img 标签
+    const imgs = doc.querySelectorAll('img');
+
+    imgs.forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && src === oldSrc) {
+            img.setAttribute('src', newSrc); // 替换 src
+        }
+    });
+    // 返回修改后的 HTML 字符串
+    return doc.body.innerHTML;
+};
+// 富文本部分到此结束
+// ***************************************************************************
 
 // 添加题目
 const addQuestion = () => {
     if (!selectedType.value) {
         return alert("请选择题型！");
     }
-
     // 根据题型生成对应的初始数据
     const newQuestion = {
-        id: nanoid(),
         type: selectedType.value,
-        data: selectedType.value === "choice"
+        data: selectedType.value === "CHOICE"
                 ? { question: "", options: ["", "", "", ""], answer: null }
-                : selectedType.value === "fill"
+                : selectedType.value === "FILL_IN_BLANK"
                         ? { question: "", answers: [""] }
                         : { question: "", answer: "" },
     };
@@ -270,7 +397,28 @@ const updateFillAnswers = (index) => {
 };
 
 // 提交所有题目
-const submitQuestions = () => {
+const submitQuestions = async () => {
+
+    //html转化并取代
+    let content = bodyEditor.value.getHTML() || bodyEditor.value.container.firstChild.innerHTML;
+
+    const base64Images = extractBase64ImagesFromContent(content);
+
+    for (const base64Image of base64Images) {
+        const mimeType = base64Image.split(';')[0].split(':')[1];  // 获取图片的MIME类型，例如 image/png
+        const blob = base64ToBlob(base64Image, mimeType);
+        const file = new File([blob], 'image.png', {type: mimeType});  // 可以通过文件名调整，使用适当的扩展名
+        const newImageUrl = await uploadImage(file);
+        console.log(newImageUrl);
+        console.log('000');
+        if (newImageUrl) {
+            content = replaceImagePlaceholder(content, base64Image, newImageUrl);
+            console.log(content);
+        }
+    }
+
+
+
     const payload = {
         stem: stemForm.value.stem,
         questions: questions.value.map((q) => ({

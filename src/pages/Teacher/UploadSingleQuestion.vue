@@ -13,6 +13,7 @@
           <el-tab-pane label="选择题" name="CHOICE">
             <div class="tab-content">
               <el-form :model="questionForms.CHOICE" label-width="80px">
+
                   <el-form-item label="问题" class="form-item-margin">
                       <div style="max-width: 750px; overflow: hidden;">
                           <quill-editor
@@ -25,6 +26,7 @@
                           ></quill-editor>
                       </div>
                   </el-form-item>
+
                 <el-form-item>
                   <el-row>
                     <el-col
@@ -482,18 +484,11 @@ const quillOptions = {
       ['link', 'image', 'video'], // 超链接 图片 视频
     ],
     blotFormatter: {
-      // overlay: {
-      //    style: {
-      //        border: '2px solid red',
-      //    }
-      // },
+
       toolbar: {
         mainClassName: 'blot-formatter__toolbar'
       }
     }
-
-
-
   }
 };
 
