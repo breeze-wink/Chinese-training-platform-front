@@ -307,7 +307,6 @@ const base64ToBlob = (base64, mimeType) => {
         const byte = byteCharacters.charCodeAt(offset);
         byteArrays.push(byte);
     }
-
     const byteArray = new Uint8Array(byteArrays);
     return new Blob([byteArray], { type: mimeType });
 };
@@ -325,8 +324,6 @@ const uploadImage = async (imageSrc) => {
         if (response.status === 200) {
             console.log(response.data.imageUrl);
             return response.data.imageUrl;
-
-
         } else {
             console.error('图片上传失败');
         }
@@ -401,7 +398,6 @@ const submitQuestions = async () => {
 
     //html转化并取代
     let content = bodyEditor.value.getHTML() || bodyEditor.value.container.firstChild.innerHTML;
-
     const base64Images = extractBase64ImagesFromContent(content);
 
     for (const base64Image of base64Images) {
@@ -416,8 +412,6 @@ const submitQuestions = async () => {
             console.log(content);
         }
     }
-
-
 
     const payload = {
         stem: stemForm.value.stem,

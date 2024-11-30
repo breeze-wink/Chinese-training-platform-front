@@ -181,11 +181,8 @@
                     <el-button v-if="active < 3" @click="next">nextStep</el-button>
                     <el-button v-if="active === 3" @click="goToOwnPage" type="primary" class="custom-button">进入平台
                     </el-button>
-
-
                 </div>
             </el-dialog>
-
 
             <!-- 注册浮窗 -->
             <el-dialog v-model="registerDialogVisible" title="注册" width="500px" align-center>

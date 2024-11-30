@@ -82,17 +82,15 @@ const routes = [
         component: UploadCombinedQuestion
     },
 
-
-
     //系统管理员
-    { path: '/system-admin/KnowledgePoint', component: KnowledgePoint },
-    { path: '/system-admin/CourseStandard', component: CourseStandard },
+    { path: '/system-admin/knowledge-point', component: KnowledgePoint },
+    { path: '/system-admin/course-standard', component: CourseStandard },
     { path: '/system-admin/name', name:'name',component: name},
-    { path: '/system-admin/GenerateSchadm',component: GenerateSchadm},
+    { path: '/system-admin/generate-sch-adm',component: GenerateSchadm},
 
     // 学管
-    { path: '/school-admin/ManageStudent', component: ManageStudent },
-    { path: '/school-admin/Manageteacher', component: ManageTeacher },
+    { path: '/school-admin/manage-student', component: ManageStudent },
+    { path: '/school-admin/manage-teacher', component: ManageTeacher },
     { path: '/school-admin/authorization-code', name:'AuthorizationCode',component: AuthorizationCode },
 
 
