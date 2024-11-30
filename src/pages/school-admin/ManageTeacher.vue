@@ -111,10 +111,23 @@ const resetSearch = () => {
 };
 
 // 删除教师
-const deleteTeacher = (teacher) => {
-  teachers.value = teachers.value.filter(t => t.id !== teacher.id);
-  ElMessage({ message: '删除成功', type: 'success' });
-};
+const deleteTeacher = async (teacher) => {
+  try {
+    // 向后端发送 DELETE 请求，删除教师
+    const response = await axios.delete(`/api/school-admin/${adminId.value}/delete-teacher/${teacher.id}`);
+
+    if (response.status === 200 && response.data.message === '教师账号删除成功') {
+      // 删除成功后，从前端数组中移除该教师
+      teachers.value = teachers.value.filter(t => t.id !== teacher.id);
+      ElMessage({message: '教师删除成功', type: 'success'});
+    } else {
+      // 删除失败
+      ElMessage({message: '删除失败：' + response.data.message, type: 'error'});
+    }
+  } catch (error) {
+    ElMessage({message: '删除失败，请稍后再试', type: 'error'});
+  }
+}
 
 // 处理分页变化
 const handlePageChange = (page) => {

@@ -203,8 +203,8 @@
                         <el-input v-model="registerForm.student.code" placeholder="验证码" size="large"
                                   class="input-wid"></el-input>
                       </el-form-item>
-                      <el-button :disabled="countdown.value > 0" @click="sendVerificationCode('student')">
-                        {{ codeButtonText }}
+                      <el-button type="primary" @click="sendVerificationCode" :disabled="isSendingCode" style="margin-left: 10px;">
+                        {{ isSendingCode ? `${countdown}s` : '获取验证码' }}
                       </el-button>
                     </div>
                     <el-form-item prop="username" label="用户名">
@@ -242,8 +242,8 @@
                         <el-input v-model="registerForm.teacher.code" placeholder="验证码" size="large"
                                   class="input-wid"></el-input>
                       </el-form-item>
-                      <el-button :disabled="countdown.value > 0" @click="sendVerificationCode('teacher')">
-                        {{ codeButtonText }}
+                      <el-button type="primary" @click="sendVerificationCode" :disabled="isSendingCode" style="margin-left: 10px;">
+                        {{ isSendingCode ? `${countdown}s` : '获取验证码' }}
                       </el-button>
                     </div>
                     <el-form-item prop="password" label="密码">

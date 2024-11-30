@@ -22,7 +22,12 @@
               <el-input v-model="currentItem.name"></el-input>
             </el-form-item>
             <el-form-item label="类型">
-              <el-input v-model="currentItem.type"></el-input>
+              <el-select v-model="currentItem.type" placeholder="选择类型">
+                <el-option label="现代文阅读" value="现代文阅读"></el-option>
+                <el-option label="古诗文阅读" value="古诗文阅读"></el-option>
+                <el-option label="名著阅读" value="名著阅读"></el-option>
+                <el-option label="作文" value="作文"></el-option>
+              </el-select>
             </el-form-item>
             <el-form-item label="描述">
               <el-input type="textarea" v-model="currentItem.description"></el-input>
@@ -34,17 +39,17 @@
           </el-form>
         </div>
 
-        <!-- 查看知识点详情 -->
+        <!-- 查看详情（不可编辑） -->
         <div class="view-knowledge-container" v-if="viewMode">
           <el-form :model="currentItem" label-width="80px">
             <el-form-item label="标题">
-              <el-input v-model="currentItem.name" disabled></el-input>
+              <el-input v-model="currentItem.name" :disabled="true"></el-input>
             </el-form-item>
             <el-form-item label="类型">
-              <el-input v-model="currentItem.type" disabled></el-input>
+              <el-input v-model="currentItem.type" :disabled="true"></el-input>
             </el-form-item>
             <el-form-item label="描述">
-              <el-input type="textarea" v-model="currentItem.description" disabled></el-input>
+              <el-input type="textarea" v-model="currentItem.description" :disabled="true"></el-input>
             </el-form-item>
             <el-form-item>
               <el-button @click="closeView">关闭</el-button>
@@ -59,13 +64,18 @@
               <el-input v-model="currentItem.name"></el-input>
             </el-form-item>
             <el-form-item label="类型">
-              <el-input v-model="currentItem.type"></el-input>
+              <el-select v-model="currentItem.type" placeholder="选择类型">
+                <el-option label="现代文阅读" value="现代文阅读"></el-option>
+                <el-option label="古诗文阅读" value="古诗文阅读"></el-option>
+                <el-option label="名著阅读" value="名著阅读"></el-option>
+                <el-option label="作文" value="作文"></el-option>
+              </el-select>
             </el-form-item>
             <el-form-item label="描述">
               <el-input type="textarea" v-model="currentItem.description"></el-input>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="saveItem">保存</el-button>
+              <el-button type="primary" @click="updateItem">保存</el-button>
               <el-button @click="cancelEdit">取消</el-button>
             </el-form-item>
           </el-form>
@@ -90,10 +100,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import { ElButton, ElInput, ElTable, ElTableColumn, ElForm, ElFormItem, ElMessage } from 'element-plus';
+import { ElButton, ElInput, ElTable, ElTableColumn, ElForm, ElFormItem, ElMessage, ElSelect, ElOption } from 'element-plus';
 import axios from 'axios';
 
 // 定义变量
@@ -134,31 +144,70 @@ const addKnowledgePoint = () => {
 const editKnowledgePoint = (item) => {
   currentItem.value = { ...item };
   editMode.value = true;
+  viewMode.value = false; // 确保在编辑时关闭查看模式
 };
 
-// 保存项目
+// 保存知识点
 const saveItem = async () => {
   if (!currentItem.value.name || !currentItem.value.type || !currentItem.value.description) {
     ElMessage({ message: '标题、类型和描述不能为空', type: 'error' });
     return;
   }
 
-  const url = currentItem.value.id
-      ? `/api/system-admin/edit-knowledge-point/${currentItem.value.id}`
-      : '/api/system-admin/add-knowledge-point';
-
-  const method = currentItem.value.id ? 'put' : 'post';
-
   try {
-    const response = await axios[method](url, currentItem.value);
+    const response = await axios.post('/api/system-admin/create-knowledge-point', currentItem.value);
     if (response.status === 200) {
       ElMessage({ message: response.data.message, type: 'success' });
-      fetchKnowledgePoints();  // Refresh the list
-      cancelAdd();  // Close the form after saving
+      fetchKnowledgePoints();  // 刷新列表
+      cancelAdd();  // 关闭表单
     }
   } catch (error) {
     ElMessage({ message: '保存失败', type: 'error' });
   }
+};
+
+// 更新知识点
+const updateItem = async () => {
+  if (!currentItem.value.name || !currentItem.value.type || !currentItem.value.description) {
+    ElMessage({ message: '标题、类型和描述不能为空', type: 'error' });
+    return;
+  }
+
+  try {
+    const response = await axios.put(`/api/system-admin/update-knowledge-point/${currentItem.value.id}`, currentItem.value);
+    if (response.status === 200) {
+      ElMessage({ message: response.data.message, type: 'success' });
+      fetchKnowledgePoints();  // 刷新列表
+      cancelEdit();  // 关闭表单
+    }
+  } catch (error) {
+    ElMessage({ message: '更新失败', type: 'error' });
+  }
+};
+
+// 删除知识点
+const deleteItem = async (item) => {
+  try {
+    const response = await axios.delete(`/api/system-admin/delete-knowledge-point/${item.id}`);
+    if (response.status === 200) {
+      ElMessage({ message: response.data.message, type: 'success' });
+      fetchKnowledgePoints();  // 刷新列表
+    }
+  } catch (error) {
+    ElMessage({ message: '删除失败', type: 'error' });
+  }
+};
+
+// 查看详情
+const viewKnowledgePoint = (item) => {
+  currentItem.value = { ...item };
+  viewMode.value = true;
+  editMode.value = false; // 确保在查看时关闭编辑模式
+};
+
+// 关闭查看
+const closeView = () => {
+  viewMode.value = false;
 };
 
 // 取消新增
@@ -173,28 +222,12 @@ const cancelEdit = () => {
   currentItem.value = { id: null, name: '', type: '', description: '' };
 };
 
-// 关闭查看
-const closeView = () => {
-  viewMode.value = false;
-  currentItem.value = { id: null, name: '', type: '', description: '' };
-};
-
-// 删除知识点
-const deleteItem = async (item) => {
-  try {
-    const response = await axios.delete(`/api/system-admin/delete-knowledge-point/${item.id}`);
-    if (response.status === 200) {
-      ElMessage({ message: response.data.message, type: 'success' });
-      fetchKnowledgePoints();  // Refresh the list after deletion
-    }
-  } catch (error) {
-    ElMessage({ message: '删除失败', type: 'error' });
-  }
-};
-
-// 初始化加载知识点数据
-fetchKnowledgePoints();
+onMounted(() => {
+  fetchKnowledgePoints();
+});
 </script>
+
+
 
 <style scoped>
 .page-container {

@@ -19,8 +19,8 @@
         <!-- 表格显示数据 -->
         <el-table :data="paginatedData" style="width: 100%; margin-top: 20px;">
           <el-table-column prop="id" label="序号" width="80"></el-table-column>
-          <el-table-column prop="name" label="姓名" width="150"></el-table-column> <!-- Shortened width for name -->
-          <el-table-column prop="email" label="邮箱" width="250"></el-table-column> <!-- Increased width for email -->
+          <el-table-column prop="name" label="姓名" width="150"></el-table-column>
+          <el-table-column prop="email" label="邮箱" width="250"></el-table-column>
           <el-table-column prop="username" label="用户名"></el-table-column>
           <el-table-column prop="grade" label="年级"></el-table-column>
           <el-table-column prop="schoolId" label="学校ID"></el-table-column>
@@ -63,7 +63,7 @@ const adminId = computed(() => store.state.user.id);
 // 定义变量
 const search = ref('');
 const currentPage = ref(1);
-const pageSize = ref(10);  // 每页显示 7 行
+const pageSize = ref(10);  // 每页显示 10 行
 const totalItems = ref(0);
 const students = ref([]);
 
@@ -72,30 +72,24 @@ const getStudents = async () => {
   try {
     const response = await axios.get(`/api/school-admin/${adminId.value}/query-all-students`);
     if (response.status === 200 && response.data.message === '全校学生信息查询成功') {
-      // 更新学生列表和总数
       students.value = response.data.data;
       totalItems.value = response.data.data.length;
     } else {
-      // 如果响应不符合预期，提示用户
       ElMessage({ message: '学生账号信息查询失败：' + response.data.message, type: 'error' });
     }
   } catch (error) {
-    // 捕获错误并显示提示
-    console.error(error);
     ElMessage({ message: '获取学生信息失败，请稍后再试', type: 'error' });
   }
 };
 
 // 页面加载时获取学生数据
 onMounted(() => {
-  getStudents(); // 使用动态的 adminId 获取信息
+  getStudents();
 });
 
 // 过滤后的数据
 const filteredData = computed(() => {
-  return students.value.filter(student =>
-      student.name && student.name.includes(search.value)
-  );
+  return students.value.filter(student => student.name && student.name.includes(search.value));
 });
 
 // 根据当前页和每页的行数来获取显示的数据
@@ -117,10 +111,27 @@ const resetSearch = () => {
 };
 
 // 删除学生
-const deleteStudent = (student) => {
-  students.value = students.value.filter(s => s.id !== student.id);
-  ElMessage({ message: '删除成功', type: 'success' });
+// 删除学生
+const deleteStudent = async (student) => {
+  try {
+    // 调用后端 API 删除学生
+    const response = await axios.delete(`/api/school-admin/${adminId.value}/delete-student/${student.id}`);
+
+    // 如果删除成功
+    if (response.status === 200 && response.data.message === '学生账号删除成功') {
+      // 从前端数据列表中移除该学生
+      students.value = students.value.filter(s => s.id !== student.id);
+      ElMessage({ message: '学生删除成功', type: 'success' });
+    } else {
+      // 删除失败时显示错误消息
+      ElMessage({ message: '删除失败：' + response.data.message, type: 'error' });
+    }
+  } catch (error) {
+    // 请求失败时显示错误消息
+    ElMessage({ message: '删除失败，请稍后再试', type: 'error' });
+  }
 };
+
 
 // 处理分页变化
 const handlePageChange = (page) => {

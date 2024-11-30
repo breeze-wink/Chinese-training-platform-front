@@ -143,7 +143,7 @@ const menuItems = computed(() => {
 
       case 'sch-adm':
         return [
-          { index: '1', label: '首页', icon: User, path: '/school-admin/AuthorizationCode' },
+          { index: '1', label: '首页', icon: Avatar, path: '/school-admin/authorization-Code' },
           {
             index: '2',
             label: '相关管理',
