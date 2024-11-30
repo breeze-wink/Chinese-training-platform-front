@@ -2,11 +2,9 @@
   <div class="page-container">
     <!-- 引入头部通用组件 -->
     <Header />
-
     <div class="main-container">
       <!-- 引入侧边栏通用组件 -->
       <Sidebar />
-
       <!-- 内容区 -->
       <div class="content">
         <h2>单题上传</h2>
@@ -15,16 +13,20 @@
           <el-tab-pane label="选择题" name="CHOICE">
             <div class="tab-content">
               <el-form :model="questionForms.CHOICE" label-width="80px">
-                <el-form-item label="问题"  class="form-item-margin" >
-                  <div style="max-width: 750px; overflow: hidden;">
-                    <quill-editor
-                        ref="editor"
-                        placeholder="请输入问题内容"
-                        class="quill-editor"
-                        :options="quillOptions"
-                    ></quill-editor>
-                  </div>
-                </el-form-item>
+
+                  <el-form-item label="问题" class="form-item-margin">
+                      <div style="max-width: 750px; overflow: hidden;">
+                          <quill-editor
+                                  ref="editor"
+                                  v-model:content="currentForm.problem"
+                          placeholder="请输入问题内容"
+                          class="quill-editor"
+                          :options="quillOptions"
+                          @change="handleEditorChange"
+                          ></quill-editor>
+                      </div>
+                  </el-form-item>
+
                 <el-form-item>
                   <el-row>
                     <el-col
@@ -71,7 +73,6 @@
             </div>
           </el-tab-pane>
 
-
           <!-- 填空题标签页 -->
           <el-tab-pane label="填空题"  name="FILL_IN_BLANK">
             <template #default>
@@ -98,12 +99,10 @@
                   </el-form-item>
                   <el-form-item label="答案">
                     <div v-for="(answer, index) in questionForms.FILL_IN_BLANK.answers" :key="index" class="answer-row">
-
                       <el-input
-                          v-model="questionForms.FILL_IN_BLANK.answers[index]"
-                          placeholder="请输入第 {{ index + 1 }} 个填空的答案"
+                        v-model="questionForms.FILL_IN_BLANK.answers[index]"
+                        :placeholder="'请输入第 ' + (index + 1) + ' 个填空的答案'"
                       ></el-input>
-
                     </div>
                   </el-form-item>
 
@@ -189,25 +188,11 @@
                   </el-form-item>
 
                   <!-- 所属知识点下拉框 -->
-                  <KnowledgePointSelector @point-selected="onPointSelected" />
-
-<!--                  <el-form-item label="上传范文">-->
-<!--                    <el-upload-->
-<!--                        action="/api/upload/essay-sample"-->
-<!--                        :on-success="handleUploadSuccess"-->
-<!--                        :limit="1"-->
-<!--                        accept=".pdf,.doc,.docx"-->
-<!--                    >-->
-<!--                      <el-button type="primary">点击上传</el-button>-->
-<!--                    </el-upload>-->
-<!--                  </el-form-item>-->
+<!--                  <KnowledgePointSelector @point-selected="onPointSelected" />-->
                 </el-form>
               </div>
             </template>
           </el-tab-pane>
-
-
-
         </el-tabs>
 
         <!-- 确定上传按钮 -->
@@ -288,6 +273,14 @@ const essayForm = ref({
   explanation: '',
 });
 
+const currentForm = computed(() => questionForms.value[activeTab.value]);
+
+const handleEditorChange = (html, delta, source) => {
+    // 更新当前活动标签页的问题描述
+    if (source === 'user') {  // 确保只在用户操作时更新
+        currentForm.value.problem = html;
+    }
+};
 // 上传成功回调
 const handleUploadSuccess = (response, file) => {
   console.log('范文上传成功:', response, file);
@@ -298,79 +291,71 @@ const updateProblem = (value) => {
 };
 // 提交函数
 const submitQuestion = async () => {
-  // 确保子组件已挂载完成
-
-  // 从知识点选择器组件中获取数据
-  console.log('caonima');
-  console.log(KnowledgePointId.value);
-  // 获取当前激活标签的表单数据
-  console.log(activeTab.value);
-  const currentForm = questionForms.value[activeTab.value];
-
-  // 检查知识点是否选择
-  if (!KnowledgePointId) {
-    return ElMessage.warning('请先选择分类和知识点！');
-  }
-  let content = editor.value.getHTML() || editor.value.container.firstChild.innerHTML;
-
-  const base64Images = extractBase64ImagesFromContent(content);
-
-  for (const base64Image of base64Images) {
-    const mimeType = base64Image.split(';')[0].split(':')[1];  // 获取图片的MIME类型，例如 image/png
-    const blob = base64ToBlob(base64Image, mimeType);
-    const file = new File([blob], 'image.png', { type: mimeType });  // 可以通过文件名调整，使用适当的扩展名
-    const newImageUrl = await uploadImage(file);
-    console.log(newImageUrl);
-    console.log('000');
-    if (newImageUrl) {
-      content = replaceImagePlaceholder(content, base64Image, newImageUrl);
-      console.log(content);
+    // 检查知识点是否选择
+    const pointId =ref();
+    if(activeTab.value==='ESSAY'){
+      pointId.value=17;
+    }else{
+      pointId.value=KnowledgePointId.value
     }
-  }
-
-  currentForm.problem = content;
-  console.log(currentForm.problem);
-
-
-
-
-  // 构造请求数据
-  const requestData = {
-    questionType: '单题', // 固定为单题
-    body: null, // 固定为 null
-    questions: [
-      {
-        type: activeTab.value, // 当前题型
-        problem: content, // 问题描述
-        choices: activeTab.value === 'CHOICE' ? currentForm.options : [], // 选项（选择题需要）
-        answer:
-            activeTab.value === 'CHOICE'
-                ? String.fromCharCode(65 + parseInt(currentForm.answer))  // 将数字转换成字母（A、B、C、D等）
-                : activeTab.value === 'FILL_IN_BLANK'
-                    ? currentForm.answers
-                    : currentForm.answer, // 答案
-        analysis: currentForm.explanation, // 解析
-        knowledgePointId: KnowledgePointId.value, // 知识点 ID
-      },
-    ],
-  };
-  console.log(requestData);
-
-  //提交数据
-  try {
-    const response = await axios.post(
-        `/api/teacher/${teacherId.value}/upload-question`,
-        requestData
-    );
-    if (response.status === 200 && response.data.message === '上传成功') {
-      ElMessage.success('题目上传成功！');
-    } else {
-      ElMessage.error(response.data.message || '题目上传失败');
+    if (!pointId.value) {
+        return ElMessage.warning('请先选择分类和知识点！');
     }
-  } catch (error) {
-    console.error('上传失败:', error);
-    ElMessage.error('上传失败，请稍后重试');
-  }
+
+    const content = editor.value ? editor.value.getHTML() || editor.value.container.firstChild.innerHTML : '';
+    let processedContent = content;
+
+    // 处理图片上传
+    const base64Images = extractBase64ImagesFromContent(content);
+    for (const base64Image of base64Images) {
+        const mimeType = base64Image.split(';')[0].split(':')[1];
+        const blob = base64ToBlob(base64Image, mimeType);
+        const file = new File([blob], 'image.png', { type: mimeType });
+        const newImageUrl = await uploadImage(file);
+        if (newImageUrl) {
+            processedContent = replaceImagePlaceholder(processedContent, base64Image, newImageUrl);
+        }
+    }
+
+    // 更新问题描述
+    currentForm.value.problem = processedContent;
+
+    // 构造请求数据
+    const requestData = {
+        questionType: '单题',
+        body: null,
+        questions: [
+            {
+                type: activeTab.value,
+                problem: processedContent,
+                choices: activeTab.value === 'CHOICE' ? currentForm.value.options : [],
+                answer: activeTab.value === 'CHOICE'
+                    ? [String.fromCharCode(65 + parseInt(currentForm.value.answer))]
+                    : activeTab.value === 'FILL_IN_BLANK'
+                        ? currentForm.value.answers
+                        : Array.isArray(currentForm.value.answer)
+                            ? currentForm.value.answer
+                            : [currentForm.value.answer],
+                analysis: currentForm.value.explanation,
+                knowledgePointId: pointId.value,
+            },
+        ],
+    };
+
+    try {
+        const response = await axios.post(
+            `/api/teacher/${teacherId.value}/upload-question`,
+            requestData
+        );
+        if (response.status === 200 && response.data.message === '上传成功') {
+            ElMessage.success('题目上传成功！');
+        } else {
+            ElMessage.error(response.data.message || '题目上传失败');
+        }
+    } catch (error) {
+        console.error('上传失败:', error);
+        ElMessage.error('上传失败，请稍后重试');
+    }
 };
 // 从富文本内容中提取图片
 const extractBase64ImagesFromContent = (content) => {

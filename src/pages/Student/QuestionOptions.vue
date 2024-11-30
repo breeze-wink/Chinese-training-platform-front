@@ -18,7 +18,7 @@
                     </div>
                     <div class="question-number-input" v-if="selectedOption === 'custom'">
                         <label for="questionNumber">题目数量:</label>
-                        <input type="number" id="questionNumber" v-model.number="questionNum" min="1" max="100" />
+                        <input type="number" id="questionNumber" v-model.number="questionNum" min="1" max="10" @change="validateQuestionNumber" />
                     </div>
                     <div class="practice-name-input" v-if="selectedOption === 'custom'">
                         <label for="practiceName">练习名称:</label>
@@ -28,7 +28,9 @@
                 </div>
             </div>
         </div>
-        <el-dialog title="考点选择" v-model="dialogVisible" width="50%">
+
+        <!-- 考点选择对话框 -->
+        <el-dialog title="考点选择" v-model="dialogVisible" width="50%" :close-on-click-modal="false" :before-close="handleClose">
             <el-checkbox-group v-model="checkList">
                 <div v-for="(group, type) in groupedKnowledgePoints" :key="type" class="knowledge-group">
                     <h4 @click="logGroupType(type)">{{ type }}</h4>
@@ -42,10 +44,21 @@
             <span slot="footer" class="dialog-footer">
                 <div class="button-container">
                     <el-button @click="dialogVisible = false" class="submit-button">取 消</el-button>
-                    <el-button type="primary" @click="confirmSelection" class="submit-button">确 定</el-button>
+                    <el-button type="primary" @click="confirmSelection" class="submit-button" :loading="isProcessing">确 定</el-button>
                 </div>
             </span>
         </el-dialog>
+
+        <!-- 加载提示 -->
+        <div v-if="isProcessing" class="loading-modal">
+            <div class="modal-content">
+                <p>正在加载题目，请稍候...</p>
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- 遮罩层 -->
+        <div v-if="isProcessing" class="overlay"></div>
     </div>
 </template>
 
@@ -68,6 +81,7 @@ export default {
             knowledgePoints: [],
             questionNum: 10,
             practiceName: 'Custom Practice', // 默认练习名称
+            isProcessing: false, // 是否正在处理
         };
     },
     computed: {
@@ -147,6 +161,9 @@ export default {
             }
         },
         async confirmSelection() {
+            this.isProcessing = true; // 显示加载提示和遮罩层
+            this.dialogVisible = false; // 立即关闭考点选择对话框
+
             const requestBody = {
                 num: this.questionNum,
                 name: this.practiceName,
@@ -177,12 +194,18 @@ export default {
                 }
             } catch (error) {
                 console.error('考点和题目发送失败', error.response ? error.response.data : error.message);
+            } finally {
+                this.isProcessing = false; // 处理完成后隐藏加载提示和遮罩层
             }
-
-            this.dialogVisible = false;
         },
         logGroupType(type) {
             console.log('Group Type:', type); // 控制台输出
+        },
+        validateQuestionNumber() {
+            if (this.questionNum > 10) {
+                alert('最多只能选择10个题目。'); // 使用原生的alert弹窗
+                this.questionNum = 10; // 当超过10时，设置为10
+            }
         }
     }
 };
@@ -340,10 +363,62 @@ button:hover {
     display: block; /* 使复选框垂直排列 */
     margin-bottom: 10px;
 }
+
+/* 遮罩层样式 */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+    z-index: 999; /* 确保遮罩层在最上层 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 加载提示模态窗样式 */
+.loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* 确保模态窗在遮罩层之上 */
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 300px;
+    width: 100%;
+}
+
+.modal-content p {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 </style>
-
-
-
-
-
-

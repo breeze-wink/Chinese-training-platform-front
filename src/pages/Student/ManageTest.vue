@@ -33,8 +33,8 @@
                             <td>{{ item.startTime || item.dueTime }}</td>
                             <td>{{ item.endTime || item.dueTime }}</td>
                             <td>
-                                <button @click="continueTraining(item)">继续训练</button>
-                                <button @click="deletePractice(item)">删除练习</button>
+                                <button @click="showSystemConfirmContinue(item)" :disabled="isProcessing">继续训练</button>
+                                <button :disabled="isDeleting || isProcessing" @click="showSystemConfirmDelete(item)">删除练习</button>
                             </td>
                         </tr>
                         </tbody>
@@ -71,8 +71,7 @@
                             <td>{{ item.endTime || item.practiceTime }}</td>
                             <td>{{ item.totalScore }}</td>
                             <td>
-                                <button @click="viewAnswers(item)">答案查询</button>
-                                <button @click="teacherComment(item)">老师评语</button>
+                                <button @click="showSystemConfirmViewAnswers(item)" :disabled="isProcessing">答案查询</button>
                             </td>
                         </tr>
                         </tbody>
@@ -81,6 +80,19 @@
                 </section>
             </div>
         </div>
+
+        <!-- 加载提示 -->
+        <div v-if="isDeleting || isContinuing || isViewingAnswers" class="loading-modal">
+            <div class="modal-content">
+                <p v-if="isDeleting">正在删除，请稍候...</p>
+                <p v-if="isContinuing">正在加载题目，请稍候...</p>
+                <p v-if="isViewingAnswers">正在加载答案，请稍候...</p>
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- 遮罩层 -->
+        <div v-if="isProcessing" class="overlay"></div>
     </div>
 </template>
 
@@ -104,7 +116,14 @@ export default {
             completedItems: {
                 作业: [],
                 练习: []
-            }
+            },
+            isDeleting: false,
+            isContinuing: false,
+            isViewingAnswers: false,
+            isProcessing: false, // 新增：用于跟踪是否正在处理请求
+            practiceToDelete: null,
+            practiceToContinue: null,
+            answersToView: null
         };
     },
     computed: {
@@ -198,10 +217,18 @@ export default {
                 console.error('获取已完成作业列表失败', error);
             }
         },
-        async continueTraining(item) {
+        showSystemConfirmContinue(item) {
+            if (window.confirm(`确定要继续训练 "${item.practiceName || item.title}" 吗？`)) {
+                this.practiceToContinue = item;
+                this.isContinuing = true; // 显示加载提示
+                this.isProcessing = true; // 设置为正在处理
+                this.performContinueTraining();
+            }
+        },
+        async performContinueTraining() {
             try {
                 const endpoint = `/api/student/${this.getUserId}/continue-practice`;
-                const params = { practiceId: item.practiceId };
+                const params = { practiceId: this.practiceToContinue.practiceId };
 
                 console.log(`Sending POST request to ${endpoint} with params:`, params); // 调试日志
 
@@ -219,10 +246,10 @@ export default {
                     router.push({
                         name: 'AnswerTemporary',
                         query: {
-                            practiceId: item.practiceId,
+                            practiceId: this.practiceToContinue.practiceId,
                             questions: JSON.stringify(questions),
-                            mode: item.mode,
-                            practiceName: item.practiceName
+                            mode: this.practiceToContinue.mode,
+                            practiceName: this.practiceToContinue.practiceName
                         }
                     });
                 } else {
@@ -230,6 +257,17 @@ export default {
                 }
             } catch (error) {
                 console.error('获取题目失败', error.response ? error.response.data : error.message);
+            } finally {
+                this.isContinuing = false; // 隐藏加载提示
+                this.isProcessing = false; // 结束处理状态
+            }
+        },
+        showSystemConfirmViewAnswers(item) {
+            if (window.confirm(`确定要查看 "${item.practiceName || item.title}" 的答案吗？`)) {
+                this.answersToView = item;
+                this.isViewingAnswers = true; // 显示加载提示
+                this.isProcessing = true; // 设置为正在处理
+                this.performViewAnswers();
             }
         },
         viewAnswers(item) {
@@ -250,15 +288,67 @@ export default {
                 });
             } catch (error) {
                 console.error('获取答案失败', error);
+            } finally {
+                this.isViewingAnswers = false; // 隐藏加载提示
+                this.isProcessing = false; // 结束处理状态
             }
         },
-        teacherComment(item) {
-            // 处理老师评语逻辑
-            console.log('Teacher comment for:', item);
+        performViewAnswers() {
+            this.viewAnswers(this.answersToView);
         },
-        deletePractice(item) {
-            // 处理删除练习逻辑
-            console.log('Delete practice:', item);
+        showSystemConfirmDelete(item) {
+            if (window.confirm(`确定要删除练习 "${item.practiceName || item.title}" 吗？`)) {
+                this.practiceToDelete = item;
+                this.isDeleting = true; // 显示加载提示
+                this.isProcessing = true; // 设置为正在处理
+                this.performDelete();
+            }
+        },
+        async performDelete() {
+            if (!this.practiceToDelete) {
+                console.error('No practice to delete');
+                this.isDeleting = false; // 隐藏加载提示
+                this.isProcessing = false; // 结束处理状态
+                return;
+            }
+
+            const userId = this.getUserId; // 从vuex获取当前用户的ID
+            const practiceId = this.practiceToDelete.practiceId; // 获取要删除的练习ID
+
+            if (!practiceId) {
+                console.error('Missing required param "practiceId"', this.practiceToDelete);
+                this.isDeleting = false; // 隐藏加载提示
+                this.isProcessing = false; // 结束处理状态
+                return;
+            }
+
+            try {
+                const response = await axios.delete(`/api/student/${userId}/delete-practice?practiceId=${practiceId}`, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.status === 200) {
+                    // 删除成功后，更新本地数据
+                    this.pendingItems.练习 = this.pendingItems.练习.filter(p => p.practiceId !== practiceId);
+                    this.completedItems.练习 = this.completedItems.练习.filter(p => p.practiceId !== practiceId);
+
+                    console.log('Pending items after deletion:', this.pendingItems.练习); // 调试日志
+                    console.log('Completed items after deletion:', this.completedItems.练习); // 调试日志
+
+                    alert(response.data.message); // 显示成功消息
+                } else {
+                    console.error('删除练习失败', response.data.message);
+                    alert(response.data.message); // 显示错误消息
+                }
+            } catch (error) {
+                console.error('删除练习失败', error.response ? error.response.data : error.message);
+                alert('网络错误或服务器错误，请稍后再试');
+            } finally {
+                this.isDeleting = false; // 隐藏加载提示
+                this.isProcessing = false; // 结束处理状态
+            }
         }
     },
     created() {
@@ -324,11 +414,68 @@ button {
 
 button:hover {
     background-color: #0056b3;
-
 }
 
 p {
     text-align: center;
     color: #888;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+    z-index: 999; /* 确保遮罩层在最上层 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.2em;
+}
+
+.loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* 确保模态窗在遮罩层之上 */
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 300px;
+    width: 100%;
+}
+
+.modal-content p {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 </style>

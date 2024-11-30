@@ -49,7 +49,8 @@
 import { computed, ref } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
-import {Document, Setting, User, Management, Upload,EditPen} from '@element-plus/icons-vue';
+import {Document, Setting, User, Management, Upload, EditPen, Avatar} from '@element-plus/icons-vue';
+import {ElAvatar} from "element-plus";
 
 //获取路由
 const router = useRouter();
@@ -127,17 +128,18 @@ const menuItems = computed(() => {
             ];
       case 'sys-adm':
         return [
-          { index: '1', label: '用户名', icon: User, path: '/system-admin/name' },
+          { index: '1', label: '账号信息', icon: User, path: '/system-admin/name' },
           {
             index: '2',
             label: '相关管理',
-            icon: Management,
+            icon: Document,
             children: [
               { index: '2-1', label: '课标管理', path: '/system-admin/CourseStandard' },
               { index: '2-2', label: '知识点管理', path: '/system-admin/KnowledgePoint' },
             ],
           },
-          { index: '3', label: '生成学校管理员', icon: Setting, path: '/system-admin/GenerateSchadm' },
+          { index: '3', label: '学校管理员信息', icon: Avatar, path: '/system-admin/GenerateSchadm' },
+          
         ];
 
       case 'sch-adm':

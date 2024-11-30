@@ -35,7 +35,7 @@ import AnswerTemporary from "@/pages/Student/AnswerTemporary.vue";
 
 const routes = [
     //首页
-    { path: '/', component: Home },
+    { path: '/', name: 'Home', component: Home },
     // 游客诗词详情页
     { path: '/poem/:id', name: 'TouristPoem', component: TouristPoem, props: true },
     //老师页面
@@ -93,7 +93,7 @@ const routes = [
     // 学管
     { path: '/school-admin/ManageStudent', component: ManageStudent },
     { path: '/school-admin/Manageteacher', component: ManageTeacher },
-    { path: '/school-admin/authorization-code', name:'AuthorizationCode',component: AuthorizationCode },
+    { path: '/school-admin/AuthorizationCode', name:'AuthorizationCode',component: AuthorizationCode },
 
 
     // 学生的个人页面
