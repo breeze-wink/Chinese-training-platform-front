@@ -124,7 +124,6 @@ const teacherInfo = ref({
     email: '',
     phoneNumber: '',
     schoolName: ''
-
 });
 
 // 实名认证表单
@@ -203,7 +202,6 @@ const updateUsername = async () => {
     }
 };
 const updatePhoneNumber = async () => {
-
     try {
         //发送 POST 请求
         const url = `/api/teacher/${teacherId.value}/update-phoneNumber`;
@@ -225,7 +223,6 @@ const updatePhoneNumber = async () => {
 }
 
 const updateName = async () => {
-
     try {
         //发送 POST 请求
         const url = `/api/teacher/${teacherId.value}/update-name`;
@@ -243,7 +240,6 @@ const updateName = async () => {
     } catch (error) {
         console.error('请求失败' + error.message);
     }
-
 }
 
 // 提交实名认证

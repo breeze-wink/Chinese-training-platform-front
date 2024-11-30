@@ -187,8 +187,6 @@
                     ></el-input>
                   </el-form-item>
 
-                  <!-- 所属知识点下拉框 -->
-<!--                  <KnowledgePointSelector @point-selected="onPointSelected" />-->
                 </el-form>
               </div>
             </template>
@@ -411,32 +409,6 @@ const uploadImage = async (imageSrc) => {
     return null;
   }
 };
-// 处理包含Base64图片的内容
-// const handleContentImages = async () => {
-//     let content = editor.value.getHTML() || editor.value.container.firstChild.innerHTML;
-//
-//     // 确保 content 是有效的字符串
-//     if (!content || typeof content !== 'string') {
-//         console.error("Content is invalid or empty");
-//         return;
-//     }
-//
-//     const base64Images = extractBase64ImagesFromContent(content);
-//
-//     for (const base64Image of base64Images) {
-//         const mimeType = base64Image.split(';')[0].split(':')[1];  // 获取图片的MIME类型，例如 image/png
-//         const blob = base64ToBlob(base64Image, mimeType);
-//         const file = new File([blob], 'image.png', { type: mimeType });  // 可以通过文件名调整，使用适当的扩展名
-//
-//         const newImageUrl = await uploadImage(file);
-//         if (newImageUrl) {
-//             content = replaceImagePlaceholder(content, base64Image, newImageUrl);
-//         }
-//     }
-//
-//     currentForm.problem = content;
-//     console.log(currentForm);
-// };
 
 const escapeRegExp = (str) => {
   return str.replace(/[.*+?^=!:${}()|\[\]\/\\]/g, '\\$&'); // 转义正则表达式中的特殊字符
