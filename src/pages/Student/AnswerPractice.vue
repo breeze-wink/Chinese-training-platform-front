@@ -7,16 +7,18 @@
                     <h2 class="practice-name">{{ practiceName }}</h2>
                     <form @submit.prevent="submitAnswers">
                         <!-- 显示问题 -->
-                        <template v-for="(question, index) in displayedQuestions" :key="question.practiceQuestionId">
+                        <template v-for="question in displayedQuestions" :key="question.practiceQuestionId">
                             <!-- 显示问题内容 -->
                             <div :id="'question-' + question.practiceQuestionId" ref="questionElements" class="question">
                                 <!-- 显示 questionBody -->
                                 <div v-if="question.showBody" class="question-body">
                                     <strong>{{ question.number }}. {{ question.questionBody }}</strong>
                                 </div>
-                                <!-- 显示 questionContent -->
-                                <h4>{{ question.sequence }}. {{ question.questionContent }}</h4>
-
+                                <!-- 显示问题序号和内容 -->
+                                <div class="question-sequence-content">
+                                    <span class="sequence">{{ question.sequence }}. </span>
+                                    <span v-html="question.questionContent" class="question-content"></span>
+                                </div>
                                 <!-- 选择题 -->
                                 <div v-if="question.type === 'CHOICE'" class="options">
                                     <label v-for="(option, optionIndex) in getOptions(question.questionOptions)" :key="optionIndex" class="option">
@@ -24,15 +26,10 @@
                                         <span>{{ option.label }}. {{ option.text }}</span>
                                     </label>
                                 </div>
-
                                 <!-- 填空题或简答题 -->
                                 <div v-else-if="question.type === 'FILL_IN_BLANK' || question.type === 'SHORT_ANSWER'" class="input-field">
                                     <!-- 创建独立的 Quill 编辑器容器 -->
-                                    <div
-                                        :id="`quill-editor-${question.practiceQuestionId}`"
-                                        ref="quillEditors"
-                                        class="quill-editor"
-                                    ></div>
+                                    <div :id="`quill-editor-${question.practiceQuestionId}`" ref="quillEditors" class="quill-editor"></div>
                                 </div>
                             </div>
                         </template>
@@ -46,7 +43,7 @@
             </div>
             <div class="navigation">
                 <ul>
-                    <li v-for="(question, index) in displayedQuestions" :key="question.practiceQuestionId" :class="{ active: currentIndex === question.practiceQuestionId }">
+                    <li v-for="question in displayedQuestions" :key="question.practiceQuestionId" :class="{ active: currentIndex === question.practiceQuestionId }">
                         <a :href="'#question-' + question.practiceQuestionId" class="nav-link" @click.prevent="scrollToQuestion(question.practiceQuestionId)">
                             <div class="nav-option">
                                 {{ question.sequence }}
@@ -76,6 +73,104 @@ import axios from 'axios';
 import { nextTick } from 'vue';
 import Quill from 'quill';
 
+const extractBase64ImagesFromContent = (content) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+    const images = [];
+
+    // 查找所有 img 标签
+    const imgTags = doc.querySelectorAll('img');
+    imgTags.forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && src.startsWith('data:image/')) {  // 判断是否为Base64图像
+            images.push(src);
+        }
+    });
+
+    return images;
+};
+
+const base64ToBlob = (base64, mimeType) => {
+    const byteCharacters = atob(base64.split(',')[1]); // 解码Base64数据
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset++) {
+        const byte = byteCharacters.charCodeAt(offset);
+        byteArrays.push(byte);
+    }
+
+    const byteArray = new Uint8Array(byteArrays);
+    return new Blob([byteArray], { type: mimeType });
+};
+
+const uploadImage = async (file) => {
+    try {
+        const formData = new FormData();
+        formData.append("image", file);  // 假设 imageSrc 是一个 File 对象
+        formData.append("type", "content");  // 固定图片类型为 "content"
+
+        const response = await axios.post('/api/uploads/image', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        if (response.status === 200) {
+            console.log(response.data.imageUrl);
+            return response.data.imageUrl;
+        } else {
+            console.error('图片上传失败');
+        }
+    } catch (error) {
+        console.error('上传图片失败:', error);
+        return null;
+    }
+};
+
+const replaceImagePlaceholder = (content, oldSrc, newSrc) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+
+    // 查找所有 img 标签
+    const imgs = doc.querySelectorAll('img');
+
+    imgs.forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && src === oldSrc) {
+            img.setAttribute('src', newSrc); // 替换 src
+        }
+    });
+    // 返回修改后的 HTML 字符串
+    return doc.body.innerHTML;
+};
+
+const fetchImage = async (type, imageName) => {
+    try {
+        const response = await axios.get(`/api/uploads/images/${type}/${imageName}`, {
+            responseType: 'blob' // 设置响应类型为blob以处理二进制文件
+        });
+        if (response.status === 200) {
+            return URL.createObjectURL(response.data); // 创建一个对象URL
+        }
+    } catch (error) {
+        console.error('获取图片失败:', error);
+        return null;
+    }
+};
+
+const uploadAndReplaceImagesInContent = async (content, questionId) => {
+    const base64Images = extractBase64ImagesFromContent(content);
+    for (const base64Image of base64Images) {
+        const mimeType = base64Image.split(';')[0].split(':')[1];
+        const blob = base64ToBlob(base64Image, mimeType);
+        const file = new File([blob], 'image.png', { type: mimeType });
+        const newImageUrl = await uploadImage(file);
+        if (newImageUrl) {
+            content = replaceImagePlaceholder(content, base64Image, newImageUrl);
+        }
+    }
+    this.studentAnswers[questionId] = content; // 更新学生答案
+    return content;
+};
+
 export default {
     components: {
         Header,
@@ -85,6 +180,7 @@ export default {
         return {
             studentAnswers: {},
             parsedQuestions: [],
+            displayedQuestions: [],
             currentIndex: 0,
             observer: null,
             quillEditors: {},
@@ -115,18 +211,97 @@ export default {
         } else {
             console.error('questions 未定义');
         }
-
         // 其他初始化逻辑
     },
     mounted() {
         this.setupIntersectionObserver();
         this.initQuillEditors();
+        this.$nextTick(() => {
+            this.loadImagesInContent(); // 确保DOM更新完成后再加载图片
+        });
     },
     beforeDestroy() {
         if (this.observer) this.observer.disconnect();
         Object.values(this.quillEditors).forEach((editor) => editor.destroy());
     },
     methods: {
+        loadImagesInContent() {
+            console.log('开始加载题目中的图片');
+            this.parsedQuestions.forEach(question => {
+                // 确保 question.questionContent 是一个字符串
+                if (typeof question.questionContent !== 'string' || !question.questionContent) {
+                    console.error(`问题 ${question.practiceQuestionId} 的 questionContent 不是有效的字符串:`, typeof question.questionContent);
+                    return;
+                }
+
+                // 使用DOMParser来解析HTML字符串
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(question.questionContent, 'text/html');
+
+                // 查找所有 img 标签
+                const imgTags = doc.querySelectorAll('img');
+                let hasImage = false;  // 添加标志变量
+                imgTags.forEach(img => {
+                    const src = img.getAttribute('src');
+                    if (src) {
+                        hasImage = true;  // 设置为true表示至少有一个图片
+
+                        // 将图片放入一个新的 <p> 标签中
+                        const newImgTag = document.createElement('p');
+                        newImgTag.appendChild(img.cloneNode(true));
+                        img.parentNode.replaceChild(newImgTag, img);
+
+                        // 如果是Base64图片，上传并替换为服务器上的图片URL
+                        if (src.startsWith('data:image/')) {
+                            const base64Image = src;
+                            const mimeType = base64Image.split(';')[0].split(':')[1];
+                            const blob = base64ToBlob(base64Image, mimeType);
+                            const file = new File([blob], 'image.png', { type: mimeType });
+                            uploadImage(file).then(newImageUrl => {
+                                if (newImageUrl) {
+                                    const newSrc = newImageUrl;
+                                    newImgTag.querySelector('img').setAttribute('src', newSrc);
+                                    // 更新question.questionContent
+                                    question.questionContent = doc.body.innerHTML;
+                                }
+                            }).catch(error => {
+                                console.error('上传图片失败:', error);
+                            });
+                        } else { // 否则直接替换为新的后端接口路径
+                            const imageName = src.split('/').pop(); // 获取文件名
+                            const newSrc = `/api/uploads/images/content/${imageName}`;
+                            newImgTag.querySelector('img').setAttribute('src', newSrc);
+                            // 更新question.questionContent
+                            question.questionContent = doc.body.innerHTML;
+                        }
+                    }
+                });
+
+                // 如果没有图片，移除可能存在的空行
+                if (!hasImage) {
+                    question.questionContent = question.questionContent.replace(/<p><\/p>/g, '');
+                } else {
+                    // 确保图片总是放在新的 <p> 标签中
+                    question.questionContent = question.questionContent.replace(/(<img[^>]*>)/g, '<p>$1</p>');
+                }
+            });
+        },
+        async uploadAndReplaceImagesInContent(content, questionId) {
+            const base64Images = extractBase64ImagesFromContent(content);
+            for (const base64Image of base64Images) {
+                const mimeType = base64Image.split(';')[0].split(':')[1];
+                const blob = base64ToBlob(base64Image, mimeType);
+                const file = new File([blob], 'image.png', { type: mimeType });
+                const newImageUrl = await uploadImage(file);
+                if (newImageUrl) {
+                    content = replaceImagePlaceholder(content, base64Image, newImageUrl);
+                }
+            }
+            // 更新 studentAnswers
+            this.studentAnswers[questionId] = content;
+            return content;
+        },
+
         async submitAnswers() {
             this.isProcessing = true;  // 请求开始前设置为 true
 
@@ -137,6 +312,12 @@ export default {
                 this.$message.error('练习ID未定义，请重试。');
                 this.isProcessing = false;  // 请求结束时设置为 false
                 return;
+            }
+
+            // 处理图片上传
+            for (const [questionId, content] of Object.entries(this.studentAnswers)) {
+                let processedContent = await this.uploadAndReplaceImagesInContent(content, questionId);
+                this.studentAnswers[questionId] = processedContent;
             }
 
             const answers = this.parsedQuestions.map((question) => ({
@@ -208,6 +389,10 @@ export default {
 
             console.log('开始保存答案');
 
+            for (const [questionId, content] of Object.entries(this.studentAnswers)) {
+                await this.uploadAndReplaceImagesInContent(content, questionId);
+            }
+
             // 构建答案数组，使用 practiceQuestionId 作为键
             const answers = this.parsedQuestions.map((question) => ({
                 practiceQuestionId: question.practiceQuestionId,
@@ -225,7 +410,7 @@ export default {
                     if (matchedOption) {
                         answer.answerContent = matchedOption.label; // 修正为选项字母
                     } else {
-                        console.warn(`无法匹配到选项: ${answer.answerContent} for question: ${question.questionContent}`);
+                        console.warn(`无法匹配到选项: ${answer.answerContent} for question: ${question.content}`);
                     }
                 }
             });
@@ -344,12 +529,17 @@ export default {
                         // 同步答案数据，直接更新 studentAnswers
                         quill.on('text-change', () => {
                             const richText = quill.root.innerHTML;
-                            this.studentAnswers[question.practiceQuestionId] = this.getSimpleText(richText);
+                            uploadAndReplaceImagesInContent(richText, question.practiceQuestionId).then(updatedContent => {
+                                quill.root.innerHTML = updatedContent; // 更新Quill编辑器的内容
+                            });
                         });
 
                         // 恢复已保存的答案
                         if (this.studentAnswers[question.practiceQuestionId]) {
-                            quill.root.innerHTML = this.studentAnswers[question.practiceQuestionId];
+                            let content = this.studentAnswers[question.practiceQuestionId];
+                            uploadAndReplaceImagesInContent(content, question.practiceQuestionId).then(updatedContent => {
+                                quill.root.innerHTML = updatedContent; // 更新Quill编辑器的内容
+                            });
                         }
 
                         // 存储 Quill 实例
@@ -363,7 +553,8 @@ export default {
             var re1 = new RegExp("<.+?>", "g"); // 匹配HTML标签的正则表达式
             var msg = html.replace(re1, ''); // 执行替换成空字符
             return msg;
-        }
+        },
+
     },
     computed: {
         displayedQuestions() {
@@ -639,6 +830,26 @@ input[type="text"]:focus, textarea:focus {
     width: 100%;
 }
 
+.generated-questions p {
+    margin: 0 0 1em; /* 为段落提供适当的间距 */
+}
+
+.generated-questions p:empty,
+.generated-questions p:blank {
+    display: none; /* 隐藏空的 <p> 标签 */
+}
+
+.generated-questions p:only-child {
+    margin: 0; /* 当 <p> 是唯一的子元素时，移除默认的外边距 */
+}
+
+.generated-questions img {
+    display: block; /* 使图片独占一行 */
+    margin: 1em 0; /* 为图片前后提供适当的间距 */
+    max-width: 100%; /* 确保图片不会超出容器宽度 */
+    height: auto; /* 保持图片的宽高比 */
+}
+
 .modal-content p {
     margin: 0 0 10px;
     font-size: 16px;
@@ -659,4 +870,6 @@ input[type="text"]:focus, textarea:focus {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+
 </style>
