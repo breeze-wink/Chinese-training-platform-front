@@ -1,4 +1,4 @@
-<template>
+ <template>
   <div class="page-container">
     <!-- 引入头部通用组件 -->
     <Header />

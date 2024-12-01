@@ -52,13 +52,14 @@
             <label>账号ID：</label>
             <span>{{ schoolAdminId }}</span>
           </div>
-          <div class="info-item">
-            <label>密码：</label>
-            <span>******</span>
-            <el-icon @click="editPassword">
-              <Edit/>
-            </el-icon>
-          </div>
+         <div class="info-item">
+          <label>密码：</label>
+          <span>******</span>
+          <el-icon @click="showChangePasswordDialog = true">
+            <Edit/>
+          </el-icon>
+        </div>
+
           <div class="info-item">
             <label>绑定邮箱：</label>
             <span :class="{'text-danger': !email}">{{ email ? email : '还未绑定' }}</span>
@@ -84,6 +85,24 @@
         </el-card>
       </div>
     </div>
+    <!-- 修改密码对话框 -->
+    <el-dialog title="修改密码" v-model="showChangePasswordDialog" width="25%" align-center>
+      <el-form :model="changePasswordForm" label-width="100px">
+        <el-form-item label="旧密码">
+          <el-input v-model="changePasswordForm.password" type="password" placeholder="请输入旧密码" style="width: 95%;"></el-input>
+        </el-form-item>
+        <el-form-item label="新密码">
+          <el-input v-model="changePasswordForm.newPassword" type="password" placeholder="请输入新密码" style="width: 95%;"></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="closeChangePasswordDialog">取 消</el-button>
+          <el-button type="primary" @click="submitChangePassword">确 定</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
 
     <!-- 绑定邮箱对话框 -->
     <el-dialog title="绑定邮箱" v-model="showBindEmailDialog" width="25%" align-center>
@@ -114,7 +133,8 @@ import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
 import { ElButton, ElMessage, ElDialog, ElForm, ElFormItem, ElInput } from 'element-plus';
 import axios from 'axios';
-import { useStore } from 'vuex'; // 使用 Vuex 进行状态管理
+import { useStore } from 'vuex';
+import {Edit} from "@element-plus/icons-vue"; // 使用 Vuex 进行状态管理
 
 // 定义变量
 const adminName = ref('');
@@ -173,6 +193,21 @@ onMounted(() => {
   getAdminInfo(adminId.value); // 使用动态的 adminId 获取信息
 });
 
+// 定义变量
+const showChangePasswordDialog = ref(false);
+const changePasswordForm = ref({
+  password: '',
+  newPassword: ''
+});
+
+const closeChangePasswordDialog = () => {
+  showChangePasswordDialog.value = false;
+  changePasswordForm.value = {
+    password: '',
+    newPassword: ''
+  };
+};
+
 // 生成或更新授权码
 const generateOrUpdateCode = async () => {
   if (!schoolAdminId.value) {
@@ -193,6 +228,35 @@ const generateOrUpdateCode = async () => {
     }
   } catch (error) {
     ElMessage({ message: '授权码操作失败', type: 'error' });
+  }
+};
+// 修改密码
+const submitChangePassword = async () => {
+  if (!changePasswordForm.value.password || !changePasswordForm.value.newPassword) {
+    ElMessage({ message: '请填写完整信息', type: 'error' });
+    return;
+  }
+
+  try {
+    const response = await axios.post(`/api/school-admin/${schoolAdminId.value}/change-password`, {
+      password: changePasswordForm.value.password,
+      newPassword: changePasswordForm.value.newPassword
+    });
+
+    if (response.status === 200) {
+      ElMessage({ message: '密码修改成功', type: 'success' });
+      showChangePasswordDialog.value = false; // 关闭对话框
+      changePasswordForm.value.password = '';
+      changePasswordForm.value.newPassword = '';
+    } else {
+      console.error(response.data.message);
+      ElMessage({ message: '密码修改失败,' + response.data.message, type: 'error' });
+    }
+
+  } catch (error) {
+    ElMessage({ message: '密码修改失败, '+ error.response.data.message, type: 'error' });
+    changePasswordForm.value.password = '';
+    changePasswordForm.value.newPassword = '';
   }
 };
 
@@ -344,19 +408,7 @@ const toggleEdit = (field) => {
   margin-right: 50px;
 }
 .edit-input {
-    width: 200px; /* 限制输入框的宽度，避免太长 */
-}
-.authorization-code-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-top: 20px;
-}
-
-.el-button {
-  appearance: auto;
-  -webkit-appearance: auto;
-  -moz-appearance: auto;
+  width: 200px; /* 限制输入框的宽度，避免太长 */
 }
 
 .info-item label {

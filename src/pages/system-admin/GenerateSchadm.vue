@@ -12,15 +12,23 @@
         <div class="title-and-button-container">
         <h2>学校管理员账号管理</h2>
         <!-- 触发浮动框的按钮 -->
-        <el-button type="primary" slot="" @click="openDialog" class="custom-button">生成学校管理员账号 </el-button>
+
+
         </div>
+
         <!-- 学校管理员账号列表 -->
-        <el-table :data="admins" height="true" style="max-width: 100%;">
-          <el-table-column prop="schoolName" label="学校" width="240"></el-table-column>
-          <el-table-column prop="userName" label="用户名" width="200"></el-table-column>
-          <el-table-column prop="name" label="负责人" width="200"></el-table-column>
-          <el-table-column prop="email" label="邮箱" width="240"></el-table-column>
-          <el-table-column label="操作" width="120">
+        <el-table :data="searchedAdmins" stripe height="620" style="max-width: 100%;" >
+          <el-table-column prop="schoolName" label="学校" width="200" ></el-table-column>
+          <el-table-column prop="userName" label="用户名" width="280" ></el-table-column>
+          <el-table-column prop="name" label="负责人" width="100" ></el-table-column>
+          <el-table-column prop="email" label="邮箱" width="320" ></el-table-column>
+          <el-table-column align="right" >
+            <template #header>
+              <div class="header-container">
+                <el-button text type="primary" icon="CirclePlus" @click="openDialog" class="custom-button"></el-button>
+                <el-input v-model="search" size="large" placeholder="请输入学校名称" style="margin-left: 10px;"/>
+              </div>
+            </template>
             <template #default="{ row }">
               <el-button @click="deleteAdmin(row.schoolAdminId)" type="danger" size="large">删除</el-button>
             </template>
@@ -28,25 +36,23 @@
         </el-table>
 
 
-        <!-- 浮动框 -->
-        <div v-if="dialogVisible" class="floating-box">
-          <h3 class="floating-box-title">生成学校管理员账号</h3>
+        <el-dialog title="生成学校管理员账号" v-model="dialogVisible" width="30%" align-center>
           <el-form :model="newAdmin" label-width="100px" class="floating-box-form">
             <el-form-item label="用户名">
               <el-input v-model="newAdmin.name" placeholder="请输入用户名"></el-input>
             </el-form-item>
-            <el-form-item label="密码">
+            <el-form-item label="密码" >
               <el-input v-model="newAdmin.password" type="password" placeholder="请输入密码"></el-input>
             </el-form-item>
             <el-form-item label="学校名称">
               <el-input v-model="newAdmin.schoolName" placeholder="请输入学校名称"></el-input>
             </el-form-item>
-          </el-form>
-          <div class="floating-box-footer">
-            <el-button @click="dialogVisible = false" class="cancel-btn">取消</el-button>
-            <el-button type="primary" @click="generateAdmin" class="submit-btn">生成</el-button>
-          </div>
-        </div>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+              <el-button @click="dialogVisible = false" class="cancel-btn">取消</el-button>
+              <el-button type="primary" @click="generateAdmin" class="submit-btn">生成</el-button>
+            </span>
+        </el-dialog>
 
 
       </div>
@@ -56,7 +62,7 @@
 
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import {ref, onMounted, computed} from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
 import { ElButton, ElInput, ElForm, ElFormItem, ElMessage, ElTable, ElTableColumn } from 'element-plus';
@@ -66,11 +72,20 @@ import axios from 'axios';
 const newAdmin = ref({ name: '', password: '', schoolName: ''});
 const dialogVisible = ref(false);
 const admins = ref([]);  // 用于存储管理员列表
+const search = ref("");
 
 // 页面加载时获取管理员列表
 onMounted(async () => {
   await fetchAdmins();
 });
+
+const searchedAdmins = computed(() =>
+    admins.value.filter(
+        (data) =>
+            !search.value ||
+            data.schoolName.toLowerCase().includes(search.value.toLowerCase())
+    )
+)
 
 // 获取学校管理员列表
 const fetchAdmins = async () => {
@@ -78,6 +93,7 @@ const fetchAdmins = async () => {
     const response = await axios.get('/api/system-admin/get-school-admin-accounts');
     if (response.data && response.data) {
       admins.value = response.data.data; // 将返回的数据赋值给admins
+      searchedAdmins.value = admins.value;
     } else {
       ElMessage({ message: '获取管理员列表失败', type: 'error' });
     }
@@ -151,12 +167,17 @@ const generateAdmin = async () => {
 }
 
 .content {
-  max-width: 1000px;
+  max-width: 1140px;
   width: 100%;
   padding: 20px;
   background-color: #fff;
   overflow-y: auto;
   margin-right: 50px;
+}
+
+.page-container /deep/ .el-table .el-table__header-wrapper th{
+  color: #000 !important; /* 黑色字体 */
+  font-weight: bold; /* 加粗 */
 }
 
 /* 弹窗样式 */
@@ -211,7 +232,11 @@ const generateAdmin = async () => {
   justify-content: flex-end;
   margin-top: 20px;
 }
-
+.dialog-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px; /* 底部按钮与表单的间距 */
+}
 .cancel-btn {
   margin-right: 10px;
   background-color: #f2f4f7;
@@ -233,6 +258,8 @@ const generateAdmin = async () => {
   background-color: #66b1ff;
 }
 
+
+
 .el-table {
   font-size: 18px;  /* 增大字体 */
 }
@@ -244,12 +271,20 @@ const generateAdmin = async () => {
   margin-bottom: 20px; /* 设置标题和表格之间的间距 */
 }
 
+.header-container {
+  display: flex;
+  align-items: center; /* 垂直居中 */
+  gap: 10px; /* 元素之间的间距 */
+}
+
 .custom-button {
   border-radius: 12px;
   padding: 8px 16px;
-  font-weight: bold;
-  margin-right: 30px;
-  margin-top:30px;
+  font-size: 25px;
+}
+/* 由于使用了scoped，确保样式只作用于当前组件 */
+.header-container .el-input {
+  margin-left: 10px; /* 输入框与按钮之间的间距 */
 }
 
 .floating-box-footer {
