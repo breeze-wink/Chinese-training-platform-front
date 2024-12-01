@@ -276,8 +276,8 @@ const uploadQuestions = async () => {
         questions: questionCards.value.map(card => {
                 // 根据题目类型处理答案
                 const answer = card.questionType === 'CHOICE' ?
-                        card.answer : card.questionType === 'FILL_IN_BLANK' ?
-                                card.blanks : card.answer;
+                        [card.answer ]: card.questionType === 'FILL_IN_BLANK' ?
+                                card.blanks : [card.answer];
                 return {
                     type: card.questionType, // 题目类型
                     problem: card.question, // 问题内容
@@ -495,7 +495,7 @@ const handleQuestionTypeChange = () => {
 
 .question-card {
     margin: 20px 40px;
-    background: #eef1e8;
+    background: linear-gradient(#ffffff, #dfe1f8);
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
