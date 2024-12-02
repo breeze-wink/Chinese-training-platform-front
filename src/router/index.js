@@ -31,6 +31,7 @@ import AnswerPractice from "@/pages/Student/AnswerPractice.vue";
 import AnswerDetail from "@/pages/Student/AnswerDetail.vue";
 import ManageTest from "@/pages/Student/ManageTest.vue";
 import AnswerTemporary from "@/pages/Student/AnswerTemporary.vue";
+import TestGenerationStrategy from "@/pages/Teacher/TestGenerationStrategy.vue";
 
 
 const routes = [
@@ -81,6 +82,12 @@ const routes = [
         name: 'UploadCombinedQuestion',
         component: UploadCombinedQuestion
     },
+    {
+        path: '/teacher/test-generation-strategy',
+        name: 'TestGenerationStrategy',
+        component: TestGenerationStrategy
+    },
+
 
     //系统管理员
     { path: '/system-admin/knowledge-point', component: KnowledgePoint },
