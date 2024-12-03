@@ -13,10 +13,11 @@
           <el-tab-pane label="选择题" name="CHOICE">
             <div class="tab-content">
               <el-form :model="questionForms.CHOICE" label-width="80px">
+
                   <el-form-item label="问题" class="form-item-margin">
                       <div style="max-width: 750px; overflow: hidden;">
                           <quill-editor
-                                  ref="editor"
+                                  ref="editorChoice"
                                   v-model:content="currentForm.problem"
                           placeholder="请输入问题内容"
                           class="quill-editor"
@@ -25,6 +26,7 @@
                           ></quill-editor>
                       </div>
                   </el-form-item>
+
                 <el-form-item>
                   <el-row>
                     <el-col
@@ -79,7 +81,7 @@
                   <el-form-item label="问题" class="form-item-margin">
                     <div style="max-width: 750px; overflow: hidden;">
                       <quill-editor
-                          ref="editor"
+                              ref="editorFillInBlank"
                           placeholder="请输入问题内容"
                           class="quill-editor"
                           :options="quillOptions"
@@ -128,7 +130,7 @@
                   <el-form-item label="问题" class="form-item-spacing">
                     <div style="max-width: 750px; overflow: hidden;">
                       <quill-editor
-                              ref="editor"
+                              ref="editorShortAnswer"
                           placeholder="请输入问题内容"
                           class="quill-editor"
                           :options="quillOptions"
@@ -168,7 +170,7 @@
                   <el-form-item label="题目">
                     <div style="max-width: 750px; overflow: hidden;">
                       <quill-editor
-                              ref="editor"
+                              ref="editorEssay"
                           placeholder="请输入问题内容"
                           class="quill-editor"
                           :options="quillOptions"
@@ -185,8 +187,6 @@
                     ></el-input>
                   </el-form-item>
 
-                  <!-- 所属知识点下拉框 -->
-<!--                  <KnowledgePointSelector @point-selected="onPointSelected" />-->
                 </el-form>
               </div>
             </template>
@@ -215,12 +215,21 @@ import {ElMessage} from "element-plus";
 import Quill from "quill";
 import {ImageDrop} from 'quill-image-drop-module'
 import BlotFormatter from 'quill-blot-formatter/dist/BlotFormatter';
+import quillEditors from "quill/blots/break.js";
 
 const activeTab = ref('CHOICE'); // 当前激活的标签页
 const store = useStore();
 const teacherId = computed(() => store.state.user.id);
 const knowledgePointSelector = ref(null);
 const KnowledgePointId = ref();
+//每个标签页的editor
+const editorChoice = ref(null);
+const editorFillInBlank = ref(null);
+const editorShortAnswer = ref(null);
+const editorEssay = ref(null);
+
+
+
 const onPointSelected = (pointId) => {
   console.log('父组件接收到的知识点 ID:', pointId);
   KnowledgePointId.value = pointId;
@@ -229,7 +238,6 @@ const onPointSelected = (pointId) => {
 Quill.register('modules/imageDrop', ImageDrop)
 
 Quill.register('modules/blotFormatter', BlotFormatter)
-
 
 const questionForms = ref({
   CHOICE: {
@@ -300,7 +308,19 @@ const submitQuestion = async () => {
         return ElMessage.warning('请先选择分类和知识点！');
     }
 
-    const content = editor.value ? editor.value.getHTML() || editor.value.container.firstChild.innerHTML : '';
+    let editorInstance;
+    if (activeTab.value === 'CHOICE') {
+        editorInstance = editorChoice.value;
+    } else if (activeTab.value === 'FILL_IN_BLANK') {
+        editorInstance = editorFillInBlank.value;
+    } else if (activeTab.value === 'SHORT_ANSWER') {
+        editorInstance = editorShortAnswer.value;
+    } else if (activeTab.value === 'ESSAY') {
+        editorInstance = editorEssay.value;
+    }
+
+    // 获取编辑器的内容
+    const content = editorInstance ? editorInstance.getHTML() || editorInstance.container.firstChild.innerHTML : '';
     let processedContent = content;
 
     // 处理图片上传
@@ -339,6 +359,7 @@ const submitQuestion = async () => {
             },
         ],
     };
+    console.log(requestData);
 
     try {
         const response = await axios.post(
@@ -409,32 +430,6 @@ const uploadImage = async (imageSrc) => {
     return null;
   }
 };
-// 处理包含Base64图片的内容
-// const handleContentImages = async () => {
-//     let content = editor.value.getHTML() || editor.value.container.firstChild.innerHTML;
-//
-//     // 确保 content 是有效的字符串
-//     if (!content || typeof content !== 'string') {
-//         console.error("Content is invalid or empty");
-//         return;
-//     }
-//
-//     const base64Images = extractBase64ImagesFromContent(content);
-//
-//     for (const base64Image of base64Images) {
-//         const mimeType = base64Image.split(';')[0].split(':')[1];  // 获取图片的MIME类型，例如 image/png
-//         const blob = base64ToBlob(base64Image, mimeType);
-//         const file = new File([blob], 'image.png', { type: mimeType });  // 可以通过文件名调整，使用适当的扩展名
-//
-//         const newImageUrl = await uploadImage(file);
-//         if (newImageUrl) {
-//             content = replaceImagePlaceholder(content, base64Image, newImageUrl);
-//         }
-//     }
-//
-//     currentForm.problem = content;
-//     console.log(currentForm);
-// };
 
 const escapeRegExp = (str) => {
   return str.replace(/[.*+?^=!:${}()|\[\]\/\\]/g, '\\$&'); // 转义正则表达式中的特殊字符
@@ -462,9 +457,12 @@ const replaceImagePlaceholder = (content, oldSrc, newSrc) => {
 onMounted(async () => {
 
   await nextTick(() => {
-    // 通过 ref 获取 Quill 编辑器实例
-    // 这里假设你的 quill-editor 组件的 ref 已经设置为 "editor"
-    editor.value = document.querySelector('.quill-editor').getQuill();
+      quillEditors.value['CHOICE'] = document.querySelector('.quill-editor-choice').getQuill();
+      quillEditors.value['FILL_IN_BLANK'] = document.querySelector('.quill-editor-fill').getQuill();
+      quillEditors.value['SHORT_ANSWER'] = document.querySelector('.quill-editor-short').getQuill();
+      quillEditors.value['ESSAY'] = document.querySelector('.quill-editor-essay').getQuill();
+
+    //editor.value = document.querySelector('.quill-editor').getQuill();
     // 现在你可以使用 quillInstance 来做你需要的操作，例如获取内容等
   });
 
@@ -482,18 +480,11 @@ const quillOptions = {
       ['link', 'image', 'video'], // 超链接 图片 视频
     ],
     blotFormatter: {
-      // overlay: {
-      //    style: {
-      //        border: '2px solid red',
-      //    }
-      // },
+
       toolbar: {
         mainClassName: 'blot-formatter__toolbar'
       }
     }
-
-
-
   }
 };
 

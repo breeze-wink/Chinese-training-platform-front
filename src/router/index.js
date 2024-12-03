@@ -90,6 +90,7 @@ const routes = [
     },
 
     //系统管理员
+
     { path: '/system-admin/KnowledgePoint', component: KnowledgePoint, meta: { requiresAuth: true } },
     { path: '/system-admin/CourseStandard', component: CourseStandard, meta: { requiresAuth: true } },
     { path: '/system-admin/name', name:'name',component: Name, meta: { requiresAuth: true } },
@@ -99,6 +100,7 @@ const routes = [
     { path: '/school-admin/ManageStudent', component: ManageStudent, meta: { requiresAuth: true } },
     { path: '/school-admin/ManageTeacher', component: ManageTeacher, meta: { requiresAuth: true } },
     { path: '/school-admin/AuthorizationCode', name:'AuthorizationCode',component: AuthorizationCode, meta: { requiresAuth: true } },
+
 
     // 学生的个人页面
     { path: '/student/personal-info', name: 'StudentPersonalInfo',component: StudentPersonalInfo, meta: { requiresAuth: true }},
