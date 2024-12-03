@@ -53,7 +53,10 @@
                                            老师可以亲手从题库中挑选出最合适的题目，
                                             这种模式，不仅考验你的专业眼光，更体现了你对教育的热爱和执着</p>
                                     </div>
-                                <button>手动出题</button>
+                                <button
+                                        @click="navigateTo('/teacher/paper-creation/manual')">
+                                    手动出题
+                                    </button>
                             </div>
                         </div>
                     </div>
@@ -68,6 +71,18 @@
 import Sidebar from "@/components/Sidebar.vue";
 import Header from "@/components/Header.vue";
 import { ref } from "vue";
+
+
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const navigateTo = (path) => {
+    if (path) {
+        router.push(path);
+    }
+};
+
+
 </script>
 
 <style scoped>
