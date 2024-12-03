@@ -16,10 +16,6 @@
                             自定义
                         </label>
                     </div>
-                    <div class="question-number-input" v-if="selectedOption === 'custom'">
-                        <label for="questionNumber">题目数量:</label>
-                        <input type="number" id="questionNumber" v-model.number="questionNum" min="1" max="10" @change="validateQuestionNumber" />
-                    </div>
                     <div class="practice-name-input" v-if="selectedOption === 'custom'">
                         <label for="practiceName">练习名称:</label>
                         <input type="text" id="practiceName" v-model="practiceName" placeholder="Custom Practice" />
@@ -36,17 +32,32 @@
                     <h4 @click="logGroupType(type)">{{ type }}</h4>
                     <el-row :gutter="20">
                         <el-col :span="8" v-for="item in group" :key="item.id">
-                            <el-checkbox :label="item.id">{{ item.name }}</el-checkbox>
+                            <div class="checkbox-with-input">
+                                <el-checkbox :label="item.id" @change="toggleQuestionInput(item.id)">
+                                    {{ item.name }}
+                                </el-checkbox>
+                                <transition name="fade">
+                                    <input
+                                        v-if="questionInputs[item.id]"
+                                        type="number"
+                                        min="1"
+                                        max="10"
+                                        v-model.number="questionInputs[item.id].num"
+                                        class="question-number"
+                                        @focus="validateQuestionNumber"
+                                    />
+                                </transition>
+                            </div>
                         </el-col>
                     </el-row>
                 </div>
             </el-checkbox-group>
             <span slot="footer" class="dialog-footer">
-                <div class="button-container">
-                    <el-button @click="dialogVisible = false" class="submit-button">取 消</el-button>
-                    <el-button type="primary" @click="confirmSelection" class="submit-button" :loading="isProcessing">确 定</el-button>
-                </div>
-            </span>
+        <div class="button-container">
+          <el-button @click="dialogVisible = false" class="submit-button">取 消</el-button>
+          <el-button type="primary" @click="confirmSelection" class="submit-button" :loading="isProcessing">确 定</el-button>
+        </div>
+      </span>
         </el-dialog>
 
         <!-- 加载提示 -->
@@ -79,9 +90,9 @@ export default {
             dialogVisible: false,
             checkList: [],
             knowledgePoints: [],
-            questionNum: 10,
             practiceName: 'Custom Practice', // 默认练习名称
             isProcessing: false, // 是否正在处理
+            questionInputs: {} // 用于存储每个知识点对应的题目数量
         };
     },
     computed: {
@@ -160,15 +171,39 @@ export default {
                 console.error('题目发送失败', error.response ? error.response.data : error.message);
             }
         },
+        toggleQuestionInput(knowledgePointId) {
+            if (this.questionInputs[knowledgePointId]) {
+                delete this.questionInputs[knowledgePointId];
+            } else {
+                this.questionInputs[knowledgePointId] = { num: 1 }; // 默认题目数量为1
+            }
+        },
         async confirmSelection() {
             this.isProcessing = true; // 显示加载提示和遮罩层
             this.dialogVisible = false; // 立即关闭考点选择对话框
 
             const requestBody = {
-                num: this.questionNum,
                 name: this.practiceName,
-                data: this.checkList.map(knowledgePointId => ({ knowledgePointId })),
+                knowledgePoints: [],
+                questionBodyTypes: []
             };
+
+            // 检查是否选择了某个类型的全部考点
+            for (const [type, group] of Object.entries(this.groupedKnowledgePoints)) {
+                const allSelected = group.every(item => this.checkList.includes(item.id));
+                if (allSelected) {
+                    requestBody.questionBodyTypes.push({ type, num: group.length * 1 }); // 假设每种类型默认生成1个题目
+                } else {
+                    group.forEach(item => {
+                        if (this.checkList.includes(item.id)) {
+                            requestBody.knowledgePoints.push({
+                                knowledgePointId: parseInt(item.id, 10),
+                                num: this.questionInputs[item.id]?.num || 1
+                            });
+                        }
+                    });
+                }
+            }
 
             try {
                 const url = `/api/student/${this.studentId}/practice/generate-define`;
@@ -201,10 +236,11 @@ export default {
         logGroupType(type) {
             console.log('Group Type:', type); // 控制台输出
         },
-        validateQuestionNumber() {
-            if (this.questionNum > 10) {
+        validateQuestionNumber(event) {
+            const input = event.target;
+            if (input.value > 10) {
                 alert('最多只能选择10个题目。'); // 使用原生的alert弹窗
-                this.questionNum = 10; // 当超过10时，设置为10
+                input.value = 10; // 当超过10时，设置为10
             }
         }
     }
@@ -243,21 +279,6 @@ export default {
     justify-content: center;
     gap: 10px;
     margin-bottom: 20px;
-}
-
-.question-number-input {
-    margin-bottom: 20px;
-}
-
-.question-number-input label {
-    margin-right: 10px;
-}
-
-.question-number-input input {
-    width: 100px;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
 }
 
 .practice-name-input {
@@ -334,19 +355,6 @@ button:hover {
     align-items: center; /* 垂直居中 */
 }
 
-.button-container .el-button {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px 20px;
-    margin: 0 10px;
-}
-
-.button-container .el-button:hover {
-    background-color: #0056b3;
-}
-
 .knowledge-group {
     margin-bottom: 20px;
 }
@@ -359,9 +367,28 @@ button:hover {
     cursor: pointer; /* 使标题可点击 */
 }
 
-.el-checkbox {
-    display: block; /* 使复选框垂直排列 */
-    margin-bottom: 10px;
+.checkbox-with-input {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-with-input .el-checkbox {
+    margin-right: 10px;
+}
+
+.checkbox-with-input .question-number {
+    width: 30px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.3s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active in <2.1.8 */ {
+    opacity: 0;
 }
 
 /* 遮罩层样式 */

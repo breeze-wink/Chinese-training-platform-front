@@ -31,7 +31,7 @@ import AnswerPractice from "@/pages/Student/AnswerPractice.vue";
 import AnswerDetail from "@/pages/Student/AnswerDetail.vue";
 import ManageTest from "@/pages/Student/ManageTest.vue";
 import AnswerTemporary from "@/pages/Student/AnswerTemporary.vue";
-
+import PersonalProfiling from "@/pages/Student/PersonalProfiling.vue";
 
 const routes = [
     //首页
@@ -135,6 +135,8 @@ const routes = [
     },
     // 试卷管理
     { path: '/student/manage-test', name: 'ManageTest', component: ManageTest},
+    // 个人分析
+    { path: '/student/personal-profiling', name: 'PersonalProfiling', component: PersonalProfiling},
 ];
 
 
