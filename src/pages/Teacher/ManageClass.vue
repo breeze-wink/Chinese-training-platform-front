@@ -251,11 +251,8 @@ import {ElMessage} from "element-plus";
 // classList 是一个班级信息的数组，每个对象包含classId, classCode, className, classDescription 等字段
 const classList = ref([]);
 const groupList = ref([]);
-
 const store = useStore();
 const teacherId = computed(() => store.state.user.id);
-
-
 
 // 控制生成班级对话框的显示状态
 const createDialogVisible = ref(false);
@@ -275,8 +272,6 @@ const openEditDialog = (classItem) => {
     };
     editDialogVisible.value = true;
 };
-
-
 
 // 新建班级表单的数据
 const newClassForm = ref({
@@ -445,7 +440,6 @@ const viewMembers = async (classInfo) => {
     }
 };
 const viewGroupMembers = async (groupInfo) => {
-
     try {
         const response = await axios.get(`/api/teacher/${teacherId.value}/groups-members`, {
             params: { groupId: groupInfo.groupId}
@@ -493,9 +487,6 @@ const updateClass = async () => {
     }
 };
 
-
-
-
 // 移除成员的函数
 const removeMember = async (member) => {
     try {
@@ -534,8 +525,6 @@ const viewStats = (classInfo) => {
 
 // 解散班级的函数
 const disbandClass = async (classItem) => {
-    console.log(classItem)
-
     try{
         const response = await axios.delete(`/api/teacher/${teacherId.value}/classes/disband`,{
             params:{
@@ -589,6 +578,7 @@ onMounted(() => {
     fetchClassList();
     fetchGroupList();
 });
+
 </script>
 
 <style scoped>
@@ -621,7 +611,6 @@ onMounted(() => {
 .button-text {
     margin-left: 8px; /* 设置图标与文字之间的额外间距 */
 }
-
 
 .create-class-button {
     margin-bottom: 0px; /* 为生成班级按钮添加一些下方间距 */
@@ -680,6 +669,5 @@ onMounted(() => {
 .el-message--success {
     background-color: #f0f9eb !important; /* 恢复为绿色 */
 }
-
 
 </style>

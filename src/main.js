@@ -12,15 +12,21 @@ import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import apiClient from "@/plugins/axios.js";
+import axios from "axios";
+
+// 覆盖全局 axios 实例
+Object.assign(axios, apiClient);
 
 const app = createApp(App);
 
 // 使用 Element Plus
 app.use(ElementPlus);
-// 使用 Vue Router
-app.use(router);
 // 使用 Vuex store
 app.use(store);
+// 使用 Vue Router
+app.use(router);
+
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component);
 }
