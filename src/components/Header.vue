@@ -42,7 +42,6 @@ const handleCommand = (command) => {
         // 在这里添加退出登录的逻辑
         store.dispatch('logout');
 
-
     }
 };
 </script>

@@ -412,9 +412,11 @@ const login = async () => {
             //使用vuex更新用户信息
             await store.dispatch('login', {
                 id: response.data.id,
-                role: Identity.value
+                role: Identity.value,
+                token: response.data.token
             });
 
+            console.log('token:', response.data.token);
             loginDialogVisible.value = false; // 登录成功后关闭对话框
 
             if (Identity.value === 'teacher') {
@@ -424,9 +426,9 @@ const login = async () => {
             }else if (Identity.value === 'sys-adm') {
               await router.push({name: 'name'});
             }else if (Identity.value === 'sch-adm') {
-              await router.push({name: 'AuthorizationCode'}); }
+              await router.push({name: 'AuthorizationCode'});
               // 跳转到学管学习页面
-
+            }
 
         } else if (response.status === 401 ){
             // 处理非200状态码的情况
@@ -640,6 +642,7 @@ async function submitForm(formName, userType) {
         }
     });
 }
+
 </script>
 
 <style scoped>
