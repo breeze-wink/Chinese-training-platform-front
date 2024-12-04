@@ -49,7 +49,7 @@
 import { computed, ref } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
-import {Document, Setting, User, Management, Upload, EditPen, Avatar} from '@element-plus/icons-vue';
+import {Document, Setting, User, Management, Upload, EditPen, Avatar, Edit} from '@element-plus/icons-vue';
 import {ElAvatar} from "element-plus";
 
 //获取路由
@@ -109,7 +109,13 @@ const menuItems = computed(() => {
                     icon: Upload,
                     path: '/teacher/upload-question'
                 },
-                { index: '5', label: '设置', icon: Setting,  path:null  },
+                {
+                    index: '5',
+                    label: '生成试卷',
+                    icon: Edit,
+                    path: '/teacher/test-generation-strategy'
+                },
+                { index: '6', label: '设置', icon: Setting,  path:null  },
             ];
         case 'student':
             return [
