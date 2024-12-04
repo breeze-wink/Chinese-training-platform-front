@@ -134,24 +134,24 @@ const menuItems = computed(() => {
             label: '相关管理',
             icon: Document,
             children: [
-              { index: '2-1', label: '课标管理', path: '/system-admin/CourseStandard' },
-              { index: '2-2', label: '知识点管理', path: '/system-admin/KnowledgePoint' },
+              { index: '2-1', label: '课标管理', path: '/system-admin/course-standard' },
+              { index: '2-2', label: '知识点管理', path: '/system-admin/knowledge-point' },
             ],
           },
-          { index: '3', label: '学校管理员信息', icon: Avatar, path: '/system-admin/GenerateSchadm' },
-          
+          { index: '3', label: '学校管理员信息', icon: Avatar, path: '/system-admin/generate-sch-adm' },
+
         ];
 
       case 'sch-adm':
         return [
-          { index: '1', label: '首页', icon: Avatar, path: '/school-admin/authorization-Code' },
+          { index: '1', label: '首页', icon: User, path: '/school-admin/authorization-code' },
           {
             index: '2',
             label: '相关管理',
             icon: Management,
             children: [
-              { index: '2-1', label: '教师管理', path: '/school-admin/ManageTeacher' },
-              { index: '2-2', label: '学生管理', path: '/school-admin/ManageStudent' },
+              { index: '2-1', label: '教师管理', path: '/school-admin/manage-teacher' },
+              { index: '2-2', label: '学生管理', path: '/school-admin/manage-student' },
             ],
           },
         ];
