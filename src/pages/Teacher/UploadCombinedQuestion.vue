@@ -269,6 +269,7 @@ const uploadQuestions = async () => {
             processedContent = replaceImagePlaceholder(processedContent, base64Image, newImageUrl);
         }
     }
+    const submitTime = new Date().toISOString();  // ISO 格式的时间
     // 构建请求数据
     const requestData = {
         questionType: stemForm.value.questionType, // 题干类型
@@ -286,7 +287,8 @@ const uploadQuestions = async () => {
                     analysis: card.analysis, // 解析
                     knowledgePointId: card.selectedPointId // 知识点ID
             };
-            })
+            }),
+        submitTime:submitTime,
     };
     console.log(requestData);
 
