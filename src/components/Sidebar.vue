@@ -49,8 +49,7 @@
 import { computed, ref } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
-import {Document, Setting, User, Management, Upload, EditPen, Avatar, Edit} from '@element-plus/icons-vue';
-import {Document, Setting, User, Management, Upload, EditPen, Avatar, Opportunity} from '@element-plus/icons-vue';
+import {Document, Setting, User, Management, Upload, EditPen, Avatar, Edit, Opportunity} from '@element-plus/icons-vue';
 import {ElAvatar} from "element-plus";
 
 //获取路由
