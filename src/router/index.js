@@ -33,6 +33,9 @@ import ManageTest from "@/pages/Student/ManageTest.vue";
 import AnswerTemporary from "@/pages/Student/AnswerTemporary.vue";
 import PersonalProfiling from "@/pages/Student/PersonalProfiling.vue";
 import store from '@/store/user';
+import TestGenerationStrategy from "@/pages/Teacher/TestGenerationStrategy.vue";
+import ManualPaperCreation from "@/pages/Teacher/ManualPaperCreation.vue";
+
 
 const routes = [
     //首页
@@ -89,6 +92,21 @@ const routes = [
         component: UploadCombinedQuestion,
         meta: { requiresAuth: true }
     },
+    //选择组卷方式
+    {
+        path: '/teacher/test-generation-strategy',
+        name: 'TestGenerationStrategy',
+        component: TestGenerationStrategy,
+        meta: { requiresAuth: true }
+    },
+    //手动组卷
+    {
+        path: '/teacher/paper-creation/manual',
+        name: 'ManualPaperCreation',
+        component: ManualPaperCreation,
+        meta: { requiresAuth: true }
+    },
+
 
 
 
