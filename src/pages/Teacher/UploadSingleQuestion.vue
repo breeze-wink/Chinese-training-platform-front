@@ -339,6 +339,7 @@ const submitQuestion = async () => {
     currentForm.value.problem = processedContent;
 
     // 构造请求数据
+    const submitTime = new Date().toISOString();  // ISO 格式的时间
     const requestData = {
         questionType: '单题',
         body: null,
@@ -358,6 +359,7 @@ const submitQuestion = async () => {
                 knowledgePointId: pointId.value,
             },
         ],
+        submitTime:submitTime,
     };
     console.log(requestData);
 

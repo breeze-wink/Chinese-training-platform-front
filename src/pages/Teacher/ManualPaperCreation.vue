@@ -24,25 +24,25 @@
                         <button
                                 class="difficulty-button"
                                 :class="{ 'is-selected': selectedDifficulty === '全部' }"
-                                @click="selectedDifficulty = '全部'">
+                                @click="selectedDifficulty = '全部';fetchQuestions()">
                             全部
                         </button>
                         <button
                                 class="difficulty-button"
                                 :class="{ 'is-selected': selectedDifficulty === '容易' }"
-                                @click="selectedDifficulty = '容易'">
+                                @click="selectedDifficulty = '容易';fetchQuestions()">
                             容易
                         </button>
                         <button
                                 class="difficulty-button"
                                 :class="{ 'is-selected': selectedDifficulty === '普通' }"
-                                @click="selectedDifficulty = '普通'">
+                                @click="selectedDifficulty = '普通';fetchQuestions()">
                             普通
                         </button>
                         <button
                                 class="difficulty-button"
                                 :class="{ 'is-selected': selectedDifficulty === '困难' }"
-                                @click="selectedDifficulty = '困难'">
+                                @click="selectedDifficulty = '困难';fetchQuestions()">
                             困难
                         </button>
                     </div>
@@ -53,38 +53,38 @@
                         <button
                                 class="type-button"
                                 :class="{ 'is-selected': selectedType === '全部' }"
-                                @click="selectedType = '全部'">
+                                @click="selectedType = '全部';fetchQuestions()">
                             全部
                         </button>
                         <button
                                 class="type-button"
                                 :class="{ 'is-selected': selectedType === '选择' }"
-                                @click="selectedType = '选择'">
+                                @click="selectedType = '选择';fetchQuestions()">
                             选择
                         </button>
                         <button
                                 class="type-button"
                                 :class="{ 'is-selected': selectedType === '填空' }"
-                                @click="selectedType = '填空'">
+                                @click="selectedType = '填空';fetchQuestions()">
                             填空
                         </button>
                         <button
                                 class="type-button"
                                 :class="{ 'is-selected': selectedType === '问答' }"
-                                @click="selectedType = '问答'">
+                                @click="selectedType = '问答';fetchQuestions()">
                             问答
                         </button>
                         <button
                                 class="type-button"
                                 :class="{ 'is-selected': selectedType === '作文' }"
-                                @click="selectedType = '作文'">
+                                @click="selectedType = '作文';fetchQuestions()">
                             作文
                         </button>
                     </div>
                 </div>
 
             </div>
-                <!-- 新增的块 -->
+                <!-- 中间栏目 -->
                 <div class="footer-controls">
                     <div class="left-controls">
                         <button
@@ -92,12 +92,12 @@
                                 :key="value"
                                 class="control-button"
                                 :class="{ 'is-selected': selectedButton === value }"
-                                @click="toggleSelectionStatus(value)">
+                                @click="toggleSelectionStatus(value);fetchQuestions()">
                             {{ label }}
                         </button>
                         <div class="sort-control">
                             <span class="sort-text">难度排序</span>
-                            <button @click="toggleSortOrder" class="sort-button">
+                            <button @click="toggleSortOrder();fetchQuestions()" class="sort-button">
                                 <el-icon :class="sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'">
                                     <SortUp v-if="sortOrder === 'asc'" />
                                     <SortDown v-else />
@@ -106,7 +106,7 @@
                         </div>
                         <div class="search-box">
                             <input type="text" v-model="searchKeyword" placeholder="从结果中搜索" />
-                            <el-icon class="search-icon">
+                            <el-icon class="search-icon" @click="fetchQuestions">
                                 <Search />
                             </el-icon>
 
@@ -117,15 +117,7 @@
                     </div>
                 </div>
 
-
-
-
-
-
             </div>
-
-
-
 
 
         </div>
@@ -192,6 +184,7 @@ const formatOptions = (knowledgePoints) => {
 // 处理选择变化
 const handleChange = (value) => {
     console.log('选中的值:', value);  // 打印选择的知识点
+    fetchQuestions();
 };
 
 // 级联器：从此结束
@@ -237,9 +230,57 @@ const search = () => {
 
 // 中间栏目：从此结束
 // ***************************************************************************
+// 组合请求参数
+const prepareRequestData = () => {
+    let requestData = {
+        difficulty: selectedDifficulty.value, // 难度
+        type: selectedType.value,             // 题型
+        knowledgeType:'',                     //知识点大类
+        knowledgeId: '',                     // 知识点ID
+        searchKeyword: searchKeyword.value,   // 查找内容
+        sortOrder: sortOrder.value,           // 排序顺序
+        mode: selectedButton.value,           // 模式
+        page: 1,                              // 页码
+        pageSize: 10,                         // 每页数量
+    };
+
+    // 处理知识点的选择
+    if (selectedKnowledge.value.length === 1) {
+        requestData.knowledgeType = selectedKnowledge.value[0];
+    } else if (selectedKnowledge.value.length === 2) {
+        requestData.knowledgeType = selectedKnowledge.value[0];
+        requestData.knowledgeId = selectedKnowledge.value[1];
+    }
+
+    return requestData;
+};
+
+// 发送请求
+const fetchQuestions = async () => {
+    const requestData = prepareRequestData();
+    console.log('发送请求的数据:', requestData);
+    // try {
+    //     const response = await axios.get('/api/questions', {params: requestData});
+    //     if (response.status === 200) {
+    //         console.log(response.data);
+    //     } else {
+    //         console.error('获取题目失败：', response.data.message);
+    //     }
+    // } catch (error) {
+    //     console.error('获取题目失败：', error.message);
+    // }
+};
 
 
 
+
+// ***************************************************************************
+// 查询函数，从此开始
+
+
+
+// 查询函数：从此结束
+// ***************************************************************************
 // 组件挂载时获取数据
 onMounted(() => {
     fetchKnowledgePoints();
