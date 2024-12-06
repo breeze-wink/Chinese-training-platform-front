@@ -31,6 +31,7 @@ import AnswerPractice from "@/pages/Student/AnswerPractice.vue";
 import AnswerDetail from "@/pages/Student/AnswerDetail.vue";
 import ManageTest from "@/pages/Student/ManageTest.vue";
 import AnswerTemporary from "@/pages/Student/AnswerTemporary.vue";
+import PersonalProfiling from "@/pages/Student/PersonalProfiling.vue";
 import store from '@/store/user';
 import TestGenerationStrategy from "@/pages/Teacher/TestGenerationStrategy.vue";
 import ManualPaperCreation from "@/pages/Teacher/ManualPaperCreation.vue";
@@ -107,6 +108,8 @@ const routes = [
     },
 
 
+
+
     //系统管理员
 
     { path: '/system-admin/KnowledgePoint', component: KnowledgePoint, meta: { requiresAuth: true } },
@@ -161,6 +164,9 @@ const routes = [
         meta: { requiresAuth: true }
     },
     // 试卷管理
+    { path: '/student/manage-test', name: 'ManageTest', component: ManageTest},
+    // 个人分析
+    { path: '/student/personal-profiling', name: 'PersonalProfiling', component: PersonalProfiling},
     { path: '/student/manage-test', name: 'ManageTest', component: ManageTest, meta: { requiresAuth: true }},
 ];
 

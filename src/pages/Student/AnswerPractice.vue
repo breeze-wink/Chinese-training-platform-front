@@ -189,7 +189,7 @@ export default {
     },
     created() {
         const questionsFromQuery = this.$route.query.questions;
-        const mode = this.$route.query.mode || 'default';  // 获取mode参数，如果没有则设置为'default'
+        const mode = this.$route.query.mode || 'default';
 
         if (questionsFromQuery) {
             try {
@@ -256,7 +256,7 @@ export default {
                             const base64Image = src;
                             const mimeType = base64Image.split(';')[0].split(':')[1];
                             const blob = base64ToBlob(base64Image, mimeType);
-                            const file = new File([blob], 'image.png', { type: mimeType });
+                            const file = new File([blob], 'image.png', {type: mimeType});
                             uploadImage(file).then(newImageUrl => {
                                 if (newImageUrl) {
                                     const newSrc = newImageUrl;
@@ -291,7 +291,7 @@ export default {
             for (const base64Image of base64Images) {
                 const mimeType = base64Image.split(';')[0].split(':')[1];
                 const blob = base64ToBlob(base64Image, mimeType);
-                const file = new File([blob], 'image.png', { type: mimeType });
+                const file = new File([blob], 'image.png', {type: mimeType});
                 const newImageUrl = await uploadImage(file);
                 if (newImageUrl) {
                     content = replaceImagePlaceholder(content, base64Image, newImageUrl);
@@ -426,7 +426,7 @@ export default {
 
                 if (response.status === 200) {
                     this.$message.success('暂存成功');
-                    this.$router.push({ name: 'QuestionOptions' });
+                    this.$router.push({name: 'QuestionOptions'});
                 } else {
                     this.$message.error('暂存失败');
                 }
@@ -481,7 +481,7 @@ export default {
             this.currentIndex = id;
             const element = this.$refs.questionElements.find(el => el.id === 'question-' + id);
             if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 改为居中滚动
+                element.scrollIntoView({behavior: 'smooth', block: 'center'}); // 改为居中滚动
                 this.currentIndex = id;
             }
         },
@@ -522,24 +522,26 @@ export default {
                         const quill = new Quill(editorContainer, {
                             theme: 'snow',
                             modules: {
-                                toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['link', 'image']],
+                                // toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['link', 'image']],
+                                toolbar: [['bold', 'italic', 'underline'], [{list: 'ordered'}, {list: 'bullet'}]],
                             },
                         });
 
                         // 同步答案数据，直接更新 studentAnswers
                         quill.on('text-change', () => {
                             const richText = quill.root.innerHTML;
-                            uploadAndReplaceImagesInContent(richText, question.practiceQuestionId).then(updatedContent => {
-                                quill.root.innerHTML = updatedContent; // 更新Quill编辑器的内容
-                            });
+                            // 移除了上传图片的处理
+                            // uploadAndReplaceImagesInContent(richText, question.practiceQuestionId).then(updatedContent => {
+                            //     quill.root.innerHTML = updatedContent; // 更新Quill编辑器的内容
                         });
 
                         // 恢复已保存的答案
                         if (this.studentAnswers[question.practiceQuestionId]) {
                             let content = this.studentAnswers[question.practiceQuestionId];
-                            uploadAndReplaceImagesInContent(content, question.practiceQuestionId).then(updatedContent => {
-                                quill.root.innerHTML = updatedContent; // 更新Quill编辑器的内容
-                            });
+                            // 移除了上传图片的处理
+                            // uploadAndReplaceImagesInContent(content, question.practiceQuestionId).then(updatedContent => {
+                            //     quill.root.innerHTML = updatedContent; // 更新Quill编辑器的内容
+                            quill.root.innerHTML = content; // 直接设置内容
                         }
 
                         // 存储 Quill 实例
@@ -548,13 +550,6 @@ export default {
                 });
             });
         },
-        // 提取富文本中的纯文本
-        getSimpleText(html) {
-            var re1 = new RegExp("<.+?>", "g"); // 匹配HTML标签的正则表达式
-            var msg = html.replace(re1, ''); // 执行替换成空字符
-            return msg;
-        },
-
     },
     computed: {
         displayedQuestions() {

@@ -49,7 +49,7 @@
 import { computed, ref } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
-import {Document, Setting, User, Management, Upload, EditPen, Avatar, Edit} from '@element-plus/icons-vue';
+import {Document, Setting, User, Management, Upload, EditPen, Avatar, Edit, Opportunity} from '@element-plus/icons-vue';
 import {ElAvatar} from "element-plus";
 
 //获取路由
@@ -130,7 +130,8 @@ const menuItems = computed(() => {
                         { index: '2-2', label: '试卷管理',  path:'/student/manage-test' },
                     ],
                 },
-                { index: '4', label: '设置', icon: Setting,  path:null  },
+                { index: '4', label: '个人分析', icon: Opportunity,  path:'/student/personal-profiling' },
+                { index: '5', label: '设置', icon: Setting,  path:null  },
             ];
       case 'sys-adm':
         return [

@@ -375,9 +375,9 @@ export default {
             return parts[0];
         },
         initQuillEditors() {
-            this.$nextTick(() => {
+            nextTick(() => {
                 this.parsedQuestions.forEach((question) => {
-                    if (question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER') {
+                    if (question.type === 'FILL_IN_BLANK' || question.type === 'SHORT_ANSWER') {
                         const editorId = `quill-editor-${question.practiceQuestionId}`;
                         const editorContainer = document.getElementById(editorId);
 
@@ -389,23 +389,29 @@ export default {
                         const quill = new Quill(editorContainer, {
                             theme: 'snow',
                             modules: {
-                                toolbar: [
-                                    ['bold', 'italic', 'underline'],
-                                    [{list: 'ordered'}, {list: 'bullet'}],
-                                    ['link', 'image']
-                                ],
+                                // toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['link', 'image']],
+                                toolbar: [['bold', 'italic', 'underline'], [{list: 'ordered'}, {list: 'bullet'}]],
                             },
                         });
 
+                        // 同步答案数据，直接更新 studentAnswers
                         quill.on('text-change', () => {
                             const richText = quill.root.innerHTML;
-                            this.studentAnswers[question.practiceQuestionId] = this.getSimpleText(richText);
+                            // 移除了上传图片的处理
+                            // uploadAndReplaceImagesInContent(richText, question.practiceQuestionId).then(updatedContent => {
+                            //     quill.root.innerHTML = updatedContent; // 更新Quill编辑器的内容
                         });
 
+                        // 恢复已保存的答案
                         if (this.studentAnswers[question.practiceQuestionId]) {
-                            quill.root.innerHTML = this.studentAnswers[question.practiceQuestionId];
+                            let content = this.studentAnswers[question.practiceQuestionId];
+                            // 移除了上传图片的处理
+                            // uploadAndReplaceImagesInContent(content, question.practiceQuestionId).then(updatedContent => {
+                            //     quill.root.innerHTML = updatedContent; // 更新Quill编辑器的内容
+                            quill.root.innerHTML = content; // 直接设置内容
                         }
 
+                        // 存储 Quill 实例
                         this.quillEditors[question.practiceQuestionId] = quill;
                     }
                 });
