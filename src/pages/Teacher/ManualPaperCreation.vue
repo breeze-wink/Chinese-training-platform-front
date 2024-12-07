@@ -11,79 +11,83 @@
 
             <!-- 内容区 -->
             <div class="content">
-            <div class="up-content">
-                <h2>手动组卷</h2>
-                <div class ="setting-group">
-                    <div class="cascade-group">
-                        <span>知识点:</span>
-                        <el-cascader :options="options" :props="props1"
-                                     v-model="selectedKnowledge" clearable @change="handleChange" />
-                    </div>
-                    <div class="difficulty-selection">
-                        <span>难度：</span>
-                        <button
-                                class="difficulty-button"
-                                :class="{ 'is-selected': selectedDifficulty === '全部' }"
-                                @click="selectedDifficulty = '全部';fetchQuestions()">
-                            全部
-                        </button>
-                        <button
-                                class="difficulty-button"
-                                :class="{ 'is-selected': selectedDifficulty === '容易' }"
-                                @click="selectedDifficulty = '容易';fetchQuestions()">
-                            容易
-                        </button>
-                        <button
-                                class="difficulty-button"
-                                :class="{ 'is-selected': selectedDifficulty === '普通' }"
-                                @click="selectedDifficulty = '普通';fetchQuestions()">
-                            普通
-                        </button>
-                        <button
-                                class="difficulty-button"
-                                :class="{ 'is-selected': selectedDifficulty === '困难' }"
-                                @click="selectedDifficulty = '困难';fetchQuestions()">
-                            困难
-                        </button>
+                <div class="up-content">
+                    <h2>手动组卷</h2>
+                    <div class ="setting-group">
+                        <div class="cascade-group">
+                            <span>知识点:</span>
+                            <el-cascader
+                                    :options="options"
+                                    :props="props1"
+                                    v-model="selectedKnowledge"
+                                    clearable @change="handleChange"
+                                    placeholder="输入知识点"/>
+                        </div>
+                        <div class="difficulty-selection">
+                            <span>难度：</span>
+                            <button
+                                    class="difficulty-button"
+                                    :class="{ 'is-selected': selectedDifficulty === '' }"
+                                    @click="selectedDifficulty = '';fetchQuestions()">
+                                全部
+                            </button>
+                            <button
+                                    class="difficulty-button"
+                                    :class="{ 'is-selected': selectedDifficulty === '容易' }"
+                                    @click="selectedDifficulty = '容易';fetchQuestions()">
+                                容易
+                            </button>
+                            <button
+                                    class="difficulty-button"
+                                    :class="{ 'is-selected': selectedDifficulty === '普通' }"
+                                    @click="selectedDifficulty = '普通';fetchQuestions()">
+                                普通
+                            </button>
+                            <button
+                                    class="difficulty-button"
+                                    :class="{ 'is-selected': selectedDifficulty === '困难' }"
+                                    @click="selectedDifficulty = '困难';fetchQuestions()">
+                                困难
+                            </button>
+                        </div>
+
+                        <!--类型选择-->
+                        <div class="type-selection">
+                            <span>题型：</span>
+                            <button
+                                    class="type-button"
+                                    :class="{ 'is-selected': selectedType === '' }"
+                                    @click="selectedType = '';fetchQuestions()">
+                                全部
+                            </button>
+                            <button
+                                    class="type-button"
+                                    :class="{ 'is-selected': selectedType === '选择' }"
+                                    @click="selectedType = '选择';fetchQuestions()">
+                                选择
+                            </button>
+                            <button
+                                    class="type-button"
+                                    :class="{ 'is-selected': selectedType === '填空' }"
+                                    @click="selectedType = '填空';fetchQuestions()">
+                                填空
+                            </button>
+                            <button
+                                    class="type-button"
+                                    :class="{ 'is-selected': selectedType === '问答' }"
+                                    @click="selectedType = '问答';fetchQuestions()">
+                                问答
+                            </button>
+                            <button
+                                    class="type-button"
+                                    :class="{ 'is-selected': selectedType === '作文' }"
+                                    @click="selectedType = '作文';fetchQuestions()">
+                                作文
+                            </button>
+                        </div>
                     </div>
 
-                    <!--类型选择-->
-                    <div class="type-selection">
-                        <span>题型：</span>
-                        <button
-                                class="type-button"
-                                :class="{ 'is-selected': selectedType === '全部' }"
-                                @click="selectedType = '全部';fetchQuestions()">
-                            全部
-                        </button>
-                        <button
-                                class="type-button"
-                                :class="{ 'is-selected': selectedType === '选择' }"
-                                @click="selectedType = '选择';fetchQuestions()">
-                            选择
-                        </button>
-                        <button
-                                class="type-button"
-                                :class="{ 'is-selected': selectedType === '填空' }"
-                                @click="selectedType = '填空';fetchQuestions()">
-                            填空
-                        </button>
-                        <button
-                                class="type-button"
-                                :class="{ 'is-selected': selectedType === '问答' }"
-                                @click="selectedType = '问答';fetchQuestions()">
-                            问答
-                        </button>
-                        <button
-                                class="type-button"
-                                :class="{ 'is-selected': selectedType === '作文' }"
-                                @click="selectedType = '作文';fetchQuestions()">
-                            作文
-                        </button>
-                    </div>
                 </div>
-
-            </div>
                 <!-- 中间栏目 -->
                 <div class="footer-controls">
                     <div class="left-controls">
@@ -118,6 +122,43 @@
                 </div>
 
             </div>
+            <!-- 固钉试题篮 -->
+            <div class="fixed-question-basket" @click="toggleDrawer">
+                <span>试题篮: {{ questionCount }}</span>
+            </div>
+
+            <!-- 抽屉 -->
+            <el-drawer
+                    v-model="drawerVisible"
+                    direction="rtl"
+                    size="25%"
+                    :before-close="handleCloseDrawer"
+                    title="试题篮"
+                    style="max-width: 300px;"
+            >
+                <div class="drawer-content">
+                    <p>试题总量：{{ questionCount }}</p>
+                    <div class="button-container">
+                    <button
+                            class="clear-button"
+                            @mouseover="hoverClearButton = true"
+                            @mouseleave="hoverClearButton = false"
+                            @click="clearQuestions"
+                            :style="{ backgroundColor: hoverClearButton ? '#409EFF' : '' }"
+                    >
+                        清空试题
+                    </button>
+                    <button class="preview-button" @click="previewFullPaper">
+                        预览全卷
+                    </button>
+                    </div>
+                </div>
+            </el-drawer>
+
+
+
+            <!-- 返回顶部按钮 -->
+            <el-backtop :right="50" :bottom="80" />
 
 
         </div>
@@ -134,10 +175,11 @@ import Header from "@/components/Header.vue";
 import {computed, onMounted, ref} from "vue";
 import axios from "axios";
 import {useStore} from "vuex";
+
 import {SortDown, SortUp} from "@element-plus/icons-vue";
 
-const selectedDifficulty = ref('全部'); // 默认选中全部
-const selectedType = ref('全部'); // 默认选中全部
+const selectedDifficulty = ref(''); // 默认选中全部
+const selectedType = ref(''); // 默认选中全部
 //从全局中ID信息
 const store = useStore();
 const teacherId = computed(() => store.state.user.id);
@@ -230,14 +272,51 @@ const search = () => {
 
 // 中间栏目：从此结束
 // ***************************************************************************
+
+// ***************************************************************************
+// 右侧栏目：从此开始
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+// 控制抽屉显示的变量
+const drawerVisible = ref(false);
+// 试题数量
+const questionCount = ref(10);
+// 控制清空按钮悬浮时的样式
+const hoverClearButton = ref(false);
+
+const toggleDrawer = () => {
+    drawerVisible.value = !drawerVisible.value;
+    console.log(drawerVisible.value);
+};
+
+const handleCloseDrawer = () => {
+    drawerVisible.value = false;
+};
+
+const clearQuestions = () => {
+    questionCount.value = 0;
+};
+
+const previewFullPaper = () => {
+    // 预览全卷的逻辑
+    router.push('/teacher/paper-preview');
+
+    console.log("预览全卷");
+};
+
+
+// 右侧栏目：从此结束
+// ***************************************************************************
 // 组合请求参数
 const prepareRequestData = () => {
     let requestData = {
         difficulty: selectedDifficulty.value, // 难度
         type: selectedType.value,             // 题型
         knowledgeType:'',                     //知识点大类
-        knowledgeId: '',                     // 知识点ID
-        searchKeyword: searchKeyword.value,   // 查找内容
+        knowledgeId: null,                     // 知识点ID
+        search: searchKeyword.value,       // 查找内容
         sortOrder: sortOrder.value,           // 排序顺序
         mode: selectedButton.value,           // 模式
         page: 1,                              // 页码
@@ -258,17 +337,20 @@ const prepareRequestData = () => {
 // 发送请求
 const fetchQuestions = async () => {
     const requestData = prepareRequestData();
-    console.log('发送请求的数据:', requestData);
-    // try {
-    //     const response = await axios.get('/api/questions', {params: requestData});
-    //     if (response.status === 200) {
-    //         console.log(response.data);
-    //     } else {
-    //         console.error('获取题目失败：', response.data.message);
-    //     }
-    // } catch (error) {
-    //     console.error('获取题目失败：', error.message);
-    // }
+
+    try {
+
+        const response = await axios.post('/api/teacher/search-questions', requestData);
+        console.log('发送请求的数据:', requestData);
+        if (response.status === 200) {
+            console.log('传回的题目数据');
+            console.log(response.data);
+        } else {
+            console.error('获取题目失败：', response.data.message);
+        }
+    } catch (error) {
+        console.error('获取题目失败：', error.message);
+    }
 };
 
 
@@ -307,11 +389,9 @@ onMounted(() => {
     display: flex;
     flex-direction: column; /* 让内容和页脚垂直排列 */
     flex: 1; /* 确保这个区域占据剩余的空间 */
-
     max-width: 1040px; /* 最大宽度为 1000px */
     padding: 0px;
     width: 100%; /* 宽度在正常情况下可以随着窗口大小缩放 */
-
 }
 .up-content {
 
@@ -484,6 +564,63 @@ onMounted(() => {
     margin-top: 20px;
 }
 
+.fixed-question-basket {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    background-color: #409eff;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
 
+.fixed-question-basket:hover {
+    background-color: #66b1ff;
+}
+
+.drawer-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center; /* 让内容水平居中 */
+}
+.button-container {
+    display: flex;
+    flex-direction: column; /* 垂直排列按钮 */
+    gap: 10px;
+    width: 100%; /* 容器宽度占满父容器 */
+    max-width: 200px; /* 设置最大宽度 */
+    margin: 0 auto; /* 居中 */
+}
+
+
+.clear-button {
+
+    padding: 8px 20px;
+    border: none;
+    color: white;
+    background-color: #409eff;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.clear-button:hover {
+    background-color: #66b1ff;
+}
+
+.preview-button {
+    padding: 8px 20px;
+    border: none;
+    background-color: #67c23a;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.preview-button:hover {
+    background-color: #85d587;
+}
 
 </style>
