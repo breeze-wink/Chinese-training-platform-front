@@ -112,15 +112,16 @@ const routes = [
 
     //系统管理员
 
-    { path: '/system-admin/KnowledgePoint', component: KnowledgePoint, meta: { requiresAuth: true } },
-    { path: '/system-admin/CourseStandard', component: CourseStandard, meta: { requiresAuth: true } },
+    { path: '/system-admin/knowledge-point', component: KnowledgePoint, meta: { requiresAuth: true } },
+    { path: '/system-admin/course-standard', component: CourseStandard, meta: { requiresAuth: true } },
     { path: '/system-admin/name', name:'name',component: Name, meta: { requiresAuth: true } },
-    { path: '/system-admin/GenerateSchadm',component: GenerateSchadm, meta: { requiresAuth: true } },
+    { path: '/system-admin/generate-sch-adm',component: GenerateSchadm, meta: { requiresAuth: true } },
 
     // 学管
-    { path: '/school-admin/ManageStudent', component: ManageStudent, meta: { requiresAuth: true } },
-    { path: '/school-admin/ManageTeacher', component: ManageTeacher, meta: { requiresAuth: true } },
-    { path: '/school-admin/AuthorizationCode', name:'AuthorizationCode',component: AuthorizationCode, meta: { requiresAuth: true } },
+    { path: '/school-admin/manage-student', component: ManageStudent, meta: { requiresAuth: true } },
+    { path: '/school-admin/manage-class', component: ManageClass, meta: { requiresAuth: true } },
+    { path: '/school-admin/manage-teacher', component: ManageTeacher, meta: { requiresAuth: true } },
+    { path: '/school-admin/authorization-code', name:'AuthorizationCode',component: AuthorizationCode, meta: { requiresAuth: true } },
 
 
     // 学生的个人页面
