@@ -106,7 +106,7 @@ export default {
 
 <style scoped>
 .page-container {
-    background-color: #f9f9f9; /* 添加背景色 */
+    background-color: #f0f0f0; /* 添加背景色 */
     background-image: url('../../static/mountains.jpg'); /* 设置背景图像 */
     background-size: cover; /* 背景图像覆盖整个元素 */
     background-position: center; /* 背景图像居中 */

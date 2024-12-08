@@ -205,16 +205,12 @@ export default {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background: linear-gradient(135deg, #f0f0f0, #ffffff);
+    background-color: #f0f0f0; /* 背景改为浅灰色 */
 }
 
 .main-container {
     display: flex;
     flex: 1;
-    padding: 20px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
 }
 
 .learning-stats {

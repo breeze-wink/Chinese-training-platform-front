@@ -239,6 +239,7 @@ export default {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    background-color: #f0f0f0; /* 背景改为浅灰色 */
 }
 
 .main-container {
