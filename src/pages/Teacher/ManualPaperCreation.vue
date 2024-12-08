@@ -121,6 +121,55 @@
                     </div>
                 </div>
 
+                <!-- 题目卡片显示区域 -->
+                <div class="question-cards">
+                    <!-- Big Questions -->
+                    <div v-if="bigQuestions.length > 0">
+                        <div v-for="(bigQuestion, index) in bigQuestions" :key="index" class="question-card">
+                            <div class="question-body">
+                                <strong>{{ bigQuestion.body }}</strong>
+                            </div>
+                            <div class="sub-questions">
+                                <div v-for="(sub, idx) in bigQuestion.subQuestion" :key="idx" class="sub-question">
+                                    <p>{{ sub.question }}</p>
+                                </div>
+                            </div>
+                            <div class="card-buttons">
+                                <button @click="viewExplanation">查看解析</button>
+                                <button @click="addToBasket">添加</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Single Questions -->
+                    <div v-if="questions.length > 0">
+                        <div v-for="(question, index) in questions" :key="index" class="question-card">
+                            <div class="question-body">
+                                <strong>{{ question.body }}</strong>
+                            </div>
+                            <div class="question">
+                                <p>{{ question.question }}</p>
+                            </div>
+                            <div class="card-buttons">
+                                <button @click="viewExplanation">查看解析</button>
+                                <button @click="addToBasket">添加</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- 分页控件 -->
+                <div v-if="totalPages > 1" class="pagination">
+                    <el-pagination
+                            :current-page="currentPage"
+                            :page-size="pageSize"
+                            :total="totalPages"
+                            @current-change="handlePageChange"
+                            layout="prev, pager, next, jumper"
+                    />
+                </div>
+
             </div>
             <!-- 固钉试题篮 -->
             <div class="fixed-question-basket" @click="toggleDrawer">
@@ -273,6 +322,24 @@ const search = () => {
 // 中间栏目：从此结束
 // ***************************************************************************
 
+
+
+
+// ***************************************************************************
+// 卡片：从此开始
+
+const pageSize = ref(10);
+// 当前页和总页码
+const currentPage = ref(1);
+const totalPages = ref(1);
+// 试题数据
+const bigQuestions = ref([]); // 用于存储大题（bigQuestion）数据
+const questions = ref([]);   // 用于存储单题（questions）数据
+
+
+// 卡片：从此结束
+// ***************************************************************************
+
 // ***************************************************************************
 // 右侧栏目：从此开始
 import { useRouter } from 'vue-router';
@@ -344,6 +411,12 @@ const fetchQuestions = async () => {
         console.log('发送请求的数据:', requestData);
         if (response.status === 200) {
             console.log('传回的题目数据');
+            const data = response.data;
+            bigQuestions.value = data.bigQuestions || [];
+            questions.value = data.questions || [];
+            currentPage.value = data.currentPage || 1;
+            totalPages.value = data.totalPages || 1;
+            pageSize.value = data.pageSize || 10;
             console.log(response.data);
         } else {
             console.error('获取题目失败：', response.data.message);
@@ -354,7 +427,11 @@ const fetchQuestions = async () => {
 };
 
 
-
+// 翻页逻辑
+const handlePageChange = (page) => {
+    currentPage.value = page;
+    fetchQuestions();
+};
 
 // ***************************************************************************
 // 查询函数，从此开始
@@ -408,6 +485,7 @@ onMounted(() => {
     align-items: center;
     margin-top: 20px;
     padding: 5px;
+    margin-bottom: 20px;
 
     background-color: #ffffff;
 
@@ -621,6 +699,118 @@ onMounted(() => {
 
 .preview-button:hover {
     background-color: #85d587;
+}
+
+
+
+
+/* 题目卡片显示区域 */
+.question-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+/* 大题卡片 */
+.question-card {
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+
+/* 题目正文部分 */
+.question-body {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+/* 子问题列表 */
+.sub-questions {
+    margin-top: 10px;
+}
+/* 子问题项 */
+.sub-question {
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+/* 单题卡片的题目部分 */
+.question {
+    font-size: 16px;
+    margin-top: 10px;
+}
+/* 卡片按钮区域 */
+.card-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+/* 按钮样式 */
+.card-buttons button {
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.card-buttons button:hover {
+    background-color: #45a049;
+}
+
+.card-buttons button:focus {
+    outline: none;
+}
+
+
+/* 分页控件容器 */
+.pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+/* 分页控件 */
+.el-pagination {
+    width: 100%;
+    max-width: 600px;
+}
+
+/* 分页按钮 */
+.el-pagination .el-button--default,
+.el-pagination .el-button--primary {
+    background-color: #fff;
+    border: 1px solid #dcdfe6;
+    color: #409EFF;
+    font-size: 14px;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.el-pagination .el-button--primary {
+    background-color: #409EFF;
+    border-color: #409EFF;
+    color: #fff;
+}
+
+/* 禁用按钮 */
+.el-pagination .el-button--disabled {
+    background-color: #f2f6fc;
+    border-color: #dcdfe6;
+    color: #b0c4de;
+}
+
+/* 页码文本 */
+.el-pagination .el-pagination__pager {
+    display: flex;
+    gap: 5px;
+    align-items: center;
 }
 
 </style>
