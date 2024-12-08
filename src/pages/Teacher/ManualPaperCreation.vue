@@ -434,7 +434,9 @@ const addToBasket = (question, isBigQuestion = false, parentId = null) => {
         subQuestions: question.subQuestion.map(sub => ({
             id: `${questionId}-sub-${sub.questionId || Math.random()}`, // 确保唯一
             question: sub.question,
-            type: sub.type
+            type: sub.type,
+            answer: sub.answer,             // 添加答案
+            explanation: sub.explanation    // 添加解析
         })),
         referencedCount: question.referencedCount,
         difficulty: question.difficulty
@@ -443,6 +445,8 @@ const addToBasket = (question, isBigQuestion = false, parentId = null) => {
         type: question.type,
         body: question.body,
         question: question.question,
+        answer: question.answer,           // 添加答案
+        explanation: question.explanation, // 添加解析
         referencedCount: question.referencedCount,
         difficulty: question.difficulty
     };
