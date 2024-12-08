@@ -165,7 +165,59 @@ export default {
             }
         },
         async confirmSelection() {
-            // Your confirm logic here
+            this.isProcessing = true; // 显示加载提示和遮罩层
+            this.dialogVisible = false; // 立即关闭考点选择对话框
+
+            const requestBody = {
+                name: this.practiceName,
+                knowledgePoints: [],
+                questionBodyTypes: []
+            };
+
+            // 检查是否选择了某个类型的全部考点
+            for (const [type, group] of Object.entries(this.groupedKnowledgePoints)) {
+                const allSelected = group.every(item => this.checkList.includes(item.id));
+                if (allSelected) {
+                    requestBody.questionBodyTypes.push({ type, num: group.length * 1 }); // 假设每种类型默认生成1个题目
+                } else {
+                    group.forEach(item => {
+                        if (this.checkList.includes(item.id)) {
+                            requestBody.knowledgePoints.push({
+                                knowledgePointId: parseInt(item.id, 10),
+                                num: this.questionInputs[item.id]?.num || 1
+                            });
+                        }
+                    });
+                }
+            }
+
+            try {
+                const url = `/api/student/${this.studentId}/practice/generate-define`;
+                const response = await axios.post(url, requestBody, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                const practiceId = response.data.practiceId;
+                if (practiceId !== undefined) {
+                    const questions = response.data.data;
+                    this.$router.push({
+                        name: 'AnswerPractice',
+                        query: {
+                            practiceId: practiceId,
+                            questions: encodeURIComponent(JSON.stringify(questions)),
+                            mode: 'custom',
+                            practiceName: this.practiceName
+                        },
+                    });
+                } else {
+                    console.error('PracticeId is undefined');
+                }
+            } catch (error) {
+                console.error('考点和题目发送失败', error.response ? error.response.data : error.message);
+            } finally {
+                this.isProcessing = false; // 处理完成后隐藏加载提示和遮罩层
+            }
         },
         logGroupType(type) {
             console.log('Clicked Group Type:', type);
