@@ -51,6 +51,10 @@ import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import {Document, Setting, User, Management, Upload, EditPen, Avatar, Edit, Opportunity} from '@element-plus/icons-vue';
 import {ElAvatar} from "element-plus";
+import KnowledgePoint from "@/pages/system-admin/KnowledgePoint.vue";
+import GenerateSchadm from "@/pages/system-admin/GenerateSchadm.vue";
+import ManageStudent from "@/pages/school-admin/ManageStudent.vue";
+import ManageTeacher from "@/pages/school-admin/ManageTeacher.vue";
 
 //获取路由
 const router = useRouter();
@@ -151,7 +155,7 @@ const menuItems = computed(() => {
 
       case 'sch-adm':
         return [
-          { index: '1', label: '首页', icon: User, path: '/school-admin/authorization-code' },
+          { index: '1', label: '首页', icon: User, path: '/school-admin/AuthorizationCode' },
           {
             index: '2',
             label: '相关管理',
@@ -159,6 +163,7 @@ const menuItems = computed(() => {
             children: [
               { index: '2-1', label: '教师管理', path: '/school-admin/manage-teacher' },
               { index: '2-2', label: '学生管理', path: '/school-admin/manage-student' },
+              { index: '2-3', label: '班级管理', path: '/school-admin/manage-class' },
             ],
           },
         ];
