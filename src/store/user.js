@@ -10,7 +10,8 @@ export default createStore({
             role: null, // 用户角色，比如 'teacher' 或 'student'
             token: null
         },
-        isAuthenticated: false // 登录状态
+        isAuthenticated: false, // 登录状态
+        basket: [] // 添加试卷篮状态
     },
     mutations: {
         setUser(state, user) {
@@ -65,7 +66,18 @@ export default createStore({
                     break;
                 }
             }
+        },
+        // 添加试卷篮相关的 mutations
+        addQuestionToBasket(state, question) {
+            state.basket.push(question);
+        },
+        removeQuestionFromBasket(state, questionId) {
+            state.basket = state.basket.filter(q => q.id !== questionId);
+        },
+        clearBasket(state) {
+            state.basket = [];
         }
+
     },
 
     actions: {
@@ -86,6 +98,16 @@ export default createStore({
         },
         initializeUser({ commit }) {
             commit('initializeUser');
+        },
+        //试卷篮
+        addQuestionToBasket({ commit }, question) {
+            commit('addQuestionToBasket', question);
+        },
+        removeQuestionFromBasket({ commit }, questionId) {
+            commit('removeQuestionFromBasket', questionId);
+        },
+        clearBasket({ commit }) {
+            commit('clearBasket');
         }
     },
     getters: {
@@ -119,6 +141,13 @@ export default createStore({
         // 获取登录状态
         isAuthenticated(state) {
             return state.isAuthenticated;
+        },
+        //试卷蓝相关
+        getBasket(state) {
+            return state.basket;
+        },
+        getBasketCount(state) {
+            return state.basket.length;
         }
     }
 });
