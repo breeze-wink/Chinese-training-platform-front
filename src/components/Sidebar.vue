@@ -128,7 +128,7 @@ const menuItems = computed(() => {
             ];
         case 'sch-adm':
             return [
-                { index: '/school-admin/AuthorizationCode', label: '首页', icon: User, path: '/school-admin/AuthorizationCode' },
+                { index: '/school-admin/authorization-code', label: '首页', icon: User, path: '/school-admin/authorization-code' },
                 {
                     index: '/school-admin/manage',
                     label: '相关管理',
