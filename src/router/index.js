@@ -32,6 +32,8 @@ import AnswerDetail from "@/pages/Student/AnswerDetail.vue";
 import ManageTest from "@/pages/Student/ManageTest.vue";
 import AnswerTemporary from "@/pages/Student/AnswerTemporary.vue";
 import PersonalProfiling from "@/pages/Student/PersonalProfiling.vue";
+import AnswerHomework from "@/pages/Student/AnswerHomework.vue";
+import HomeworkDetail from "@/pages/Student/HomeworkDetail.vue";
 import store from '@/store/user';
 import TestGenerationStrategy from "@/pages/Teacher/TestGenerationStrategy.vue";
 import ManualPaperCreation from "@/pages/Teacher/ManualPaperCreation.vue";
@@ -162,6 +164,24 @@ const routes = [
             mode: route.query.mode,
             practiceName: route.query.practiceName,
         }),
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/student/answer-homework',
+        name: 'AnswerHomework',
+        component: AnswerHomework,
+        props: route => ({
+            assignmentId: route.query.assignmentId,
+            questions: route.query.questions,
+            assignmentName: route.query.assignmentName
+        }),
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/student/homework-detail',
+        name: 'HomeworkDetail',
+        component: HomeworkDetail,
+        props: true,
         meta: { requiresAuth: true }
     },
     // 试卷管理

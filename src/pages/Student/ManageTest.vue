@@ -33,7 +33,8 @@
                             <td>{{ item.startTime || item.dueTime }}</td>
                             <td>{{ item.endTime || item.dueTime }}</td>
                             <td>
-                                <button @click="showSystemConfirmContinue(item)" :disabled="isProcessing">继续训练</button>
+                                <button @click="continueHomework(item)" :disabled="isProcessing">继续练习</button>
+                                <button :disabled="isDeleting || isProcessing" v-if="selectedStatus === '作业'" @click="showSystemConfirmContinue(item)">继续练习</button>
                                 <button :disabled="isDeleting || isProcessing" @click="showSystemConfirmDelete(item)">删除练习</button>
                             </td>
                         </tr>
@@ -72,6 +73,7 @@
                             <td>{{ item.totalScore }}</td>
                             <td>
                                 <button @click="showSystemConfirmViewAnswers(item)" :disabled="isProcessing">答案查询</button>
+                                <button v-if="selectedCompletedStatus === '作业'" :disabled="isProcessing" @click="showTeacherComments(item)">老师评语</button>
                             </td>
                         </tr>
                         </tbody>
@@ -123,7 +125,9 @@ export default {
             isProcessing: false, // 新增：用于跟踪是否正在处理请求
             practiceToDelete: null,
             practiceToContinue: null,
-            answersToView: null
+            answersToView: null,
+            teacherComments: null, // 存储老师评语
+            assignmentToContinue: null
         };
     },
     computed: {
@@ -215,6 +219,42 @@ export default {
                 }
             } catch (error) {
                 console.error('获取已完成作业列表失败', error);
+            }
+        },
+        async continueHomework() {
+            try {
+                // 构造请求的 endpoint 和参数
+                const endpoint = `/api/student/${this.getUserId}/homework/get-detail`;
+                const params = { assignmentId: this.assignmentToContinue.assignmentId };
+
+                console.log(`Sending GET request to ${endpoint} with params:`, params); // 调试日志
+
+                // 发送 GET 请求获取作业详情
+                const response = await axios.get(endpoint, { params });
+
+                if (response.status === 200) {
+                    const questions = response.data.data; // 从响应中提取问题列表
+                    console.log('Received homework details:', questions); // 调试日志
+
+                    // 将题目和其他必要信息传递给答题页面
+                    router.push({
+                        name: 'AnswerHomework',
+                        query: {
+                            assignmentId: this.assignmentToContinue.assignmentId,
+                            questions: JSON.stringify(questions),
+                            assignmentName: this.assignmentToContinue.assignmentName
+                        }
+                    });
+                } else {
+                    console.error('获取作业详情失败', response.data.message);
+                    alert('获取作业详情失败，请稍后重试');
+                }
+            } catch (error) {
+                console.error('获取作业详情失败', error.response ? error.response.data : error.message);
+                alert('获取作业详情失败，请稍后重试');
+            } finally {
+                this.isContinuing = false; // 隐藏加载提示
+                this.isProcessing = false; // 结束处理状态
             }
         },
         showSystemConfirmContinue(item) {

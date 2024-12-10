@@ -1,0 +1,585 @@
+<template>
+    <div class="page-container">
+        <Header />
+        <div class="main-container">
+            <div class="content">
+                <div class="generated-questions">
+                    <h2 class="practice-name">{{ assignmentName }}</h2>
+                    <form @submit.prevent="submitAnswers">
+                        <div v-for="(question, index) in parsedQuestions" :key="index" class="question" :id="'question-' + question.practiceQuestionId" ref="questionElements">
+                            <div v-if="shouldShowQuestionBody(question)" class="question-body">
+                                {{ getPrefixOfSequence(question.sequence) }} {{ question.questionBody }}
+                            </div>
+                            <div class="question-sequence-content">
+                                <span class="sequence">{{ question.sequence }}. </span>
+                                <span v-html="question.questionContent" class="question-content"></span>
+                            </div>
+                            <div v-if="question.questionType === 'CHOICE'" class="options">
+                                <label v-for="option in getOptions(question.questionOptions)" :key="option.label" class="option">
+                                    <input type="radio"
+                                           :name="`question-${question.practiceQuestionId}`"
+                                           :value="option.label"
+                                           v-model="studentAnswers[question.practiceQuestionId]">
+                                    <span>{{ option.label }}. {{ option.text }}</span>
+                                </label>
+                            </div>
+                            <div v-else-if="question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER'" class="input-field">
+                                <div
+                                    :id="`quill-editor-${question.practiceQuestionId}`"
+                                    ref="quillEditors"
+                                    class="quill-editor"
+                                ></div>
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button type="submit" class="submit-button">提交答案</button>
+                            <button type="button" class="save-button" @click="saveAnswers">暂存答案</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="navigation">
+                <ul>
+                    <li v-for="(question, index) in parsedQuestions" :key="index" :class="{ active: currentIndex === question.practiceQuestionId }">
+                        <a :href="'#question-' + question.practiceQuestionId" class="nav-link" @click.prevent="scrollToQuestion(index, question.practiceQuestionId)">
+                            <div class="nav-option">
+                                {{ question.sequence }}
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import Header from '@/components/Header.vue';
+import axios from 'axios';
+import { nextTick } from 'vue';
+import Quill from 'quill';
+
+export default {
+    components: {
+        Header,
+    },
+    props: ['assignmentId', 'assignmentName'],
+    data() {
+        return {
+            studentAnswers: {},
+            parsedQuestions: [],
+            currentIndex: 0,
+            observer: null,
+            quillEditors: {}
+        };
+    },
+    created() {
+        this.initialize();
+        console.log('Received parameters:', {
+            assignmentId: this.assignmentId,
+            assignmentName: this.assignmentName
+        });
+        this.logQuestionsInfo();
+    },
+    mounted() {
+        this.setupIntersectionObserver();
+        this.initQuillEditors();
+        this.loadImagesInContent(); // 确保DOM更新完成后再加载图片
+    },
+    updated() {
+        this.setupIntersectionObserver();
+    },
+    beforeDestroy() {
+        if (this.observer) this.observer.disconnect();
+        Object.values(this.quillEditors).forEach((editor) => editor.destroy());
+    },
+    methods: {
+        loadImagesInContent() {
+            console.log('开始加载题目中的图片');
+            this.parsedQuestions.forEach(question => {
+                console.log(`处理问题 ${question.practiceQuestionId}:`, question);
+
+                if (typeof question.questionContent !== 'string' || !question.questionContent) {
+                    console.error(`问题 ${question.practiceQuestionId} 的 questionContent 不是有效的字符串:`, typeof question.questionContent);
+                    return;
+                }
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(question.questionContent, 'text/html');
+
+                const imgTags = doc.querySelectorAll('img');
+                let hasImage = false;
+
+                for (const img of imgTags) {
+                    img.remove();
+                    hasImage = true;
+                }
+
+                if (hasImage) {
+                    const contentDiv = doc.createElement('div');
+                    imgTags.forEach(img => {
+                        const src = img.getAttribute('src');
+                        if (src) {
+                            if (src.startsWith('data:image/')) {
+                                const base64Image = src;
+                                const mimeType = base64Image.split(';')[0].split(':')[1];
+                                const blob = this.base64ToBlob(base64Image, mimeType);
+                                const file = new File([blob], 'image.png', { type: mimeType });
+                                this.uploadImage(file).then(newImageUrl => {
+                                    if (newImageUrl) {
+                                        img.setAttribute('src', newImageUrl);
+                                    }
+                                }).catch(error => {
+                                    console.error('上传图片失败:', error);
+                                });
+                            } else {
+                                const imageName = src.split('/').pop();
+                                const newSrc = `/api/uploads/images/content/${imageName}`;
+                                img.setAttribute('src', newSrc);
+                            }
+                        }
+                        contentDiv.appendChild(img);
+                    });
+                    doc.body.appendChild(contentDiv);
+                }
+
+                question.questionContent = doc.body.innerHTML;
+            });
+        },
+        base64ToBlob(base64, mimeType) {
+            const byteCharacters = atob(base64.split(',')[1]);
+            const byteArrays = [];
+
+            for (let offset = 0; offset < byteCharacters.length; offset++) {
+                const byte = byteCharacters.charCodeAt(offset);
+                byteArrays.push(byte);
+            }
+
+            const byteArray = new Uint8Array(byteArrays);
+            return new Blob([byteArray], {type: mimeType});
+        },
+        uploadImage(file) {
+            const formData = new FormData();
+            formData.append("image", file);
+            formData.append("type", "content");
+
+            return axios.post('/api/uploads/image', formData, {
+                headers: {'Content-Type': 'multipart/form-data'},
+            }).then(response => {
+                if (response.status === 200) {
+                    console.log(response.data.imageUrl);
+                    return response.data.imageUrl;
+                } else {
+                    console.error('图片上传失败');
+                    return null;
+                }
+            }).catch(error => {
+                console.error('上传图片失败:', error);
+                return null;
+            });
+        },
+        initialize() {
+            const questionsFromQuery = this.$route.query.questions;
+            if (questionsFromQuery) {
+                try {
+                    this.parsedQuestions = JSON.parse(decodeURIComponent(questionsFromQuery));
+                    console.log('Parsed Questions:', this.parsedQuestions);
+                    this.parsedQuestions.forEach(question => {
+                        this.studentAnswers[question.practiceQuestionId] = question.answerContent || '';
+                    });
+                } catch (error) {
+                    console.error('解析题目失败', error);
+                    this.parsedQuestions = [];
+                }
+            } else {
+                console.error('questions 未定义');
+                this.parsedQuestions = [];
+            }
+        },
+        async submitAnswers() {
+            console.log('开始提交答案');
+
+            if (!this.assignmentId) {
+                console.error('assignmentId 未定义');
+                this.$message.error('作业ID未定义，请重试。');
+                return;
+            }
+
+            const answers = this.parsedQuestions.map((question) => ({
+                submissionAnswerId: question.submissionAnswerId, // 假设每个问题都有submissionAnswerId
+                answerContent: this.studentAnswers[question.practiceQuestionId]
+            }));
+
+            try {
+                const response = await axios.post(`/api/student/${this.assignmentId}/homework/complete`, {
+                    data: answers
+                });
+
+                if (response.status === 200 && response.data.message === '练习提交成功') {
+                    // 直接跳转到 ManageTest 页面，不再关注 score 字段
+                    this.$router.push({ name: 'ManageTest' });
+                } else {
+                    console.error('提交答案失败', response.data.message);
+                    this.$message.error(`提交答案失败: ${response.data.message}`);
+                }
+            } catch (error) {
+                console.error('提交答案失败', error.response ? error.response.data : error.message);
+                this.$message.error(`提交答案失败: ${error.response ? error.response.data.message : error.message}`);
+            }
+        },
+        async saveAnswers() {
+            console.log('开始保存答案');
+            const answers = this.parsedQuestions.map((question) => ({
+                practiceQuestionId: question.practiceQuestionId,
+                answerContent: this.studentAnswers[question.practiceQuestionId]
+            }));
+
+            answers.forEach(answer => {
+                const question = this.parsedQuestions.find(q => q.practiceQuestionId === answer.practiceQuestionId);
+                if (question && question.questionType === 'CHOICE' && answer.answerContent) {
+                    const options = this.getOptions(question.questionOptions);
+                    const matchedOption = options.find(option => option.text.trim() === answer.answerContent.trim());
+                    if (matchedOption) {
+                        answer.answerContent = matchedOption.label;
+                    } else {
+                        console.warn(`无法匹配到选项: ${answer.answerContent} for question: ${question.questionContent}`);
+                    }
+                }
+            });
+
+            console.log('即将发送的答案数据:', answers);
+
+            try {
+                const response = await axios.post(`/api/student/${this.assignmentId}/assignment/save`, {
+                    data: answers
+                });
+
+                if (response.status === 200) {
+                    this.$message.success('暂存成功');
+                    this.$router.push({name: 'ManageTest'});
+                } else {
+                    this.$message.error('暂存失败');
+                }
+            } catch (error) {
+                console.error('暂存答案失败', error.response ? error.response.data : error.message);
+                this.$message.error('暂存答案失败');
+            }
+        },
+        setupIntersectionObserver() {
+            if (this.observer) {
+                this.observer.disconnect();
+            }
+
+            this.observer = new IntersectionObserver((entries) => {
+                let firstVisibleEntry = entries.find(entry => entry.isIntersecting);
+                if (firstVisibleEntry) {
+                    const targetElement = firstVisibleEntry.target;
+                    this.currentIndex = parseInt(targetElement.id.split('-')[1], 10);
+                }
+            }, {threshold: 0.5});
+
+            nextTick(() => {
+                if (this.$refs.questionElements && this.$refs.questionElements.length > 0) {
+                    this.$refs.questionElements.forEach(question => {
+                        this.observer.observe(question);
+                    });
+                } else {
+                    console.warn('没有找到问题元素');
+                }
+            });
+        },
+        getOptions(optionsString) {
+            const options = [];
+            const regex = /([A-Z])\.\s*(.*?)(?=[A-Z]\.|$)/g;
+            let match;
+            while ((match = regex.exec(optionsString)) !== null) {
+                options.push({
+                    label: match[1],
+                    text: match[2].trim()
+                });
+            }
+            return options;
+        },
+        scrollToQuestion(index, id) {
+            this.currentIndex = id;
+            const element = this.$refs.questionElements.find(el => el.id === 'question-' + id);
+            if (element) {
+                element.scrollIntoView({behavior: 'smooth'});
+            }
+        },
+        logQuestionsInfo() {
+            this.parsedQuestions.forEach((question, index) => {
+                console.log(`Question ${index + 1}:`, question);
+            });
+        },
+        shouldShowQuestionBody(question) {
+            if (question.sequence.includes('.')) {
+                const [base, sub] = question.sequence.split('.');
+                const baseNumber = parseInt(base, 10);
+                for (let i = 0; i < this.parsedQuestions.length; i++) {
+                    const q = this.parsedQuestions[i];
+                    if (q.sequence.startsWith(`${baseNumber}.`) && i < this.parsedQuestions.indexOf(question)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        },
+        getPrefixOfSequence(sequence) {
+            const parts = sequence.split('.');
+            return parts[0];
+        },
+        initQuillEditors() {
+            nextTick(() => {
+                this.parsedQuestions.forEach((question) => {
+                    if (question.type === 'FILL_IN_BLANK' || question.type === 'SHORT_ANSWER') {
+                        const editorId = `quill-editor-${question.practiceQuestionId}`;
+                        const editorContainer = document.getElementById(editorId);
+
+                        if (!editorContainer) {
+                            console.error(`未找到 Quill 容器: ${editorId}`);
+                            return;
+                        }
+
+                        const quill = new Quill(editorContainer, {
+                            theme: 'snow',
+                            modules: {
+                                toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }]],
+                            },
+                        });
+
+                        quill.on('text-change', () => {
+                            const richText = quill.root.innerHTML;
+                            this.studentAnswers[question.practiceQuestionId] = richText;
+                        });
+
+                        if (this.studentAnswers[question.practiceQuestionId]) {
+                            quill.root.innerHTML = this.studentAnswers[question.practiceQuestionId];
+                        }
+
+                        this.quillEditors[question.practiceQuestionId] = quill;
+                    }
+                });
+            });
+        },
+        getSimpleText(html) {
+            var re1 = new RegExp("<.+?>", "g");
+            var msg = html.replace(re1, '');
+            return msg;
+        }
+    },
+    computed: {
+        displayedQuestions() {
+            return this.parsedQuestions.map(question => ({
+                ...question,
+                showBody: !this.parsedQuestions.some(q => q.sequence.startsWith(question.sequence.split('.')[0]) && q.sequence !== question.sequence)
+            }));
+        }
+    }
+};
+</script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+.page-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.main-container {
+    display: flex;
+    flex: 1;
+}
+
+.content {
+    flex: 3; /* 增加题目区域的宽度比例 */
+    padding: 20px; /* 为题目区域添加内边距 */
+    padding-left: 200px; /* 与最左方空出一些距离 */
+    height: calc(100vh - 80px); /* 调整高度以适应视口 */
+}
+
+.generated-questions {
+    background: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    width: 100%;
+    text-align: left;
+    transition: transform 0.3s ease-in-out;
+}
+
+.practice-name {
+    font-size: 28px;
+    margin-bottom: 20px;
+    font-family: 'SimHei', sans-serif; /* 黑体 */
+}
+
+.question-group {
+    margin-bottom: 20px;
+}
+
+.group-name {
+    font-size: 24px;
+    margin-bottom: 10px;
+    font-family: 'KaiTi', sans-serif; /* 楷体 */
+}
+
+.question {
+    margin-bottom: 20px;
+    font-family: 'kaiti', 'Times New Roman', sans-serif; /* 中文宋体，英文新罗马 */
+    font-size: 20px; /* 增大字体大小 */
+}
+
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    transition: background 0.3s ease-in-out;
+    font-family: 'kaiti', 'Times New Roman', sans-serif; /* 中文宋体，英文新罗马 */
+    font-size: 18px; /* 增大选项字体大小 */
+}
+
+.option:hover {
+    background: #f0f0f0;
+}
+
+.option input {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    transition: border 0.3s ease-in-out;
+}
+
+.option input:checked {
+    border-color: #007BFF;
+}
+
+.option input:checked::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: #007BFF;
+    border-radius: 50%;
+}
+
+.input-field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+input[type="text"], textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-family: 'kaiti', 'Times New Roman', sans-serif; /* 中文宋体，英文新罗马 */
+    font-size: 18px; /* 增大输入框字体大小 */
+    transition: border 0.3s ease-in-out;
+}
+
+input[type="text"]:focus, textarea:focus {
+    border-color: #007BFF;
+    outline: none;
+}
+
+.button-group {
+    display: flex;
+    justify-content: center; /* 居中对齐按钮 */
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.submit-button, .save-button {
+    padding: 10px 20px;
+    background-color: #007BFF; /* 设置按钮背景颜色 */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.submit-button:hover, .save-button:hover {
+    background-color: #0056b3; /* 更深的蓝色背景 */
+    transform: translateY(-2px);
+}
+
+.navigation {
+    flex: 1; /* 减少导航栏的宽度比例 */
+    background: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    width: 100%;
+    text-align: left;
+    transition: transform 0.3s ease-in-out;
+    margin-left: 20px; /* 添加左边距，使导航栏与题目区域有间隔 */
+    font-family: 'SimHei', sans-serif; /* 黑体 */
+    color: #000; /* 黑色 */
+}
+
+.navigation ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex; /* 使用Flexbox布局 */
+    flex-wrap: wrap; /* 允许换行 */
+    gap: 10px; /* 项目之间的间距 */
+}
+
+.navigation li {
+    margin: 0; /* 移除默认的margin */
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #000; /* 黑色 */
+    display: block;
+}
+
+.nav-option {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    background: #007BFF; /* 纯蓝色背景 */
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    color: white; /* 白色文字 */
+    font-family: 'SimHei', sans-serif; /* 黑体 */
+    transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
+    cursor: pointer;
+}
+
+.nav-option:hover,
+.nav-link:hover .nav-option,
+.navigation li.active .nav-option {
+    background-color: #0056b3; /* 更深的蓝色背景 */
+    transform: scale(1.1); /* 鼠标悬停时放大效果 */
+}
+
+</style>

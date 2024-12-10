@@ -9,7 +9,7 @@
                         <p>加载中...</p>
                     </div>
                     <div v-else-if="answers.length > 0" class="answers-container">
-                        <h2>{{ practiceName }} 练习答案</h2>
+                        <h2>{{ assignmentName }} 作业答案</h2>
                         <p class="score-text"><strong>客观题得分: {{ score }}</strong></p>
                         <div v-for="(answer, index) in answers" :key="index" :id="'question-' + answer.sequence" class="answer">
                             <p v-if="answer.showQuestionContent" class="question-body">
@@ -69,7 +69,7 @@ export default {
         Sidebar,
     },
     props: {
-        practiceId: {
+        assignmentId: {
             type: Number,
             required: true
         }
@@ -79,7 +79,7 @@ export default {
             answers: [],
             isLoading: true,
             score: null,
-            practiceName: '',
+            assignmentName: '',
             displayedQuestions: new Set() // 用于存储已经显示过的题目编号
         };
     },
@@ -91,9 +91,9 @@ export default {
         }
     },
     created() {
-        if (!this.practiceId) {
-            console.error('practiceId 未定义');
-            this.$message.error('练习ID未定义，请重试。');
+        if (!this.assignmentId) {
+            console.error('assignmentId 未定义');
+            this.$message.error('作业ID未定义，请重试。');
             this.isLoading = false;
             return;
         }
@@ -107,27 +107,27 @@ export default {
             return;
         }
 
-        console.log('PracticeId:', this.practiceId); // 增加日志以查看 practiceId
+        console.log('AssignmentId:', this.assignmentId); // 增加日志以查看 assignmentId
 
-        // 从路由参数中获取 score 和 practiceName
+        // 从路由参数中获取 score 和 assignmentName
         this.score = this.$route.query.score;
-        this.practiceName = this.$route.query.practiceName || this.practiceName;  // 初始化 practiceName
+        this.assignmentName = this.$route.query.assignmentName || this.assignmentName;  // 初始化 assignmentName
 
         this.fetchAnswers(studentId);
     },
     methods: {
         async fetchAnswers(studentId) {
             try {
-                const response = await axios.get(`/api/student/${studentId}/practice/get-answer`, {
+                const response = await axios.get(`/api/student/${studentId}/homework/get-answer`, {
                     params: {
-                        practiceId: this.practiceId
+                        assignmentId: this.assignmentId
                     }
                 });
 
                 console.log('响应状态码:', response.status); // 增加日志以查看响应状态码
                 console.log('响应数据:', response.data); // 增加日志以查看响应内容
 
-                if (response.status === 200 && response.data.message === '答案获取成功') {
+                if (response.status === 200 && response.data.message === 'success') {
                     this.score = response.data.totalScore;  // 更新为 totalScore
                     this.answers = response.data.data || [];
 
@@ -203,7 +203,7 @@ export default {
             console.log('开始加载题目中的图片');
             for (let i = 0; i < this.answers.length; i++) {
                 const answer = this.answers[i];
-                // 确保 question.questionContent 是一个字符串
+                // 确保 answer.questionContent 是一个字符串
                 if (typeof answer.questionContent !== 'string' || !answer.questionContent) {
                     console.error(`问题 ${answer.practiceQuestionId} 的 questionContent 不是有效的字符串:`, typeof answer.questionContent);
                     continue;
