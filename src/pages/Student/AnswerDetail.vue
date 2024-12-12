@@ -291,11 +291,11 @@ export default {
 </script>
 
 <style scoped>
-/* 使用柔和的色调和优雅的字体 */
+/* 改进页面字体和颜色风格 */
 body {
-    font-family: 'Georgia', serif; /* 优雅的衬线字体 */
-    background-color: #f5f5f5; /* 浅灰色背景 */
-    color: #333; /* 深灰色文字 */
+    font-family: 'Arial', sans-serif; /* 使用统一的无衬线字体，现代简洁 */
+    background-color: #f8f8f8; /* 浅灰色背景 */
+    color: #444; /* 更柔和的灰色文字，避免过于深色 */
     background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0ibm9uZSI+PC9yZWN0PjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSJub25lIiBzdHlsZT0ic3Ryb2tlOiAjZmZmOyBzdHJva2Utd2lkdGg6IDE7IHN0cm9rZS1vcGFjaXR5OiAxLjA7IHN0cm9rZS1kYXNoYXJyYXk6IDEwOyBzdHJva2UtbGluZWNhcDpyb3VuZCI+PC9yZWN0Pjwvc3ZnPg=='); /* 轻微的网格背景 */
     background-size: 20px 20px;
 }
@@ -340,24 +340,25 @@ body {
 }
 
 .sidebar-nav h3 {
-    font-size: 1.5em;
-    margin-bottom: 10px;
-    color: #555; /* 更柔和的文字颜色 */
+    font-size: 1.6em; /* 调整字体大小 */
+    margin-bottom: 15px;
+    color: #333; /* 更柔和的文字颜色 */
+    font-weight: 600; /* 加粗 */
 }
 
 .questions-list {
     display: flex;
     flex-wrap: wrap; /* 自动换行 */
-    gap: 10px; /* 项目之间的间距 */
+    gap: 15px; /* 增加间距 */
 }
 
 .questions-list a {
     text-decoration: none;
-    color: #333;
-    font-size: 1.2em;
+    color: #444;
+    font-size: 1.1em; /* 适中字体大小 */
     transition: all 0.3s ease; /* 平滑过渡效果 */
-    padding: 5px 10px;
-    border: 1px solid #ddd; /* 添加边框 */
+    padding: 8px 15px;
+    border: 1px solid #ddd; /* 边框颜色稍微调整 */
     border-radius: 8px; /* 圆角边框 */
     background: linear-gradient(135deg, #ffffff, #f5f5f5); /* 题号链接的渐变背景 */
 }
@@ -384,25 +385,32 @@ body {
     margin-bottom: 20px;
 }
 
+.question-content, .question-sequence-content {
+    font-size: 1.1em;
+}
+
 h2, h3, h4, .option-label, .option, .highlight, .answer-text, .question-body, .analysis {
-    font-family: 'Georgia', serif; /* 优雅的衬线字体 */
+    font-family: 'Arial', sans-serif; /* 统一字体 */
+    line-height: 1.6; /* 提高可读性 */
 }
 
 h2 {
-    font-size: 2em;
+    font-size: 2.2em; /* 增加主标题字体大小 */
     color: #333;
-    margin-bottom: 10px;
+    margin-bottom: 20px; /* 增加底部间距 */
+    font-weight: 600; /* 加粗 */
 }
 
 h3 {
-    font-size: 1.75em;
-    color: #333;
-    margin-bottom: 10px;
+    font-size: 1.8em;
+    color: #444;
+    margin-bottom: 15px;
+    font-weight: 500;
 }
 
 h4, .question-body, .analysis {
-    font-size: 1.5em;
-    color: #333;
+    font-size: 1.4em;
+    color: #444;
     margin-bottom: 10px;
 }
 
@@ -425,19 +433,19 @@ h4, .question-body, .analysis {
 
 .highlight {
     font-size: 1.4em;
-    color: #555;
+    color: #007bff; /* 使用蓝色高亮 */
 }
 
 .answer-text {
     font-size: 1.4em;
-    color: #555;
+    color: #333; /* 深色文字 */
 }
 
 /* 增加得分文本的字体大小 */
 .score-text {
-    font-size: 1.8em; /* 调整字体大小 */
-    color: #333; /* 保持深灰色文字 */
-    margin-bottom: 10px; /* 增加底部间距 */
+    font-size: 1.6em; /* 调整字体大小 */
+    color: #444; /* 更柔和的灰色 */
+    margin-bottom: 15px; /* 增加底部间距 */
 }
 
 /* 响应式布局 */
@@ -459,4 +467,5 @@ h4, .question-body, .analysis {
         margin-top: 20px;
     }
 }
+
 </style>

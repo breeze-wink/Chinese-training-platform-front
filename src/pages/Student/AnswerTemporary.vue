@@ -24,7 +24,7 @@
                                     <span>{{ option.label }}. {{ option.text }}</span>
                                 </label>
                             </div>
-                            <div v-else-if="question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER'" class="input-field">
+                            <div v-else-if="question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER'" class="quill-editor-container">
                                 <!-- 创建独立的 Quill 编辑器容器 -->
                                 <div
                                     :id="`quill-editor-${question.practiceQuestionId}`"
@@ -33,6 +33,7 @@
                                 ></div>
                             </div>
                         </div>
+
                         <div class="button-group">
                             <button type="submit" class="submit-button">提交答案</button>
                             <button type="button" class="save-button" @click="saveAnswers">暂存答案</button>
@@ -51,6 +52,11 @@
                     </li>
                 </ul>
             </div>
+        </div>
+
+        <!-- 加载提示框 -->
+        <div v-if="loading" class="loading-overlay">
+            <div class="loading-spinner"></div>
         </div>
     </div>
 </template>
@@ -82,12 +88,18 @@ export default {
             mode: this.mode,
             practiceName: this.practiceName
         });
+
+        // 输出问题类型数据，确保问题数据格式正确
+        this.parsedQuestions.forEach((question) => {
+            console.log(`Question ID: ${question.practiceQuestionId}, Type: ${question.type}`);
+        });
+
         this.logQuestionsInfo();
     },
     mounted() {
         this.setupIntersectionObserver();
-        this.initQuillEditors();
         this.loadImagesInContent(); // 确保DOM更新完成后再加载图片
+        this.initQuillEditors();
     },
     updated() {
         this.setupIntersectionObserver();
@@ -95,6 +107,19 @@ export default {
     beforeDestroy() {
         if (this.observer) this.observer.disconnect();
         Object.values(this.quillEditors).forEach((editor) => editor.destroy());
+    },
+    watch: {
+        parsedQuestions: {
+            handler(newVal) {
+                if (newVal.length > 0) {
+                    this.$nextTick(() => {  // 确保DOM已更新后再初始化
+                        this.initQuillEditors();
+                    });
+                }
+            },
+            immediate: true,
+            deep: true
+        }
     },
     methods: {
         loadImagesInContent() {
@@ -211,6 +236,8 @@ export default {
             this.localMode = this.$route.query.mode || 'unknown';
         },
         async submitAnswers() {
+            this.toggleLoading(true);
+
             console.log('开始提交答案');
 
             if (!this.practiceId) {
@@ -236,6 +263,11 @@ export default {
                     }
                 }
             });
+
+            setTimeout(() => {
+                this.toggleLoading(false); // 提交后隐藏加载提示框
+                alert('答案已提交！');
+            }, 2000);
 
             console.log('即将发送的答案数据:', answers);
 
@@ -272,6 +304,7 @@ export default {
             }
         },
         async saveAnswers() {
+            this.toggleLoading(true);
             console.log('开始保存答案');
             const answers = this.parsedQuestions.map((question) => ({
                 practiceQuestionId: question.practiceQuestionId,
@@ -291,6 +324,11 @@ export default {
                 }
             });
 
+            setTimeout(() => {
+                this.toggleLoading(false); // 保存后隐藏加载提示框
+                alert('答案已暂存！');
+            }, 2000);
+
             console.log('即将发送的答案数据:', answers);
 
             try {
@@ -307,6 +345,16 @@ export default {
             } catch (error) {
                 console.error('暂存答案失败', error.response ? error.response.data : error.message);
                 this.$message.error('暂存答案失败');
+            }
+        },
+        toggleLoading(state) {
+            this.loading = state;
+            if (state) {
+                // 禁用页面滑动
+                document.body.style.overflow = 'hidden';
+            } else {
+                // 允许页面滑动
+                document.body.style.overflow = 'auto';
             }
         },
         setupIntersectionObserver() {
@@ -375,46 +423,38 @@ export default {
             return parts[0];
         },
         initQuillEditors() {
-            nextTick(() => {
-                this.parsedQuestions.forEach((question) => {
-                    if (question.type === 'FILL_IN_BLANK' || question.type === 'SHORT_ANSWER') {
-                        const editorId = `quill-editor-${question.practiceQuestionId}`;
-                        const editorContainer = document.getElementById(editorId);
+            this.parsedQuestions.forEach((question) => {
+                if (question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER') {
+                    const editorId = `quill-editor-${question.practiceQuestionId}`;
+                    const editorContainer = document.getElementById(editorId);
 
-                        if (!editorContainer) {
-                            console.error(`未找到 Quill 容器: ${editorId}`);
-                            return;
-                        }
+                    if (!editorContainer) {
+                        console.error(`未找到 Quill 容器: ${editorId}`);
+                        return;
+                    }
 
+                    if (!this.quillEditors[question.practiceQuestionId]) {  // 只有当编辑器尚未初始化时才初始化它
                         const quill = new Quill(editorContainer, {
                             theme: 'snow',
                             modules: {
-                                // toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['link', 'image']],
-                                toolbar: [['bold', 'italic', 'underline'], [{list: 'ordered'}, {list: 'bullet'}]],
+                                toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }]],
                             },
-                        });
-
-                        // 同步答案数据，直接更新 studentAnswers
-                        quill.on('text-change', () => {
-                            const richText = quill.root.innerHTML;
-                            // 移除了上传图片的处理
-                            // uploadAndReplaceImagesInContent(richText, question.practiceQuestionId).then(updatedContent => {
-                            //     quill.root.innerHTML = updatedContent; // 更新Quill编辑器的内容
                         });
 
                         // 恢复已保存的答案
                         if (this.studentAnswers[question.practiceQuestionId]) {
-                            let content = this.studentAnswers[question.practiceQuestionId];
-                            // 移除了上传图片的处理
-                            // uploadAndReplaceImagesInContent(content, question.practiceQuestionId).then(updatedContent => {
-                            //     quill.root.innerHTML = updatedContent; // 更新Quill编辑器的内容
-                            quill.root.innerHTML = content; // 直接设置内容
+                            quill.root.innerHTML = this.studentAnswers[question.practiceQuestionId];
                         }
 
                         // 存储 Quill 实例
                         this.quillEditors[question.practiceQuestionId] = quill;
+
+                        // 同步答案数据
+                        quill.on('text-change', () => {
+                            this.studentAnswers[question.practiceQuestionId] = quill.root.innerHTML;
+                        });
                     }
-                });
+                }
             });
         },
         getSimpleText(html) {
@@ -433,6 +473,7 @@ export default {
     }
 };
 </script>
+
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
@@ -468,6 +509,23 @@ export default {
     font-size: 28px;
     margin-bottom: 20px;
     font-family: 'SimHei', sans-serif; /* 黑体 */
+}
+
+.quill-editor-container {
+    min-height: 150px; /* 确保编辑框有高度 */
+    border: none;
+    padding: 16px; /* 增加内边距，让内容不紧贴边缘 */
+    margin: 24px 0; /* 增加上下间距，确保与前后题目有足够间隔 */
+    border-radius: 8px; /* 较大的圆角，使外观更圆润 */
+    background-color: #f9f9f9; /* 柔和的背景颜色 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); /* 添加轻微阴影 */
+    transition: box-shadow 0.3s ease, background-color 0.3s ease; /* 平滑过渡效果 */
+}
+
+/* 当用户点击编辑器时，应用激活状态样式 */
+.quill-editor-container:focus-within {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 更明显的阴影 */
+    background-color: #ffffff; /* 改变背景颜色，表示当前处于编辑状态 */
 }
 
 .question-group {
@@ -634,5 +692,30 @@ input[type="text"]:focus, textarea:focus {
     background-color: #0056b3; /* 更深的蓝色背景 */
     transform: scale(1.1); /* 鼠标悬停时放大效果 */
 }
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
 
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007BFF;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 </style>

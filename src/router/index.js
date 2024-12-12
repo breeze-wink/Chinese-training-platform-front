@@ -178,7 +178,7 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
-        path: '/student/homework-detail',
+        path: '/student/homework-detail/:assignmentId',
         name: 'HomeworkDetail',
         component: HomeworkDetail,
         props: true,

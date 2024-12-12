@@ -10,11 +10,11 @@
                     </div>
                     <div v-else-if="answers.length > 0" class="answers-container">
                         <h2>{{ assignmentName }} 作业答案</h2>
-                        <p class="score-text"><strong>客观题得分: {{ score }}</strong></p>
+                        <p class="score-text"><strong>分数: {{ score }}</strong></p>
                         <div v-for="(answer, index) in answers" :key="index" :id="'question-' + answer.sequence" class="answer">
                             <p v-if="answer.showQuestionContent" class="question-body">
                                 <span class="question-prefix">{{ getMainQuestionNumber(answer.sequence) }}</span>
-                                {{ answer.questionBody }}
+                                {{ answer.body }}
                             </p>
                             <div class="question-sequence-content">
                                 <span class="sequence">{{ answer.sequence }}. </span>
@@ -68,17 +68,12 @@ export default {
         Header,
         Sidebar,
     },
-    props: {
-        assignmentId: {
-            type: Number,
-            required: true
-        }
-    },
     data() {
         return {
             answers: [],
             isLoading: true,
             score: null,
+            assignmentId: null,
             assignmentName: '',
             displayedQuestions: new Set() // 用于存储已经显示过的题目编号
         };
@@ -91,6 +86,9 @@ export default {
         }
     },
     created() {
+        this.assignmentId = this.$route.params.assignmentId;
+        console.log('从路由中获取的 assignmentId:', this.assignmentId); // 增加调试日志
+
         if (!this.assignmentId) {
             console.error('assignmentId 未定义');
             this.$message.error('作业ID未定义，请重试。');
@@ -110,8 +108,8 @@ export default {
         console.log('AssignmentId:', this.assignmentId); // 增加日志以查看 assignmentId
 
         // 从路由参数中获取 score 和 assignmentName
-        this.score = this.$route.query.score;
-        this.assignmentName = this.$route.query.assignmentName || this.assignmentName;  // 初始化 assignmentName
+        this.score = this.$route.query.score || null;
+        this.assignmentName = this.$route.query.assignmentName || '';  // 初始化 assignmentName
 
         this.fetchAnswers(studentId);
     },
