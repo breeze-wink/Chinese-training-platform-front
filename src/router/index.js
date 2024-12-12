@@ -35,6 +35,7 @@ import PersonalProfiling from "@/pages/Student/PersonalProfiling.vue";
 import store from '@/store/user';
 import TestGenerationStrategy from "@/pages/Teacher/TestGenerationStrategy.vue";
 import ManualPaperCreation from "@/pages/Teacher/ManualPaperCreation.vue";
+import PreviewPaper from "@/pages/Teacher/PreviewPaper.vue";
 
 
 const routes = [
@@ -104,6 +105,13 @@ const routes = [
         path: '/teacher/paper-creation/manual',
         name: 'ManualPaperCreation',
         component: ManualPaperCreation,
+        meta: { requiresAuth: true }
+    },
+    //预览试卷
+    {
+        path: '/teacher/paper-preview',
+        name: 'PreviewPaper',
+        component:PreviewPaper,
         meta: { requiresAuth: true }
     },
 

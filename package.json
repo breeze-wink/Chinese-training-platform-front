@@ -15,6 +15,7 @@
     "@vueup/vue-quill": "^1.2.0",
     "axios": "^1.7.7",
     "chart.js": "^4.4.7",
+    "cloc": "^2.2.0-cloc",
     "element-plus": "^2.8.8",
     "nanoid": "^5.0.8",
     "parchment": "^2.0.1",
