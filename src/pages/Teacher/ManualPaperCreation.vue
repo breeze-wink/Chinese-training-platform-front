@@ -430,7 +430,7 @@ const addToBasket = (question, isBigQuestion = false, parentId = null) => {
         type: 'big',
         body: question.body,
         subQuestions: question.subQuestion.map(sub => ({
-            id: `${questionId}-sub-${sub.questionId || Math.random()}`, // 确保唯一
+            id: sub.questionId, // 确保唯一
             question: sub.question,
             type: sub.type,
             answer: sub.answer,             // 添加答案
@@ -446,7 +446,7 @@ const addToBasket = (question, isBigQuestion = false, parentId = null) => {
         question: question.question,
         answer: question.answer,           // 添加答案
         explanation: question.explanation, // 添加解析
-        options: sub.options || [],
+        options: question.options || [],
         referencedCount: question.referencedCount,
         difficulty: question.difficulty
     };
@@ -576,6 +576,7 @@ const fetchQuestions = async () => {
         if (response.status === 200) {
             console.log('传回的题目数据');
             const data = response.data;
+
             // 给 bigQuestions 添加 showExplanation 字段
             bigQuestions.value = (data.bigQuestions || []).map(bigQuestion => ({
                 ...bigQuestion,
@@ -590,12 +591,13 @@ const fetchQuestions = async () => {
                 ...question,
                 showExplanation: false // 默认不显示解析
             }));
+            console.log('questions:',questions.value);
 
             currentPage.value = data.currentPage || 1;
             totalPages.value = data.totalPages || 1;
 
             totalCount.value = data.totalCount || 0;
-            console.log(bigQuestions.value);
+
             console.log('totalPages',totalPages.value)
         } else {
             console.error('获取题目失败：', response.data.message);

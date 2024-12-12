@@ -8,11 +8,21 @@
                 <div class="question-list">
                     <div v-for="(question, index) in basket" :key="question.id" class="question-item">
                         <div v-if="question.type === 'big'">
-                            <strong>大题 {{ index + 1 }}: {{ question.body }}</strong>
+                            <strong>题目 {{ index + 1 }}: {{ question.body }}</strong>
                             <div class="sub-questions">
                                 <div v-for="(sub, subIndex) in question.subQuestions" :key="sub.id"
                                      class="sub-question">
                                     <p>{{ subIndex + 1 }}. {{ sub.question }}</p>
+
+                                    <div v-if="sub.options && sub.options.length > 0" class="options">
+                                        <p><strong>选项：</strong></p>
+                                        <ul>
+                                            <li v-for="(option, optionIndex) in sub.options" :key="optionIndex">
+                                                {{ String.fromCharCode(65 + optionIndex) }}. {{ option }}
+                                            </li>
+                                        </ul>
+                                    </div>
+
                                     <div v-if="showExplanations" class="explanation">
                                         <p><strong>答案：</strong>{{ sub.answer }}</p>
                                         <p><strong>解析：</strong>{{ sub.explanation }}</p>
@@ -31,7 +41,27 @@
                             </div>
                         </div>
                         <div v-else>
-                            <p>{{ index + 1 }}. {{ question.question }}</p>
+
+                            <strong>
+                                题目{{ index + 1 }}.
+                                <!-- 如果有题干，紧跟在序号后面显示题干 -->
+                                <span v-if="question.body">{{ question.body }}</span>
+                                <!-- 如果没有题干，紧跟在序号后面显示问题 -->
+                                <span v-if="!question.body">{{ question.question }}</span>
+                            </strong>
+
+                            <!-- 如果有题干，则将 sub.question 换行显示 -->
+                            <p v-if="question.body" style="margin-left: 20px;">{{ question.question }}</p>
+
+                            <div v-if="question.options && question.options.length > 0" class="options">
+                                <p><strong>选项：</strong></p>
+                                <ul>
+                                    <li v-for="(option, optionIndex) in question.options" :key="optionIndex">
+                                        {{ String.fromCharCode(65 + optionIndex) }}. {{ option }}
+                                    </li>
+                                </ul>
+                            </div>
+
                             <div v-if="showExplanations" class="explanation">
                                 <p><strong>答案：</strong>{{ question.answer }}</p>
                                 <p><strong>解析：</strong>{{ question.explanation }}</p>
@@ -238,33 +268,7 @@ const  generatePaper = async () => {
     };
     console.log(paperData);
 
-    // try {
-    //     const response = await axios.post('/api/teacher/generate-paper', paperData);
-    //     if (response.status === 200) {
-    //         ElNotification.success({
-    //             title: '生成成功',
-    //             message: `试卷 "${paperName.value}" 已成功生成！`,
-    //             duration: 2000,
-    //         });
-    //         // 清空试卷篮
-    //         clearBasket();
-    //         // 导航到试卷列表页面（假设路径为 /teacher/paper-list）
-    //         router.push('/teacher/paper-list');
-    //     } else {
-    //         ElNotification.error({
-    //             title: '生成失败',
-    //             message: '试卷生成失败，请重试。',
-    //             duration: 2000,
-    //         });
-    //     }
-    // } catch (error) {
-    //     console.error('生成试卷时出错：', error);
-    //     ElNotification.error({
-    //         title: '生成失败',
-    //         message: '生成试卷时出错，请检查控制台以获取更多信息。',
-    //         duration: 2000,
-    //     });
-    // }
+
 
 
 };
