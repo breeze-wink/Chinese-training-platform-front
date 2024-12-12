@@ -260,8 +260,6 @@
                 </div>
             </el-drawer>
 
-
-
             <!-- 返回顶部按钮 -->
             <el-backtop :right="50" :bottom="80" />
 
@@ -436,7 +434,8 @@ const addToBasket = (question, isBigQuestion = false, parentId = null) => {
             question: sub.question,
             type: sub.type,
             answer: sub.answer,             // 添加答案
-            explanation: sub.explanation    // 添加解析
+            explanation: sub.explanation,   // 添加解析
+            options: sub.options || []      // 确保选项也被保存
         })),
         referencedCount: question.referencedCount,
         difficulty: question.difficulty
@@ -447,6 +446,7 @@ const addToBasket = (question, isBigQuestion = false, parentId = null) => {
         question: question.question,
         answer: question.answer,           // 添加答案
         explanation: question.explanation, // 添加解析
+        options: sub.options || [],
         referencedCount: question.referencedCount,
         difficulty: question.difficulty
     };

@@ -1,7 +1,7 @@
 <template>
     <div class="page-container">
         <!-- 引入头部通用组件 -->
-        <Header />
+        <Header/>
         <div class="main-container">
             <div class="content">
                 <h2>试卷预览</h2>
@@ -10,7 +10,8 @@
                         <div v-if="question.type === 'big'">
                             <strong>大题 {{ index + 1 }}: {{ question.body }}</strong>
                             <div class="sub-questions">
-                                <div v-for="(sub, subIndex) in question.subQuestions" :key="sub.id" class="sub-question">
+                                <div v-for="(sub, subIndex) in question.subQuestions" :key="sub.id"
+                                     class="sub-question">
                                     <p>{{ subIndex + 1 }}. {{ sub.question }}</p>
                                     <div v-if="showExplanations" class="explanation">
                                         <p><strong>答案：</strong>{{ sub.answer }}</p>
@@ -59,7 +60,8 @@
             <div class="right-content bottom">
                 <div class="paper-name">
                     <label for="paperName">试卷命名：</label>
-                    <input type="text" id="paperName" v-model="paperName" placeholder="请输入试卷名称" style="width: 280px"/>
+                    <input type="text" id="paperName" v-model="paperName" placeholder="请输入试卷名称"
+                           style="width: 280px"/>
                 </div>
                 <p>题目数量：{{ questionCount }}</p>
                 <p>试卷总分：{{ totalScore }}</p>
@@ -72,25 +74,26 @@
 </template>
 
 
-
 <script setup>
-    import Header from "@/components/Header.vue";
-    import { computed, ref, watch } from 'vue';
-    import { useStore } from 'vuex';
-    import { useRouter } from 'vue-router';
+import Header from "@/components/Header.vue";
+import {computed, ref, watch} from 'vue';
+import {useStore} from 'vuex';
+import {useRouter} from 'vue-router';
+import {ElNotification} from "element-plus";
+import axios from "axios";
 
-    const store = useStore();
-    const router = useRouter();
+const store = useStore();
+const router = useRouter();
 
-    // 获取试卷篮中的题目
-    const basket = computed(() => store.getters.getBasket);
+// 获取试卷篮中的题目
+const basket = computed(() => store.getters.getBasket);
 
-    // 状态变量
-    const showExplanations = ref(false); // 控制是否显示解析
-    const paperName = ref(''); // 试卷名称
+// 状态变量
+const showExplanations = ref(false); // 控制是否显示解析
+const paperName = ref(''); // 试卷名称
 
-    // 监视试卷篮中的变化，初始化分数
-    const initializeScores = () => {
+// 监视试卷篮中的变化，初始化分数
+const initializeScores = () => {
     basket.value.forEach(question => {
         if (question.type === 'big') {
             question.subQuestions.forEach(sub => {
@@ -101,117 +104,171 @@
         }
     });
 };
-    initializeScores();
+initializeScores();
 
-    // 监视试卷篮变化，重新初始化分数
-    watch(basket, () => {
+// 监视试卷篮变化，重新初始化分数
+watch(basket, () => {
     initializeScores();
 });
 
-    // 计算题目数量（大题算1题）
-    const questionCount = computed(() => {
+// 计算题目数量（大题算1题）
+const questionCount = computed(() => {
     return basket.value.filter(q => q.type === 'big').length + basket.value.filter(q => q.type !== 'big').length;
 });
 
-    // 计算试卷总分
-    const totalScore = computed(() => {
+// 计算试卷总分
+const totalScore = computed(() => {
     let total = 0;
     basket.value.forEach(question => {
-    if (question.type === 'big') {
-    question.subQuestions.forEach(sub => {
-    total += Number(sub.score) || 0;
-});
-} else {
-    total += Number(question.score) || 0;
-}
-});
+        if (question.type === 'big') {
+            question.subQuestions.forEach(sub => {
+                total += Number(sub.score) || 0;
+            });
+        } else {
+            total += Number(question.score) || 0;
+        }
+    });
     return total;
 });
 
-    // 计算难度系数
-    const difficultyCoefficient = computed(() => {
+// 计算难度系数
+const difficultyCoefficient = computed(() => {
     if (totalScore.value === 0) return 0;
     let total = 0;
     basket.value.forEach(question => {
-    if (question.type === 'big') {
-    question.subQuestions.forEach(sub => {
-    total += (Number(sub.score) || 0) * (question.difficulty || 0);
-});
-} else {
-    total += (Number(question.score) || 0) * (question.difficulty || 0);
-}
-});
+        if (question.type === 'big') {
+            question.subQuestions.forEach(sub => {
+                total += (Number(sub.score) || 0) * (question.difficulty || 0);
+            });
+        } else {
+            total += (Number(question.score) || 0) * (question.difficulty || 0);
+        }
+    });
     return (total / totalScore.value).toFixed(2);
 });
 
-    // 删除单题
-    const removeQuestion = (id) => {
+// 删除单题
+const removeQuestion = (id) => {
     store.dispatch('removeQuestionFromBasket', id);
 };
 
-    // 删除小题
-    const removeSubQuestion = (parentId, subId) => {
+// 删除小题
+const removeSubQuestion = (parentId, subId) => {
     const parent = basket.value.find(q => q.id === parentId);
     if (parent) {
-    parent.subQuestions = parent.subQuestions.filter(sub => sub.id !== subId);
-    // 如果所有小题都被删除，移除整个大题
-    if (parent.subQuestions.length === 0) {
-    store.dispatch('removeQuestionFromBasket', parentId);
-}
-}
+        parent.subQuestions = parent.subQuestions.filter(sub => sub.id !== subId);
+        // 如果所有小题都被删除，移除整个大题
+        if (parent.subQuestions.length === 0) {
+            store.dispatch('removeQuestionFromBasket', parentId);
+        }
+    }
 };
 
-    // 清空试卷篮
-    const clearBasket = () => {
+// 清空试卷篮
+const clearBasket = () => {
     store.dispatch('clearBasket');
 };
 
-    // 继续添加，跳转回主页面
-    const continueAdding = () => {
+// 继续添加，跳转回主页面
+const continueAdding = () => {
     router.push('/teacher/paper-creation/manual');
 };
 
-    // 切换显示解析
-    const toggleExplanations = () => {
+// 切换显示解析
+const toggleExplanations = () => {
     showExplanations.value = !showExplanations.value;
 };
 
-    // 生成试卷的逻辑
-    const generatePaper = () => {
+// 生成试卷的逻辑
+const  generatePaper = async () => {
     // 验证试卷名称
     if (!paperName.value.trim()) {
-    alert('请为试卷命名。');
-    return;
-}
+        alert('请为试卷命名。');
+        return;
+    }
 
     // 验证分数是否设置
+
     for (let question of basket.value) {
-    if (question.type === 'big') {
-    for (let sub of question.subQuestions) {
-    if (!sub.score || sub.score <= 0) {
-    alert('请为所有小题设置有效分数。');
-    return;
-}
-}
-} else {
-    if (!question.score || question.score <= 0) {
-    alert('请为所有题目设置有效分数。');
-    return;
-}
-}
-}
+        if (question.type === 'big') {
+            for (let sub of question.subQuestions) {
+                if (!sub.score || sub.score <= 0) {
+                    ElNotification.error({
+                        title: '生成失败',
+                        message: '请为所有小题设置有效分数。',
+                        duration: 2000,
+                    });
+                    return;
+                }
+            }
+        } else {
+            if (!question.score || question.score <= 0) {
+                ElNotification.error({
+                    title: '生成失败',
+                    message: '请为所有题目设置有效分数。',
+                    duration: 2000,
+                });
+                return;
+            }
+        }
+    }
 
-    // 生成试卷的逻辑，例如发送请求到服务器或保存到本地
-    // 这里以简单的 alert 作为示例
-    alert(`试卷 "${paperName.value}" 已生成！`);
+    // 构建试卷数据
+    const paperData = {
+        name: paperName.value,
+        questions: basket.value.map(q => ({
+            id: q.id,
+            type: q.type,
+            body: q.type === 'big' ? q.body : undefined,
+            question: q.type === 'big' ? undefined : q.question,
+            subQuestions: q.type === 'big' ? q.subQuestions.map(sub => ({
+                id: sub.id,
+                question: sub.question,
+                type: sub.type,
+                score: sub.score,
+                answer: sub.answer,
+                explanation: sub.explanation,
+                difficulty: q.difficulty
+            })) : undefined,
+            score: q.type === 'big' ? undefined : q.score,
+            difficulty: q.difficulty,
+            referencedCount: q.referencedCount
+        })),
+        generationTime: new Date().toISOString()
+    };
+    console.log(paperData);
 
-    // 可选：清空试卷篮或导航到其他页面
-    // clearBasket();
-    // router.push('/some-other-page');
+    // try {
+    //     const response = await axios.post('/api/teacher/generate-paper', paperData);
+    //     if (response.status === 200) {
+    //         ElNotification.success({
+    //             title: '生成成功',
+    //             message: `试卷 "${paperName.value}" 已成功生成！`,
+    //             duration: 2000,
+    //         });
+    //         // 清空试卷篮
+    //         clearBasket();
+    //         // 导航到试卷列表页面（假设路径为 /teacher/paper-list）
+    //         router.push('/teacher/paper-list');
+    //     } else {
+    //         ElNotification.error({
+    //             title: '生成失败',
+    //             message: '试卷生成失败，请重试。',
+    //             duration: 2000,
+    //         });
+    //     }
+    // } catch (error) {
+    //     console.error('生成试卷时出错：', error);
+    //     ElNotification.error({
+    //         title: '生成失败',
+    //         message: '生成试卷时出错，请检查控制台以获取更多信息。',
+    //         duration: 2000,
+    //     });
+    // }
+
+
 };
 </script>
-
-
 
 
 <style scoped>
@@ -278,6 +335,7 @@
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+
 .right-content.top button:nth-child(1) {
     background-color: #f56c6c; /* 继续添加按钮的颜色 */
     color: white;
@@ -287,7 +345,6 @@
     background-color: #409EFF; /* 查看解析按钮的颜色 */
     color: white;
 }
-
 
 
 .paper-name {
