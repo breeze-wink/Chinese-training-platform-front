@@ -411,7 +411,7 @@ const toggleExplanation = (question) => {
 // 添加题目到试卷篮的函数
 const addToBasket = (question, isBigQuestion = false, parentId = null) => {
     // 构建一个唯一的 ID，区分大题和单题
-    const questionId = isBigQuestion ? `big-${question.bodyId}` : `single-${question.questionId}`;
+    const questionId = isBigQuestion ? question.bodyId : question.questionId;
 
     // 检查是否已经存在
     const existing = store.state.basket.find(q => q.id === questionId);
@@ -592,6 +592,7 @@ const fetchQuestions = async () => {
                 showExplanation: false // 默认不显示解析
             }));
             console.log('questions:',questions.value);
+            console.log('big:',bigQuestions.value);
 
             currentPage.value = data.currentPage || 1;
             totalPages.value = data.totalPages || 1;

@@ -35,7 +35,6 @@
                                                 min="0"
                                                 placeholder="设置分数"
                                         />
-                                        <button @click="removeSubQuestion(question.id, sub.id)">删除该小题</button>
                                     </div>
                                 </div>
                             </div>
@@ -52,8 +51,9 @@
 
                             <!-- 如果有题干，则将 sub.question 换行显示 -->
                             <p v-if="question.body" style="margin-left: 20px;">{{ question.question }}</p>
+                            <div style="margin-left: 20px;">
 
-                            <div v-if="question.options && question.options.length > 0" class="options">
+                            <div v-if="question.options && question.options.length > 0" style="margin-left: 20px;">
                                 <p><strong>选项：</strong></p>
                                 <ul>
                                     <li v-for="(option, optionIndex) in question.options" :key="optionIndex">
@@ -74,9 +74,14 @@
                                         min="0"
                                         placeholder="设置分数"
                                 />
-                                <button @click="removeQuestion(question.id)">删除该题</button>
+                            </div>
                             </div>
                         </div>
+                        <!-- 删除按钮放在卡片的右下角 -->
+                        <div class="card-actions">
+                            <button @click="removeQuestion(question.id)"  class="delete-button">删除该题</button>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -210,6 +215,8 @@ const toggleExplanations = () => {
 };
 
 // 生成试卷的逻辑
+
+
 const  generatePaper = async () => {
     // 验证试卷名称
     if (!paperName.value.trim()) {
@@ -242,31 +249,63 @@ const  generatePaper = async () => {
             }
         }
     }
-
-    // 构建试卷数据
+    // 构建请求数据
     const paperData = {
         name: paperName.value,
-        questions: basket.value.map(q => ({
-            id: q.id,
-            type: q.type,
-            body: q.type === 'big' ? q.body : undefined,
-            question: q.type === 'big' ? undefined : q.question,
-            subQuestions: q.type === 'big' ? q.subQuestions.map(sub => ({
-                id: sub.id,
-                question: sub.question,
-                type: sub.type,
-                score: sub.score,
-                answer: sub.answer,
-                explanation: sub.explanation,
-                difficulty: q.difficulty
-            })) : undefined,
-            score: q.type === 'big' ? undefined : q.score,
-            difficulty: q.difficulty,
-            referencedCount: q.referencedCount
+        creatorId: store.state.user.id,  // 假设用户ID在 Vuex 中
+        totalScore: totalScore.value,
+        difficulty: difficultyCoefficient.value,
+        questions: basket.value.map((question, index) => ({
+            id: question.type === 'big' ? question.id : question.id, // 根据题目类型判断使用的ID
+            type: question.type === 'big' ? question.type : 'small' ,
+            sequence: index + 1,
+            score: question.type === 'big'
+                    ? question.subQuestions.reduce((sum, sub) => sum + (sub.score || 0), 0)  // 小题的分数加起来作为大题分数
+                    : question.score,
+            // 可以根据需要进一步处理题目信息，例如处理小题等
+            ...(question.type === 'big' && {
+                subScores: question.subQuestions.map(sub => sub.score), // 直接用 sub-score 数组传回
+            }),
         })),
-        generationTime: new Date().toISOString()
     };
+
     console.log(paperData);
+
+    try {
+        // 发送 POST 请求
+        const response = await axios.post('/api/teacher/generate-paper', paperData, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        // 处理响应
+        if (response.status === 200) {
+            ElNotification.success({
+                title: '生成成功',
+                message: '试卷已成功生成。',
+                duration: 2000,
+            });
+            // 跳转或清空试卷篮等操作
+            await store.dispatch('clearBasket');
+            await router.push('/teacher/paper-creation/manual');  // 假设生成试卷后跳转到试卷列表页
+        } else {
+            ElNotification.error({
+                title: '生成失败',
+                message: response.data.message || '未知错误',
+                duration: 2000,
+            });
+        }
+    } catch (error) {
+        ElNotification.error({
+            title: '请求失败',
+            message: '无法连接服务器，请稍后再试。',
+            duration: 2000,
+        });
+        console.error(error);
+    }
+
+
 
 
 
@@ -408,7 +447,7 @@ const  generatePaper = async () => {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: 10px;
+    margin-top: 0;
 }
 
 .action-buttons input[type="number"] {
@@ -418,18 +457,29 @@ const  generatePaper = async () => {
     border-radius: 4px;
 }
 
-.action-buttons button {
-    padding: 5px 10px;
+.card-actions {
+    display: flex;
+    justify-content: flex-end; /* 将内容对齐到右侧 */
+
+}
+
+.delete-button {
     background-color: #f56c6c;
     color: white;
+    padding: 5px 10px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    font-size: 14px;
 }
 
-.action-buttons button:hover {
+.delete-button:hover {
     background-color: #d9363e;
 }
+
+
+
+
 
 /* 固定右上和右下内容部分样式 */
 .right-content.top button,
@@ -441,7 +491,7 @@ const  generatePaper = async () => {
 }
 
 .right-content.top button:first-child {
-    background-color: #f56c6c;
+    background-color: #67c23a;
     color: white;
 }
 
@@ -456,7 +506,7 @@ const  generatePaper = async () => {
 }
 
 .right-content.top button:first-child:hover {
-    background-color: #d9363e;
+    background-color: #85d587;
 }
 
 .right-content.top button:nth-child(2):hover {
@@ -487,4 +537,7 @@ const  generatePaper = async () => {
     border: 1px solid #ccc;
     border-radius: 4px;
 }
+
+
+
 </style>
