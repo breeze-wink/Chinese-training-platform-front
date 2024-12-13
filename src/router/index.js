@@ -9,7 +9,8 @@ import ManageClass from "@/pages/Teacher/ManageClass.vue";
 import UploadQuestion from "@/pages/Teacher/UploadQuestion.vue";
 import UploadSingleQuestion from "@/pages/Teacher/UploadSingleQuestion.vue";
 import UploadCombinedQuestion from "@/pages/Teacher/UploadCombinedQuestion.vue"
-
+import AuditTeacherPersonalInfo from "@/pages/audit-teacher/PersonalInfo.vue"
+import AuditStrategy from "@/pages/audit-teacher/AuditTest.vue"
 //知识点
 import KnowledgePoint from '@/pages/system-admin/KnowledgePoint.vue';
 import CourseStandard from '@/pages/system-admin/CourseStandard.vue';
@@ -117,6 +118,21 @@ const routes = [
         meta: { requiresAuth: true }
     },
 
+    // 审核老师
+    // 个人信息
+    {
+        path: '/audit-teacher/personal-info',
+        name: 'AuditTeacherPersonalInfo',
+        component: AuditTeacherPersonalInfo,
+        meta: { requiresAuth: true }
+    },
+    // 审核习题
+    {
+        path: '/audit-teacher/audit-strategy',
+        name: 'AuditStrategy',
+        component: AuditStrategy,
+        meta: { requiresAuth: true }
+    },
 
 
 

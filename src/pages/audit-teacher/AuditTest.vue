@@ -2,90 +2,13 @@
     <div class="page-container">
         <!-- 引入头部通用组件 -->
         <Header />
-
         <div class="main-container">
             <!-- 引入侧边栏通用组件 -->
             <Sidebar />
-
-
             <!-- 内容区 -->
             <div class="content">
                 <div class="up-content">
-                    <h2>手动组卷</h2>
-                    <div class ="setting-group">
-                        <div class="cascade-group">
-                            <span>知识点:</span>
-                            <el-cascader
-                                    :options="options"
-                                    :props="props1"
-                                    v-model="selectedKnowledge"
-                                    clearable @change="handleChange"
-                                    placeholder="输入知识点"/>
-                        </div>
-                        <div class="difficulty-selection">
-                            <span>正确率：</span>
-                            <button
-                                    class="difficulty-button"
-                                    :class="{ 'is-selected': selectedDifficulty === '' }"
-                                    @click="selectedDifficulty = '';fetchQuestions()">
-                                全部
-                            </button>
-                            <button
-                                    class="difficulty-button"
-                                    :class="{ 'is-selected': selectedDifficulty === '容易' }"
-                                    @click="selectedDifficulty = '容易';fetchQuestions()">
-                                容易
-                            </button>
-                            <button
-                                    class="difficulty-button"
-                                    :class="{ 'is-selected': selectedDifficulty === '普通' }"
-                                    @click="selectedDifficulty = '普通';fetchQuestions()">
-                                普通
-                            </button>
-                            <button
-                                    class="difficulty-button"
-                                    :class="{ 'is-selected': selectedDifficulty === '困难' }"
-                                    @click="selectedDifficulty = '困难';fetchQuestions()">
-                                困难
-                            </button>
-                        </div>
-
-                        <!--类型选择-->
-                        <div class="type-selection">
-                            <span>题型：</span>
-                            <button
-                                    class="type-button"
-                                    :class="{ 'is-selected': selectedType === '' }"
-                                    @click="selectedType = '';fetchQuestions()">
-                                全部
-                            </button>
-                            <button
-                                    class="type-button"
-                                    :class="{ 'is-selected': selectedType === '选择' }"
-                                    @click="selectedType = '选择';fetchQuestions()">
-                                选择
-                            </button>
-                            <button
-                                    class="type-button"
-                                    :class="{ 'is-selected': selectedType === '填空' }"
-                                    @click="selectedType = '填空';fetchQuestions()">
-                                填空
-                            </button>
-                            <button
-                                    class="type-button"
-                                    :class="{ 'is-selected': selectedType === '问答' }"
-                                    @click="selectedType = '问答';fetchQuestions()">
-                                问答
-                            </button>
-                            <button
-                                    class="type-button"
-                                    :class="{ 'is-selected': selectedType === '作文' }"
-                                    @click="selectedType = '作文';fetchQuestions()">
-                                作文
-                            </button>
-                        </div>
-                    </div>
-
+                    <h2>题目审核</h2>
                 </div>
                 <!-- 中间栏目 -->
                 <div class="footer-controls">
@@ -151,8 +74,6 @@
 
                                     </div>
 
-
-
                                 </div>
                             </div>
                             <div class="card-buttons">
@@ -201,19 +122,6 @@
                     </div>
                 </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
                 <!-- 分页控件 -->
                 <div v-if="totalPages > 1" class="pagination">
                     <el-pagination
@@ -243,32 +151,27 @@
                 <div class="drawer-content">
                     <p>试题总量：{{ store.getters.getBasketCount }}</p>
                     <div class="button-container">
-                    <button
-                            class="clear-button"
-                            @mouseover="hoverClearButton = true"
-                            @mouseleave="hoverClearButton = false"
-                            @click="clearQuestions"
-                            :style="{ backgroundColor: hoverClearButton ? '#409EFF' : '' }"
-                    >
-                        清空试题
-                    </button>
-                    <button class="preview-button" @click="previewFullPaper">
-                        预览全卷
-                    </button>
+                        <button
+                                class="clear-button"
+                                @mouseover="hoverClearButton = true"
+                                @mouseleave="hoverClearButton = false"
+                                @click="clearQuestions"
+                                :style="{ backgroundColor: hoverClearButton ? '#409EFF' : '' }"
+                        >
+                            清空试题
+                        </button>
+                        <button class="preview-button" @click="previewFullPaper">
+                            预览全卷
+                        </button>
                     </div>
                 </div>
             </el-drawer>
 
             <!-- 返回顶部按钮 -->
             <el-backtop :right="50" :bottom="80" />
-
-
         </div>
     </div>
-
 </template>
-
-
 
 <script setup>
 
@@ -395,7 +298,7 @@ const questions = ref([]);   // 用于存储单题（questions）数据
 
 // 切换解析显示
 const toggleExplanation = (question) => {
-        question.showExplanation = !question.showExplanation;
+    question.showExplanation = !question.showExplanation;
 
 };
 // 卡片：从此结束

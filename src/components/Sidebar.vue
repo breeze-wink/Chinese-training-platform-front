@@ -96,6 +96,12 @@ const menuItems = computed(() => {
                 { index: '/teacher/test-generation-strategy', label: '生成试卷', icon: Edit, path: '/teacher/test-generation-strategy' },
                 { index: '/teacher/settings', label: '设置', icon: Setting, path: '/teacher/settings' },
             ];
+        case 'audit-teacher':
+            return [
+                { index: '/audit-teacher/personal-info', label: '个人信息', icon: User, path: '/audit-teacher/personal-info' },
+                { index: '/audit-teacher/audit-strategy', label: '生成试卷', icon: Edit, path: '/audit-teacher/audit-strategy' },
+                { index: '/audit-teacher/settings', label: '设置', icon: Setting, path: '/audit-teacher/teacher/settings' },
+            ];
         case 'student':
             return [
                 { index: '/student/personal-info', label: '个人信息', icon: User, path: '/student/personal-info' },
