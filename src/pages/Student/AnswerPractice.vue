@@ -9,7 +9,8 @@
                         <template v-for="question in displayedQuestions" :key="question.practiceQuestionId">
                             <div :id="'question-' + question.practiceQuestionId" ref="questionElements" class="question">
                                 <div v-if="question.showBody" class="question-body">
-                                    <strong>{{ question.number }}. {{ question.questionBody }}</strong>
+                                    <strong>{{ question.number }}. </strong>
+                                      <span v-html="question.questionBody"></span>
                                 </div>
                                 <div class="question-sequence-content">
                                     <span class="sequence">{{ question.sequence }}. </span>

@@ -73,10 +73,9 @@
                             <td>{{ item.endTime || item.practiceTime }}</td>
                             <td>{{ item.totalScore }}</td>
                             <td>
-                                <button @click="selectedCompletedStatus === '作业' ? viewHomeworkAnswers(item) : showSystemConfirmViewAnswers(item)" :disabled="isProcessing">
+                                <button @click="selectedCompletedStatus === '作业' ? showSystemConfirmViewHomeworkAnswers(item) : showSystemConfirmViewAnswers(item)" :disabled="isProcessing">
                                     {{ selectedCompletedStatus === '作业' ? '答案查询' : '答案查询' }}
                                 </button>
-                                <button v-if="selectedCompletedStatus === '作业'" :disabled="isProcessing" @click="showTeacherComments(item)">老师评语</button>
                             </td>
                         </tr>
                         </tbody>
@@ -306,6 +305,17 @@ export default {
                 this.isProcessing = false; // 结束处理状态
             }
         },
+        showSystemConfirmViewHomeworkAnswers(item) {
+            if (window.confirm(`确定要查看 "${item.assignmentName || item.title}" 的答案吗？`)) {
+                this.answersToView = item;
+                this.isViewingAnswers = true; // 显示加载提示
+                this.isProcessing = true; // 设置为正在处理
+                this.performViewHomeworkAnswers();
+            }
+        },
+        performViewHomeworkAnswers() {
+            this.viewHomeworkAnswers(this.answersToView);
+        },
         async viewHomeworkAnswers(item) {
             console.log('Item passed to viewAnswers:', item);
 
@@ -440,6 +450,7 @@ export default {
 .main-container {
     display: flex;
     flex: 1;
+    overflow-y: auto;
 }
 
 .content {
