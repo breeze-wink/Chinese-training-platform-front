@@ -35,7 +35,7 @@
                             </p>
                             <p><strong class="highlight">正确答案:</strong> <span class="answer-text">{{ answer.answer }}</span></p>
                             <p v-if="answer.analysis" class="analysis">
-                                <strong class="highlight">解析:</strong> {{ answer.analysis }}
+                                <strong class="highlight">解析:</strong> <span class="answer-text"> {{ answer.analysis }}</span>
                             </p>
                         </div>
                     </div>

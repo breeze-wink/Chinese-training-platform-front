@@ -379,6 +379,7 @@ export default {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    overflow: hidden;
 }
 
 .main-container {
@@ -391,6 +392,7 @@ export default {
     padding: 20px; /* 为题目区域添加内边距 */
     padding-left: 200px; /* 与最左方空出一些距离 */
     height: calc(100vh - 80px); /* 调整高度以适应视口 */
+    overflow-y: auto; /* 保持内容区可滚动 */
 }
 
 .generated-questions {
