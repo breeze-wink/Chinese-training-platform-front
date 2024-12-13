@@ -1,17 +1,28 @@
 <template>
     <div class="page-container">
         <!-- 引入头部通用组件 -->
-        <Header />
+        <Header/>
         <div class="main-container">
             <div class="content">
                 <h2>试卷预览</h2>
                 <div class="question-list">
                     <div v-for="(question, index) in basket" :key="question.id" class="question-item">
                         <div v-if="question.type === 'big'">
-                            <strong>大题 {{ index + 1 }}: {{ question.body }}</strong>
+                            <strong>题目 {{ index + 1 }}: {{ question.body }}</strong>
                             <div class="sub-questions">
-                                <div v-for="(sub, subIndex) in question.subQuestions" :key="sub.id" class="sub-question">
+                                <div v-for="(sub, subIndex) in question.subQuestions" :key="sub.id"
+                                     class="sub-question">
                                     <p>{{ subIndex + 1 }}. {{ sub.question }}</p>
+
+                                    <div v-if="sub.options && sub.options.length > 0" class="options">
+                                        <p><strong>选项：</strong></p>
+                                        <ul>
+                                            <li v-for="(option, optionIndex) in sub.options" :key="optionIndex">
+                                                {{ String.fromCharCode(65 + optionIndex) }}. {{ option }}
+                                            </li>
+                                        </ul>
+                                    </div>
+
                                     <div v-if="showExplanations" class="explanation">
                                         <p><strong>答案：</strong>{{ sub.answer }}</p>
                                         <p><strong>解析：</strong>{{ sub.explanation }}</p>
@@ -24,13 +35,33 @@
                                                 min="0"
                                                 placeholder="设置分数"
                                         />
-                                        <button @click="removeSubQuestion(question.id, sub.id)">删除该小题</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div v-else>
-                            <p>{{ index + 1 }}. {{ question.question }}</p>
+
+                            <strong>
+                                题目{{ index + 1 }}.
+                                <!-- 如果有题干，紧跟在序号后面显示题干 -->
+                                <span v-if="question.body">{{ question.body }}</span>
+                                <!-- 如果没有题干，紧跟在序号后面显示问题 -->
+                                <span v-if="!question.body">{{ question.question }}</span>
+                            </strong>
+
+                            <!-- 如果有题干，则将 sub.question 换行显示 -->
+                            <p v-if="question.body" style="margin-left: 20px;">{{ question.question }}</p>
+                            <div style="margin-left: 20px;">
+
+                            <div v-if="question.options && question.options.length > 0" style="margin-left: 20px;">
+                                <p><strong>选项：</strong></p>
+                                <ul>
+                                    <li v-for="(option, optionIndex) in question.options" :key="optionIndex">
+                                        {{ String.fromCharCode(65 + optionIndex) }}. {{ option }}
+                                    </li>
+                                </ul>
+                            </div>
+
                             <div v-if="showExplanations" class="explanation">
                                 <p><strong>答案：</strong>{{ question.answer }}</p>
                                 <p><strong>解析：</strong>{{ question.explanation }}</p>
@@ -43,9 +74,14 @@
                                         min="0"
                                         placeholder="设置分数"
                                 />
-                                <button @click="removeQuestion(question.id)">删除该题</button>
+                            </div>
                             </div>
                         </div>
+                        <!-- 删除按钮放在卡片的右下角 -->
+                        <div class="card-actions">
+                            <button @click="removeQuestion(question.id)"  class="delete-button">删除该题</button>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -59,7 +95,8 @@
             <div class="right-content bottom">
                 <div class="paper-name">
                     <label for="paperName">试卷命名：</label>
-                    <input type="text" id="paperName" v-model="paperName" placeholder="请输入试卷名称" style="width: 280px"/>
+                    <input type="text" id="paperName" v-model="paperName" placeholder="请输入试卷名称"
+                           style="width: 280px"/>
                 </div>
                 <p>题目数量：{{ questionCount }}</p>
                 <p>试卷总分：{{ totalScore }}</p>
@@ -72,25 +109,26 @@
 </template>
 
 
-
 <script setup>
-    import Header from "@/components/Header.vue";
-    import { computed, ref, watch } from 'vue';
-    import { useStore } from 'vuex';
-    import { useRouter } from 'vue-router';
+import Header from "@/components/Header.vue";
+import {computed, ref, watch} from 'vue';
+import {useStore} from 'vuex';
+import {useRouter} from 'vue-router';
+import {ElNotification} from "element-plus";
+import axios from "axios";
 
-    const store = useStore();
-    const router = useRouter();
+const store = useStore();
+const router = useRouter();
 
-    // 获取试卷篮中的题目
-    const basket = computed(() => store.getters.getBasket);
+// 获取试卷篮中的题目
+const basket = computed(() => store.getters.getBasket);
 
-    // 状态变量
-    const showExplanations = ref(false); // 控制是否显示解析
-    const paperName = ref(''); // 试卷名称
+// 状态变量
+const showExplanations = ref(false); // 控制是否显示解析
+const paperName = ref(''); // 试卷名称
 
-    // 监视试卷篮中的变化，初始化分数
-    const initializeScores = () => {
+// 监视试卷篮中的变化，初始化分数
+const initializeScores = () => {
     basket.value.forEach(question => {
         if (question.type === 'big') {
             question.subQuestions.forEach(sub => {
@@ -101,117 +139,179 @@
         }
     });
 };
-    initializeScores();
+initializeScores();
 
-    // 监视试卷篮变化，重新初始化分数
-    watch(basket, () => {
+// 监视试卷篮变化，重新初始化分数
+watch(basket, () => {
     initializeScores();
 });
 
-    // 计算题目数量（大题算1题）
-    const questionCount = computed(() => {
+// 计算题目数量（大题算1题）
+const questionCount = computed(() => {
     return basket.value.filter(q => q.type === 'big').length + basket.value.filter(q => q.type !== 'big').length;
 });
 
-    // 计算试卷总分
-    const totalScore = computed(() => {
+// 计算试卷总分
+const totalScore = computed(() => {
     let total = 0;
     basket.value.forEach(question => {
-    if (question.type === 'big') {
-    question.subQuestions.forEach(sub => {
-    total += Number(sub.score) || 0;
-});
-} else {
-    total += Number(question.score) || 0;
-}
-});
+        if (question.type === 'big') {
+            question.subQuestions.forEach(sub => {
+                total += Number(sub.score) || 0;
+            });
+        } else {
+            total += Number(question.score) || 0;
+        }
+    });
     return total;
 });
 
-    // 计算难度系数
-    const difficultyCoefficient = computed(() => {
+// 计算难度系数
+const difficultyCoefficient = computed(() => {
     if (totalScore.value === 0) return 0;
     let total = 0;
     basket.value.forEach(question => {
-    if (question.type === 'big') {
-    question.subQuestions.forEach(sub => {
-    total += (Number(sub.score) || 0) * (question.difficulty || 0);
-});
-} else {
-    total += (Number(question.score) || 0) * (question.difficulty || 0);
-}
-});
+        if (question.type === 'big') {
+            question.subQuestions.forEach(sub => {
+                total += (Number(sub.score) || 0) * (question.difficulty || 0);
+            });
+        } else {
+            total += (Number(question.score) || 0) * (question.difficulty || 0);
+        }
+    });
     return (total / totalScore.value).toFixed(2);
 });
 
-    // 删除单题
-    const removeQuestion = (id) => {
+// 删除单题
+const removeQuestion = (id) => {
     store.dispatch('removeQuestionFromBasket', id);
 };
 
-    // 删除小题
-    const removeSubQuestion = (parentId, subId) => {
+// 删除小题
+const removeSubQuestion = (parentId, subId) => {
     const parent = basket.value.find(q => q.id === parentId);
     if (parent) {
-    parent.subQuestions = parent.subQuestions.filter(sub => sub.id !== subId);
-    // 如果所有小题都被删除，移除整个大题
-    if (parent.subQuestions.length === 0) {
-    store.dispatch('removeQuestionFromBasket', parentId);
-}
-}
+        parent.subQuestions = parent.subQuestions.filter(sub => sub.id !== subId);
+        // 如果所有小题都被删除，移除整个大题
+        if (parent.subQuestions.length === 0) {
+            store.dispatch('removeQuestionFromBasket', parentId);
+        }
+    }
 };
 
-    // 清空试卷篮
-    const clearBasket = () => {
+// 清空试卷篮
+const clearBasket = () => {
     store.dispatch('clearBasket');
 };
 
-    // 继续添加，跳转回主页面
-    const continueAdding = () => {
+// 继续添加，跳转回主页面
+const continueAdding = () => {
     router.push('/teacher/paper-creation/manual');
 };
 
-    // 切换显示解析
-    const toggleExplanations = () => {
+// 切换显示解析
+const toggleExplanations = () => {
     showExplanations.value = !showExplanations.value;
 };
 
-    // 生成试卷的逻辑
-    const generatePaper = () => {
+// 生成试卷的逻辑
+
+
+const  generatePaper = async () => {
     // 验证试卷名称
     if (!paperName.value.trim()) {
-    alert('请为试卷命名。');
-    return;
-}
+        alert('请为试卷命名。');
+        return;
+    }
 
     // 验证分数是否设置
+
     for (let question of basket.value) {
-    if (question.type === 'big') {
-    for (let sub of question.subQuestions) {
-    if (!sub.score || sub.score <= 0) {
-    alert('请为所有小题设置有效分数。');
-    return;
-}
-}
-} else {
-    if (!question.score || question.score <= 0) {
-    alert('请为所有题目设置有效分数。');
-    return;
-}
-}
-}
+        if (question.type === 'big') {
+            for (let sub of question.subQuestions) {
+                if (!sub.score || sub.score <= 0) {
+                    ElNotification.error({
+                        title: '生成失败',
+                        message: '请为所有小题设置有效分数。',
+                        duration: 2000,
+                    });
+                    return;
+                }
+            }
+        } else {
+            if (!question.score || question.score <= 0) {
+                ElNotification.error({
+                    title: '生成失败',
+                    message: '请为所有题目设置有效分数。',
+                    duration: 2000,
+                });
+                return;
+            }
+        }
+    }
+    // 构建请求数据
+    const paperData = {
+        name: paperName.value,
+        creatorId: store.state.user.id,  // 假设用户ID在 Vuex 中
+        totalScore: totalScore.value,
+        difficulty: difficultyCoefficient.value,
+        questions: basket.value.map((question, index) => ({
+            id: question.type === 'big' ? question.id : question.id, // 根据题目类型判断使用的ID
+            type: question.type === 'big' ? question.type : 'small' ,
+            sequence: index + 1,
+            score: question.type === 'big'
+                    ? question.subQuestions.reduce((sum, sub) => sum + (sub.score || 0), 0)  // 小题的分数加起来作为大题分数
+                    : question.score,
+            // 可以根据需要进一步处理题目信息，例如处理小题等
+            ...(question.type === 'big' && {
+                subScores: question.subQuestions.map(sub => sub.score), // 直接用 sub-score 数组传回
+            }),
+        })),
+    };
 
-    // 生成试卷的逻辑，例如发送请求到服务器或保存到本地
-    // 这里以简单的 alert 作为示例
-    alert(`试卷 "${paperName.value}" 已生成！`);
+    console.log(paperData);
 
-    // 可选：清空试卷篮或导航到其他页面
-    // clearBasket();
-    // router.push('/some-other-page');
+    try {
+        // 发送 POST 请求
+        const response = await axios.post('/api/teacher/generate-paper', paperData, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        // 处理响应
+        if (response.status === 200) {
+            ElNotification.success({
+                title: '生成成功',
+                message: '试卷已成功生成。',
+                duration: 2000,
+            });
+            // 跳转或清空试卷篮等操作
+            await store.dispatch('clearBasket');
+            await router.push('/teacher/paper-creation/manual');  // 假设生成试卷后跳转到试卷列表页
+        } else {
+            ElNotification.error({
+                title: '生成失败',
+                message: response.data.message || '未知错误',
+                duration: 2000,
+            });
+        }
+    } catch (error) {
+        ElNotification.error({
+            title: '请求失败',
+            message: '无法连接服务器，请稍后再试。',
+            duration: 2000,
+        });
+        console.error(error);
+    }
+
+
+
+
+
+
 };
 </script>
-
-
 
 
 <style scoped>
@@ -278,6 +378,7 @@
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+
 .right-content.top button:nth-child(1) {
     background-color: #f56c6c; /* 继续添加按钮的颜色 */
     color: white;
@@ -287,7 +388,6 @@
     background-color: #409EFF; /* 查看解析按钮的颜色 */
     color: white;
 }
-
 
 
 .paper-name {
@@ -347,7 +447,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: 10px;
+    margin-top: 0;
 }
 
 .action-buttons input[type="number"] {
@@ -357,18 +457,29 @@
     border-radius: 4px;
 }
 
-.action-buttons button {
-    padding: 5px 10px;
+.card-actions {
+    display: flex;
+    justify-content: flex-end; /* 将内容对齐到右侧 */
+
+}
+
+.delete-button {
     background-color: #f56c6c;
     color: white;
+    padding: 5px 10px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    font-size: 14px;
 }
 
-.action-buttons button:hover {
+.delete-button:hover {
     background-color: #d9363e;
 }
+
+
+
+
 
 /* 固定右上和右下内容部分样式 */
 .right-content.top button,
@@ -380,7 +491,7 @@
 }
 
 .right-content.top button:first-child {
-    background-color: #f56c6c;
+    background-color: #67c23a;
     color: white;
 }
 
@@ -395,7 +506,7 @@
 }
 
 .right-content.top button:first-child:hover {
-    background-color: #d9363e;
+    background-color: #85d587;
 }
 
 .right-content.top button:nth-child(2):hover {
@@ -426,4 +537,7 @@
     border: 1px solid #ccc;
     border-radius: 4px;
 }
+
+
+
 </style>

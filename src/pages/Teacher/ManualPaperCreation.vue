@@ -260,8 +260,6 @@
                 </div>
             </el-drawer>
 
-
-
             <!-- 返回顶部按钮 -->
             <el-backtop :right="50" :bottom="80" />
 
@@ -413,7 +411,7 @@ const toggleExplanation = (question) => {
 // 添加题目到试卷篮的函数
 const addToBasket = (question, isBigQuestion = false, parentId = null) => {
     // 构建一个唯一的 ID，区分大题和单题
-    const questionId = isBigQuestion ? `big-${question.bodyId}` : `single-${question.questionId}`;
+    const questionId = isBigQuestion ? question.bodyId : question.questionId;
 
     // 检查是否已经存在
     const existing = store.state.basket.find(q => q.id === questionId);
@@ -432,11 +430,12 @@ const addToBasket = (question, isBigQuestion = false, parentId = null) => {
         type: 'big',
         body: question.body,
         subQuestions: question.subQuestion.map(sub => ({
-            id: `${questionId}-sub-${sub.questionId || Math.random()}`, // 确保唯一
+            id: sub.questionId, // 确保唯一
             question: sub.question,
             type: sub.type,
             answer: sub.answer,             // 添加答案
-            explanation: sub.explanation    // 添加解析
+            explanation: sub.explanation,   // 添加解析
+            options: sub.options || []      // 确保选项也被保存
         })),
         referencedCount: question.referencedCount,
         difficulty: question.difficulty
@@ -447,6 +446,7 @@ const addToBasket = (question, isBigQuestion = false, parentId = null) => {
         question: question.question,
         answer: question.answer,           // 添加答案
         explanation: question.explanation, // 添加解析
+        options: question.options || [],
         referencedCount: question.referencedCount,
         difficulty: question.difficulty
     };
@@ -576,6 +576,7 @@ const fetchQuestions = async () => {
         if (response.status === 200) {
             console.log('传回的题目数据');
             const data = response.data;
+
             // 给 bigQuestions 添加 showExplanation 字段
             bigQuestions.value = (data.bigQuestions || []).map(bigQuestion => ({
                 ...bigQuestion,
@@ -590,12 +591,14 @@ const fetchQuestions = async () => {
                 ...question,
                 showExplanation: false // 默认不显示解析
             }));
+            console.log('questions:',questions.value);
+            console.log('big:',bigQuestions.value);
 
             currentPage.value = data.currentPage || 1;
             totalPages.value = data.totalPages || 1;
 
             totalCount.value = data.totalCount || 0;
-            console.log(bigQuestions.value);
+
             console.log('totalPages',totalPages.value)
         } else {
             console.error('获取题目失败：', response.data.message);
