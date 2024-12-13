@@ -9,7 +9,10 @@ import ManageClass from "@/pages/Teacher/ManageClass.vue";
 import UploadQuestion from "@/pages/Teacher/UploadQuestion.vue";
 import UploadSingleQuestion from "@/pages/Teacher/UploadSingleQuestion.vue";
 import UploadCombinedQuestion from "@/pages/Teacher/UploadCombinedQuestion.vue"
-
+import TestGenerationStrategy from "@/pages/Teacher/TestGenerationStrategy.vue";
+import ManualPaperCreation from "@/pages/Teacher/ManualPaperCreation.vue";
+import PreviewPaper from "@/pages/Teacher/PreviewPaper.vue";
+import ManagePaper from "@/pages/Teacher/ManagePaper.vue";
 //知识点
 import KnowledgePoint from '@/pages/system-admin/KnowledgePoint.vue';
 import CourseStandard from '@/pages/system-admin/CourseStandard.vue';
@@ -33,9 +36,7 @@ import ManageTest from "@/pages/Student/ManageTest.vue";
 import AnswerTemporary from "@/pages/Student/AnswerTemporary.vue";
 import PersonalProfiling from "@/pages/Student/PersonalProfiling.vue";
 import store from '@/store/user';
-import TestGenerationStrategy from "@/pages/Teacher/TestGenerationStrategy.vue";
-import ManualPaperCreation from "@/pages/Teacher/ManualPaperCreation.vue";
-import PreviewPaper from "@/pages/Teacher/PreviewPaper.vue";
+
 
 
 const routes = [
@@ -112,6 +113,13 @@ const routes = [
         path: '/teacher/paper-preview',
         name: 'PreviewPaper',
         component:PreviewPaper,
+        meta: { requiresAuth: true }
+    },
+    //管理试卷
+    {
+        path: '/teacher/paper-manage',
+        name: 'ManagePaper',
+        component:ManagePaper,
         meta: { requiresAuth: true }
     },
 
