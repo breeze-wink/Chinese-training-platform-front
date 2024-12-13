@@ -9,12 +9,12 @@
                         <p>加载中...</p>
                     </div>
                     <div v-else-if="answers.length > 0" class="answers-container">
-                        <h2>{{ practiceName }} 练习答案</h2>
-                        <p class="score-text"><strong>客观题得分: {{ score }}</strong></p>
+                        <h2>{{ assignmentName }} 作业答案</h2>
+                        <p class="score-text"><strong>分数: {{ score }}</strong></p>
                         <div v-for="(answer, index) in answers" :key="index" :id="'question-' + answer.sequence" class="answer">
                             <p v-if="answer.showQuestionContent" class="question-body">
                                 <span class="question-prefix">{{ getMainQuestionNumber(answer.sequence) }}</span>
-                                {{ answer.questionBody }}
+                                {{ answer.body }}
                             </p>
                             <div class="question-sequence-content">
                                 <span class="sequence">{{ answer.sequence }}. </span>
@@ -68,18 +68,13 @@ export default {
         Header,
         Sidebar,
     },
-    props: {
-        practiceId: {
-            type: Number,
-            required: true
-        }
-    },
     data() {
         return {
             answers: [],
             isLoading: true,
             score: null,
-            practiceName: '',
+            assignmentId: null,
+            assignmentName: '',
             displayedQuestions: new Set() // 用于存储已经显示过的题目编号
         };
     },
@@ -91,9 +86,12 @@ export default {
         }
     },
     created() {
-        if (!this.practiceId) {
-            console.error('practiceId 未定义');
-            this.$message.error('练习ID未定义，请重试。');
+        this.assignmentId = this.$route.params.assignmentId;
+        console.log('从路由中获取的 assignmentId:', this.assignmentId); // 增加调试日志
+
+        if (!this.assignmentId) {
+            console.error('assignmentId 未定义');
+            this.$message.error('作业ID未定义，请重试。');
             this.isLoading = false;
             return;
         }
@@ -107,27 +105,27 @@ export default {
             return;
         }
 
-        console.log('PracticeId:', this.practiceId); // 增加日志以查看 practiceId
+        console.log('AssignmentId:', this.assignmentId); // 增加日志以查看 assignmentId
 
-        // 从路由参数中获取 score 和 practiceName
-        this.score = this.$route.query.score;
-        this.practiceName = this.$route.query.practiceName || this.practiceName;  // 初始化 practiceName
+        // 从路由参数中获取 score 和 assignmentName
+        this.score = this.$route.query.score || null;
+        this.assignmentName = this.$route.query.assignmentName || '';  // 初始化 assignmentName
 
         this.fetchAnswers(studentId);
     },
     methods: {
         async fetchAnswers(studentId) {
             try {
-                const response = await axios.get(`/api/student/${studentId}/practice/get-answer`, {
+                const response = await axios.get(`/api/student/${studentId}/homework/get-answer`, {
                     params: {
-                        practiceId: this.practiceId
+                        assignmentId: this.assignmentId
                     }
                 });
 
                 console.log('响应状态码:', response.status); // 增加日志以查看响应状态码
                 console.log('响应数据:', response.data); // 增加日志以查看响应内容
 
-                if (response.status === 200 && response.data.message === '答案获取成功') {
+                if (response.status === 200 && response.data.message === 'success') {
                     this.score = response.data.totalScore;  // 更新为 totalScore
                     this.answers = response.data.data || [];
 
@@ -203,7 +201,7 @@ export default {
             console.log('开始加载题目中的图片');
             for (let i = 0; i < this.answers.length; i++) {
                 const answer = this.answers[i];
-                // 确保 question.questionContent 是一个字符串
+                // 确保 answer.questionContent 是一个字符串
                 if (typeof answer.questionContent !== 'string' || !answer.questionContent) {
                     console.error(`问题 ${answer.practiceQuestionId} 的 questionContent 不是有效的字符串:`, typeof answer.questionContent);
                     continue;
@@ -291,11 +289,11 @@ export default {
 </script>
 
 <style scoped>
-/* 改进页面字体和颜色风格 */
+/* 使用柔和的色调和优雅的字体 */
 body {
-    font-family: 'Arial', sans-serif; /* 使用统一的无衬线字体，现代简洁 */
-    background-color: #f8f8f8; /* 浅灰色背景 */
-    color: #444; /* 更柔和的灰色文字，避免过于深色 */
+    font-family: 'Georgia', serif; /* 优雅的衬线字体 */
+    background-color: #f5f5f5; /* 浅灰色背景 */
+    color: #333; /* 深灰色文字 */
     background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0ibm9uZSI+PC9yZWN0PjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSJub25lIiBzdHlsZT0ic3Ryb2tlOiAjZmZmOyBzdHJva2Utd2lkdGg6IDE7IHN0cm9rZS1vcGFjaXR5OiAxLjA7IHN0cm9rZS1kYXNoYXJyYXk6IDEwOyBzdHJva2UtbGluZWNhcDpyb3VuZCI+PC9yZWN0Pjwvc3ZnPg=='); /* 轻微的网格背景 */
     background-size: 20px 20px;
 }
@@ -340,25 +338,24 @@ body {
 }
 
 .sidebar-nav h3 {
-    font-size: 1.6em; /* 调整字体大小 */
-    margin-bottom: 15px;
-    color: #333; /* 更柔和的文字颜色 */
-    font-weight: 600; /* 加粗 */
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    color: #555; /* 更柔和的文字颜色 */
 }
 
 .questions-list {
     display: flex;
     flex-wrap: wrap; /* 自动换行 */
-    gap: 15px; /* 增加间距 */
+    gap: 10px; /* 项目之间的间距 */
 }
 
 .questions-list a {
     text-decoration: none;
-    color: #444;
-    font-size: 1.1em; /* 适中字体大小 */
+    color: #333;
+    font-size: 1.2em;
     transition: all 0.3s ease; /* 平滑过渡效果 */
-    padding: 8px 15px;
-    border: 1px solid #ddd; /* 边框颜色稍微调整 */
+    padding: 5px 10px;
+    border: 1px solid #ddd; /* 添加边框 */
     border-radius: 8px; /* 圆角边框 */
     background: linear-gradient(135deg, #ffffff, #f5f5f5); /* 题号链接的渐变背景 */
 }
@@ -385,32 +382,25 @@ body {
     margin-bottom: 20px;
 }
 
-.question-content, .question-sequence-content {
-    font-size: 1.1em;
-}
-
 h2, h3, h4, .option-label, .option, .highlight, .answer-text, .question-body, .analysis {
-    font-family: 'Arial', sans-serif; /* 统一字体 */
-    line-height: 1.6; /* 提高可读性 */
+    font-family: 'Georgia', serif; /* 优雅的衬线字体 */
 }
 
 h2 {
-    font-size: 2.2em; /* 增加主标题字体大小 */
+    font-size: 2em;
     color: #333;
-    margin-bottom: 20px; /* 增加底部间距 */
-    font-weight: 600; /* 加粗 */
+    margin-bottom: 10px;
 }
 
 h3 {
-    font-size: 1.8em;
-    color: #444;
-    margin-bottom: 15px;
-    font-weight: 500;
+    font-size: 1.75em;
+    color: #333;
+    margin-bottom: 10px;
 }
 
 h4, .question-body, .analysis {
-    font-size: 1.4em;
-    color: #444;
+    font-size: 1.5em;
+    color: #333;
     margin-bottom: 10px;
 }
 
@@ -433,19 +423,19 @@ h4, .question-body, .analysis {
 
 .highlight {
     font-size: 1.4em;
-    color: #007bff; /* 使用蓝色高亮 */
+    color: #555;
 }
 
 .answer-text {
     font-size: 1.4em;
-    color: #333; /* 深色文字 */
+    color: #555;
 }
 
 /* 增加得分文本的字体大小 */
 .score-text {
-    font-size: 1.6em; /* 调整字体大小 */
-    color: #444; /* 更柔和的灰色 */
-    margin-bottom: 15px; /* 增加底部间距 */
+    font-size: 1.8em; /* 调整字体大小 */
+    color: #333; /* 保持深灰色文字 */
+    margin-bottom: 10px; /* 增加底部间距 */
 }
 
 /* 响应式布局 */
@@ -467,5 +457,4 @@ h4, .question-body, .analysis {
         margin-top: 20px;
     }
 }
-
 </style>

@@ -77,17 +77,15 @@ export default {
 
 <style scoped>
 .page-container {
-    background-color: #f9f9f9; /* 添加背景色 */
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100vh;
+    background-color: #f0f0f0; /* 背景改为浅灰色 */
 }
 
 .main-container {
-    background-color: #fff; /* 添加背景色 */
     display: flex;
     flex: 1;
-    padding: 1rem; /* 增加内边距，使内容与边缘有一定距离 */
 }
 
 .essay-detail {

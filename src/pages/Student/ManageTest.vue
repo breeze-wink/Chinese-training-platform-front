@@ -16,7 +16,7 @@
                             练习
                         </label>
                     </div>
-                    <table v-if="pendingItems[selectedStatus].length > 0">
+                    <table v-if="pendingItems[selectedStatus]?.length > 0">
                         <thead>
                         <tr>
                             <th>序号</th>
@@ -33,8 +33,10 @@
                             <td>{{ item.startTime || item.dueTime }}</td>
                             <td>{{ item.endTime || item.dueTime }}</td>
                             <td>
-                                <button @click="showSystemConfirmContinue(item)" :disabled="isProcessing">继续训练</button>
-                                <button :disabled="isDeleting || isProcessing" @click="showSystemConfirmDelete(item)">删除练习</button>
+                                <button :disabled="isDeleting || isProcessing" @click="selectedStatus === '作业' ? continueHomework(item) : performContinueTraining(item)">
+                                    {{ selectedStatus === '作业' ? '继续作业' : '继续练习' }}
+                                </button>
+                                <button v-if="selectedStatus === '练习'" :disabled="isDeleting || isProcessing" @click= "showSystemConfirmDelete(item)">删除练习</button>
                             </td>
                         </tr>
                         </tbody>
@@ -54,7 +56,7 @@
                             练习
                         </label>
                     </div>
-                    <table v-if="completedItems[selectedCompletedStatus].length > 0">
+                    <table v-if="completedItems[selectedCompletedStatus]?.length > 0">
                         <thead>
                         <tr>
                             <th>序号</th>
@@ -71,7 +73,10 @@
                             <td>{{ item.endTime || item.practiceTime }}</td>
                             <td>{{ item.totalScore }}</td>
                             <td>
-                                <button @click="showSystemConfirmViewAnswers(item)" :disabled="isProcessing">答案查询</button>
+                                <button @click="selectedCompletedStatus === '作业' ? viewHomeworkAnswers(item) : showSystemConfirmViewAnswers(item)" :disabled="isProcessing">
+                                    {{ selectedCompletedStatus === '作业' ? '答案查询' : '答案查询' }}
+                                </button>
+                                <button v-if="selectedCompletedStatus === '作业'" :disabled="isProcessing" @click="showTeacherComments(item)">老师评语</button>
                             </td>
                         </tr>
                         </tbody>
@@ -102,13 +107,14 @@ import Header from "@/components/Header.vue";
 import axios from 'axios';
 import router from '@/router'; // 引入路由模块
 import { mapGetters } from 'vuex';
+import {useRouter} from "vue-router";
 
 export default {
     components: { Header, Sidebar },
     data() {
         return {
-            selectedStatus: '练习',
-            selectedCompletedStatus: '练习',
+            selectedStatus: '作业',
+            selectedCompletedStatus: '作业',
             pendingItems: {
                 作业: [],
                 练习: []
@@ -123,7 +129,9 @@ export default {
             isProcessing: false, // 新增：用于跟踪是否正在处理请求
             practiceToDelete: null,
             practiceToContinue: null,
-            answersToView: null
+            answersToView: null,
+            teacherComments: null, // 存储老师评语
+            assignmentToContinue: null
         };
     },
     computed: {
@@ -217,6 +225,41 @@ export default {
                 console.error('获取已完成作业列表失败', error);
             }
         },
+        async continueHomework(item) {
+            const router = useRouter();
+            try {
+                this.isContinuing = true;
+                const endpoint = `/api/student/${this.getUserId}/homework/get-detail`;
+                const params = { assignmentId: item.assignmentId };
+
+                console.log(`Sending GET request to ${endpoint} with params:`, params); // 调试日志
+
+                const response = await axios.get(endpoint, { params });
+
+                if (response.status === 200) {
+                    const questions = response.data.data;
+                    console.log('Received homework details:', questions); // 调试日志
+
+                    this.$router.push({
+                        name: 'AnswerHomework',
+                        query: {
+                            assignmentId: item.assignmentId,
+                            questions: JSON.stringify(questions),
+                            assignmentName: item.assignmentName
+                        }
+                    });
+                } else {
+                    console.error('获取作业详情失败', response.data.message);
+                    alert('获取作业详情失败，请稍后重试');
+                }
+            } catch (error) {
+                console.error('获取作业详情失败', error.response ? error.response.data : error.message);
+                alert('获取作业详情失败，请稍后重试');
+            } finally {
+                this.isContinuing = false;
+                this.isProcessing = false;
+            }
+        },
         showSystemConfirmContinue(item) {
             if (window.confirm(`确定要继续训练 "${item.practiceName || item.title}" 吗？`)) {
                 this.practiceToContinue = item;
@@ -225,10 +268,12 @@ export default {
                 this.performContinueTraining();
             }
         },
-        async performContinueTraining() {
+        async performContinueTraining(item) {
+            const router = useRouter();
             try {
+                this.isContinuing = true;
                 const endpoint = `/api/student/${this.getUserId}/continue-practice`;
-                const params = { practiceId: this.practiceToContinue.practiceId };
+                const params = { practiceId: item.practiceId };
 
                 console.log(`Sending POST request to ${endpoint} with params:`, params); // 调试日志
 
@@ -242,14 +287,13 @@ export default {
                     const questions = response.data.data;
                     console.log('Received questions:', questions); // 调试日志
 
-                    // 将题目和其他必要信息传递给答题页面
-                    router.push({
+                    this.$router.push({ // 使用 this.$router 来访问路由
                         name: 'AnswerTemporary',
                         query: {
-                            practiceId: this.practiceToContinue.practiceId,
+                            practiceId: item.practiceId,
                             questions: JSON.stringify(questions),
-                            mode: this.practiceToContinue.mode,
-                            practiceName: this.practiceToContinue.practiceName
+                            mode: item.mode,
+                            practiceName: item.practiceName
                         }
                     });
                 } else {
@@ -260,6 +304,31 @@ export default {
             } finally {
                 this.isContinuing = false; // 隐藏加载提示
                 this.isProcessing = false; // 结束处理状态
+            }
+        },
+        async viewHomeworkAnswers(item) {
+            console.log('Item passed to viewAnswers:', item);
+
+            if (!item || !item.assignmentId) {
+                this.$message.error('无法查看答案：作业ID缺失');
+                return;
+            }
+
+            try {
+                // 设置加载状态
+                this.isProcessing = true;
+
+                // 跳转到 HomeworkDetail 页面，并通过路由传递 assignmentId 参数
+                this.$router.push({
+                    name: 'HomeworkDetail',
+                    params: { assignmentId: item.assignmentId }
+                });
+            } catch (error) {
+                console.error('跳转到作业详情页面失败', error);
+                this.$message.error('跳转失败，请重试');
+            } finally {
+                // 取消加载状态
+                this.isProcessing = false;
             }
         },
         showSystemConfirmViewAnswers(item) {
@@ -365,6 +434,7 @@ export default {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    background-color: #f0f0f0; /* 背景改为浅灰色 */
 }
 
 .main-container {
