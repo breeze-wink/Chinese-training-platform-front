@@ -17,10 +17,30 @@
                 </div>
 
                 <!-- 表格显示数据 -->
-                <el-table :data="paginatedData" style="width: 100%; margin-top: 20px;">
-                    <el-table-column prop="name" label="试卷名称" width="200"></el-table-column>
-                    <el-table-column prop="createTime" label="生成时间" width="200"></el-table-column>
-                    <el-table-column prop="difficulty" label="难度" width="100"></el-table-column>
+                <el-table :data="paginatedData" style="width: 100%; margin-top: 20px;"  @sort-change="handleSortChange">
+                    <el-table-column prop="name" label="试卷名称" width="150"></el-table-column>
+                    <el-table-column
+                            prop="createTime"
+                            label="生成时间"
+                            width="250"
+                            sortable
+                            :sort-method="sortPapers">
+                    </el-table-column>
+
+                    <el-table-column
+                            prop="difficulty"
+                            label="难度"
+                            width="120"
+                            sortable
+                            :sort-method="sortPapers">
+                    </el-table-column>
+
+                    <el-table-column
+                            prop="totalScore"
+                            label="总分" width="150"
+                            sortable
+                            :sort-method="sortPapers">
+                    </el-table-column>
 
                     <el-table-column label="操作">
                         <template #default="{ row }">
@@ -67,6 +87,10 @@ const totalItems = ref(0);
 const papers = ref([]);  // 存储所有试卷
 const filteredData = ref([]);  // 存储筛选后的试卷数据
 
+const sortBy = ref('createTime');  // 默认排序字段
+const sortOrder = ref('ascending');  // 默认排序顺序：升序
+
+
 // 获取教师所有试卷数据
 const getPapers = async () => {
     try {
@@ -74,7 +98,8 @@ const getPapers = async () => {
         if (response.status === 200) {
             papers.value = response.data.papers;
             totalItems.value = response.data.papers.length;
-            filteredData.value = papers.value;  // 初始时，显示所有试卷
+            filteredData.value = sortPapers(papers.value);  // 初始时，显示所有试卷
+
         } else {
             ElMessage({ message: '获取试卷信息失败：' + response.data.message, type: 'error' });
         }
@@ -114,6 +139,34 @@ const paginatedData = computed(() => {
 const handlePageChange = (page) => {
     currentPage.value = page;
 };
+const sortPapers = (papers) => {
+    return papers.slice().sort((a, b) => {
+        let valA = a[sortBy.value];
+        let valB = b[sortBy.value];
+
+        if (typeof valA === 'string') {
+            valA = valA.toLowerCase();
+            valB = valB.toLowerCase();
+        }
+
+        if (sortOrder.value === 'ascending') {
+            return valA < valB ? -1 : valA > valB ? 1 : 0;
+        } else {
+            return valA > valB ? -1 : valA < valB ? 1 : 0;
+        }
+    });
+};
+
+//调整排序逻辑
+const handleSortChange = (sort) => {
+    sortBy.value = sort.prop;  // 当前排序字段
+    sortOrder.value = sort.order === 'ascending' ? 'ascending' : 'descending';  // 当前排序顺序
+    filteredData.value = sortPapers(papers.value);  // 重新排序
+};
+
+
+
+/*****************按钮逻辑：开始********************/
 
 // 预览试卷
 const previewPaper = (paper) => {
