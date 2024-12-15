@@ -71,13 +71,24 @@ export default createStore({
         addQuestionToBasket(state, question) {
             state.basket.push(question);
         },
+        addQuestionsToBasket(state, questions) {
+            // 检查并添加新问题，避免重复
+            questions.forEach(question => {
+                // 生成唯一的 ID，可以根据需求调整
+                const questionId = question.id || `paper-${question.sequence}-${Math.random()}`;
+                const exists = state.basket.find(q => q.id === questionId);
+                if (!exists) {
+                    state.basket.push({ ...question, id: questionId });
+                }
+            });
+            localStorage.setItem('basket', JSON.stringify(state.basket));
+        },
         removeQuestionFromBasket(state, questionId) {
             state.basket = state.basket.filter(q => q.id !== questionId);
         },
         clearBasket(state) {
             state.basket = [];
         }
-
     },
 
     actions: {
@@ -102,6 +113,10 @@ export default createStore({
         //试卷篮
         addQuestionToBasket({ commit }, question) {
             commit('addQuestionToBasket', question);
+
+        },
+        addQuestionsToBasket({ commit }, questions) {
+            commit('addQuestionsToBasket', questions);
         },
         removeQuestionFromBasket({ commit }, questionId) {
             commit('removeQuestionFromBasket', questionId);

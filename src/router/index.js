@@ -13,6 +13,7 @@ import TestGenerationStrategy from "@/pages/Teacher/TestGenerationStrategy.vue";
 import ManualPaperCreation from "@/pages/Teacher/ManualPaperCreation.vue";
 import PreviewPaper from "@/pages/Teacher/PreviewPaper.vue";
 import ManagePaper from "@/pages/Teacher/ManagePaper.vue";
+import PreviewGeneratedPaper from "@/pages/Teacher/PreviewGeneratedPaper.vue";
 //知识点
 import KnowledgePoint from '@/pages/system-admin/KnowledgePoint.vue';
 import CourseStandard from '@/pages/system-admin/CourseStandard.vue';
@@ -36,6 +37,7 @@ import ManageTest from "@/pages/Student/ManageTest.vue";
 import AnswerTemporary from "@/pages/Student/AnswerTemporary.vue";
 import PersonalProfiling from "@/pages/Student/PersonalProfiling.vue";
 import store from '@/store/user';
+
 
 
 
@@ -113,6 +115,18 @@ const routes = [
         path: '/teacher/paper-preview',
         name: 'PreviewPaper',
         component:PreviewPaper,
+        meta: { requiresAuth: true }
+    },
+    //预览已生成试卷
+    {
+        path: '/teacher/paper-generated-preview',
+        name: 'PreviewGeneratedPaper',
+        component:PreviewGeneratedPaper,
+        props: (route) => ({
+            name: route.query.name,
+            difficulty: route.query.difficulty,
+            totalScore: route.query.totalScore
+        }),
         meta: { requiresAuth: true }
     },
     //管理试卷

@@ -130,7 +130,8 @@ import Sidebar from '@/components/Sidebar.vue';
 import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination } from 'element-plus';
 import axios from 'axios';
 import { useStore } from 'vuex';
-import {toRaw} from "vue-demi"; // 使用 Vuex 进行状态管理
+import {toRaw} from "vue-demi";
+import {useRouter} from "vue-router"; // 使用 Vuex 进行状态管理
 
 // 获取 Vuex 状态
 const store = useStore();
@@ -242,11 +243,75 @@ const handleSortChange = (sort) => {
 
 
 /*****************按钮逻辑：开始********************/
+const basket = ref([]);  // 用于存储题目信息
 
+// 在 <script setup> 标签内
+const router = useRouter();
 // 预览试卷
-const previewPaper = (paper) => {
-    // 这里可以根据需求进行跳转或其他操作
-    ElMessage.info(`预览试卷: ${paper.name}`);
+const previewPaper = async (paper) => {
+    try {
+        // 调用后端接口获取试卷详情
+        const response = await axios.get('/api/teacher/paper', { params: { id: paper.id } });
+        if (response.status === 200 && response.data.message === 'success') {
+            const paperDetails = response.data;
+
+            // 处理问题数据，确保每个问题都有唯一的 ID
+            const formattedQuestions = paperDetails.questions.map(q => {
+                if (q.subQuestions && q.subQuestions.length > 0) {
+                    // 大题
+                    return {
+                        id: `paper-${paper.id}-seq-${q.sequence}`,
+                        body: q.body,
+                        sequence: q.sequence,
+                        score: q.score,
+                        type: 'big', // 标识为大题
+                        subQuestions: q.subQuestions.map((sub, index) => ({
+                            id: `paper-${paper.id}-seq-${q.sequence}-sub-${index + 1}`,
+                            question: sub.question,
+                            answer: sub.answer,
+                            explanation: sub.explanation,
+                            options: sub.options || [],
+                            type: sub.type,
+                            knowledge: sub.knowledge,
+                            subScores: sub.subScores || []
+                        }))
+                    };
+                } else {
+                    // 单题
+                    return {
+                        id: `paper-${paper.id}-seq-${q.sequence}`,
+                        question: q.question,
+                        answer: q.answer,
+                        explanation: q.explanation,
+                        options: q.options || [],
+                        type: q.type,
+                        knowledge: q.knowledge,
+                        score: q.score,
+                        sequence: q.sequence
+                    };
+                }
+            });
+            console.log(formattedQuestions);
+
+            // 将试卷题目信息加入 basket
+            await store.dispatch('addQuestionsToBasket', formattedQuestions);
+            await router.push({
+                name: 'PreviewGeneratedPaper', // 确保在路由中定义了这个名称
+                query: {
+                    name: paper.name,
+                    difficulty: paper.difficulty, // 假设试卷对象中有 difficulty 字段
+                    totalScore: paper.totalScore
+
+                }
+            });
+            ElMessage.success(`试卷 "${paper.name}" 已添加到试卷篮`);
+        } else {
+            ElMessage.error('获取试卷详情失败');
+        }
+    } catch (error) {
+        console.error(error);
+        ElMessage.error('获取试卷详情失败');
+    }
 };
 
 

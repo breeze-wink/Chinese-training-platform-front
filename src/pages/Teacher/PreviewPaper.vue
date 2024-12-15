@@ -249,6 +249,7 @@ const  generatePaper = async () => {
             }
         }
     }
+
     // 构建请求数据
     const paperData = {
         name: paperName.value,
