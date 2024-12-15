@@ -71,7 +71,8 @@ import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination } from 'element-plus';
 import axios from 'axios';
-import { useStore } from 'vuex'; // 使用 Vuex 进行状态管理
+import { useStore } from 'vuex';
+import {toRaw} from "vue-demi"; // 使用 Vuex 进行状态管理
 
 // 获取 Vuex 状态
 const store = useStore();
@@ -96,9 +97,17 @@ const getPapers = async () => {
     try {
         const response = await axios.get(`/api/teacher/papers/${teacherId.value}`);
         if (response.status === 200) {
-            papers.value = response.data.papers;
-            totalItems.value = response.data.papers.length;
-            filteredData.value = sortPapers(papers.value);  // 初始时，显示所有试卷
+            // 检查返回的数据格式，并确保 papers 是一个数组
+
+            if (Array.isArray(response.data.papers)) {
+                papers.value = response.data.papers;
+                totalItems.value = papers.value.length;
+                filteredData.value = sortPapers(papers.value);  // 初始时，显示所有试卷
+            } else {
+                // 如果返回的数据不是数组，抛出错误
+
+                papers.value = [];  // 处理错误情况，确保不会影响后续操作
+            }
 
         } else {
             ElMessage({ message: '获取试卷信息失败：' + response.data.message, type: 'error' });
@@ -140,6 +149,10 @@ const handlePageChange = (page) => {
     currentPage.value = page;
 };
 const sortPapers = (papers) => {
+    papers = toRaw(papers);
+    if (!Array.isArray(papers)) {
+        return [];
+    }
     return papers.slice().sort((a, b) => {
         let valA = a[sortBy.value];
         let valB = b[sortBy.value];
@@ -161,6 +174,7 @@ const sortPapers = (papers) => {
 const handleSortChange = (sort) => {
     sortBy.value = sort.prop;  // 当前排序字段
     sortOrder.value = sort.order === 'ascending' ? 'ascending' : 'descending';  // 当前排序顺序
+    console.log( '排序:', sortBy.value, sortOrder.value);
     filteredData.value = sortPapers(papers.value);  // 重新排序
 };
 
