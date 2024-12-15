@@ -78,8 +78,11 @@ const handleClose = (key, keyPath) => {
 
 // 根据用户角色动态生成菜单项
 const menuItems = computed(() => {
-    switch (userRole.value) {
+    const userRole = store.getters['getUser'].role;
+    const permission = store.getters['getPermission'];
+    switch (userRole) {
         case 'teacher':
+            if (permission === 0) {
             return [
                 { index: '/teacher/personal-info', label: '个人信息', icon: User, path: '/teacher/personal-info' },
                 {
@@ -96,12 +99,14 @@ const menuItems = computed(() => {
                 { index: '/teacher/test-generation-strategy', label: '生成试卷', icon: Edit, path: '/teacher/test-generation-strategy' },
                 { index: '/teacher/settings', label: '设置', icon: Setting, path: '/teacher/settings' },
             ];
-        case 'audit-teacher':
-            return [
-                { index: '/audit-teacher/personal-info', label: '个人信息', icon: User, path: '/audit-teacher/personal-info' },
-                { index: '/audit-teacher/audit-strategy', label: '生成试卷', icon: Edit, path: '/audit-teacher/audit-strategy' },
-                { index: '/audit-teacher/settings', label: '设置', icon: Setting, path: '/audit-teacher/teacher/settings' },
-            ];
+            } else if (permission === 1) {
+                return [
+                    { index: '/audit-teacher/personal-info', label: '个人信息', icon: User, path: '/audit-teacher/personal-info' },
+                    { index: '/audit-teacher/question-list', label: '审核题目', icon: Edit, path: '/audit-teacher/question-list' },
+                    { index: '/audit-teacher/settings', label: '设置', icon: Setting, path: '/audit-teacher/settings' },
+                ];
+            }
+            break;
         case 'student':
             return [
                 { index: '/student/personal-info', label: '个人信息', icon: User, path: '/student/personal-info' },

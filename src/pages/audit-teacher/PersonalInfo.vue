@@ -118,6 +118,8 @@ import axios from "axios";
 const store = useStore();
 const teacherId = computed(() => store.state.user.id);
 
+console.log('Teacher ID:', teacherId); // 日志输出教师 ID
+
 const teacherInfo = ref({
     name: '',
     username: '',

@@ -403,6 +403,7 @@ const login = async () => {
             account: account.value,
             password: password.value
         });
+
         // 检查响应状态码和消息
         if (response.status === 200 ) {
             console.log("登录成功:", response.data.id);
@@ -410,23 +411,28 @@ const login = async () => {
             await store.dispatch('login', {
                 id: response.data.id,
                 role: Identity.value,
-                token: response.data.token
-            });
+                token: response.data.token,
+                permission: response.data.permission // 使用正确的字段名
+        });
 
+            const permission = response.data.permission;
             console.log('token:', response.data.token);
+            console.log('permission:', permission);
             loginDialogVisible.value = false; // 登录成功后关闭对话框
 
             if (Identity.value === 'teacher') {
-                await router.push({name: 'TeacherPersonalInfo'}); // 跳转到教师管理页面
+                if (permission === 0) {
+                    await router.push({name: 'TeacherPersonalInfo'}); // 跳转到教师管理页面
+                } else if (permission === 1) {
+                    await router.push({name: 'AuditTeacherPersonalInfo'});
+                }
             } else if (Identity.value === 'student') {
                 await router.push({name: 'StudentPersonalInfo'}); // 跳转到学生学习页面
-            }else if (Identity.value === 'sys-adm') {
+            } else if (Identity.value === 'sys-adm') {
               await router.push({name: 'name'});
-            }else if (Identity.value === 'sch-adm') {
+            } else if (Identity.value === 'sch-adm') {
               await router.push({name: 'AuthorizationCode'});
-              // 跳转到学管学习页面
             }
-
         } else if (response.status === 401 ){
             // 处理非200状态码的情况
             console.error("登录失败:", response.data.message);
