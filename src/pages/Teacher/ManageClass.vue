@@ -592,6 +592,7 @@ onMounted(() => {
 .main-container {
     display: flex;
     flex: 1;
+    background-color: #f0f0f0; /* 背景改为浅灰色 */
 }
 
 .content {

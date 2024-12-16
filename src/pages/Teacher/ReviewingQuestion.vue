@@ -74,8 +74,10 @@
 <script>
 import { ref } from 'vue';
 import axios from 'axios';
+import Sidebar from "@/components/Sidebar.vue";
 
 export default {
+    components: {Sidebar},
   data() {
     return {
       search: '',

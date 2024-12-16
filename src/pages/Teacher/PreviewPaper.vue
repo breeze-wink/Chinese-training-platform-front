@@ -8,7 +8,8 @@
                 <div class="question-list">
                     <div v-for="(question, index) in basket" :key="question.id" class="question-item">
                         <div v-if="question.type === 'big'">
-                            <strong>题目 {{ index + 1 }}: {{ question.body }}</strong>
+
+                          <strong>题目 {{ index + 1 }}: <span v-html="question.body"></span></strong>
                             <div class="sub-questions">
                                 <div v-for="(sub, subIndex) in question.subQuestions" :key="sub.id"
                                      class="sub-question">
@@ -44,9 +45,9 @@
                             <strong>
                                 题目{{ index + 1 }}.
                                 <!-- 如果有题干，紧跟在序号后面显示题干 -->
-                                <span v-if="question.body">{{ question.body }}</span>
+                                <span v-if="question.body" v-html="question.body"></span>
                                 <!-- 如果没有题干，紧跟在序号后面显示问题 -->
-                                <span v-if="!question.body">{{ question.question }}</span>
+                                <span v-if="!question.body" v-html="question.question"></span>
                             </strong>
 
                             <!-- 如果有题干，则将 sub.question 换行显示 -->
@@ -328,6 +329,7 @@ const  generatePaper = async () => {
     flex: 1;
     margin-right: 100px;
     margin-left: 100px;
+    background-color: #f0f0f0; /* 背景改为浅灰色 */
 }
 
 .content {
