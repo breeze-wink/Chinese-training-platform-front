@@ -9,6 +9,9 @@ import ManageClass from "@/pages/Teacher/ManageClass.vue";
 import UploadQuestion from "@/pages/Teacher/UploadQuestion.vue";
 import UploadSingleQuestion from "@/pages/Teacher/UploadSingleQuestion.vue";
 import UploadCombinedQuestion from "@/pages/Teacher/UploadCombinedQuestion.vue"
+import AuditTeacherPersonalInfo from "@/pages/audit-teacher/PersonalInfo.vue"
+import AuditStrategy from "@/pages/audit-teacher/AuditTest.vue"
+import QuestionList from "@/pages/audit-teacher/QuestionList.vue";
 
 //知识点
 import KnowledgePoint from '@/pages/system-admin/KnowledgePoint.vue';
@@ -117,6 +120,28 @@ const routes = [
         meta: { requiresAuth: true }
     },
 
+    // 审核老师
+    // 个人信息
+    {
+        path: '/audit-teacher/personal-info',
+        name: 'AuditTeacherPersonalInfo',
+        component: AuditTeacherPersonalInfo,
+        meta: { requiresAuth: true }
+    },
+    // 审核习题列表
+    {
+        path: '/audit-teacher/question-list',
+        name: 'QuestionList',
+        component: QuestionList,
+        meta: { requiresAuth: true }
+    },
+    // 审核习题
+    {
+        path: '/audit-teacher/audit-strategy',
+        name: 'AuditStrategy',
+        component: AuditStrategy,
+        meta: { requiresAuth: true }
+    },
 
 
 
@@ -209,47 +234,72 @@ const roleRoutesMap = {
     'sys-adm': '/system-admin',
     'sch-adm': '/school-admin',
     'student': '/student',
+    'audit-teacher': '/audit-teacher'
 };
 
 
 const whiteList = ['/']; // 添加不需要重定向的路由
 
-router.beforeEach((to, from, next) => {
-    store.dispatch('initializeUser');
-    const isAuthenticated = store.getters.isAuthenticated;
-    const userRole = store.getters.getUser ? store.getters.getUser.role : null;
-    const allowedRoutePrefix = roleRoutesMap[userRole];
+router.beforeEach(async (to, from, next) => {
+    try {
+        // 初始化用户信息
+        await store.dispatch('initializeUser');
+        const isAuthenticated = store.getters.isAuthenticated;
+        const user = store.getters.getUser;
+        let userRole = user ? user.role : null;
+        let allowedRoutePrefix = roleRoutesMap[userRole];
+        const permission = user && user.permission !== undefined ? user.permission : 0;
 
-    // 如果当前路由已经在白名单中，直接放行
-    if (whiteList.includes(to.path)) {
-        next();
-        return;
-    }
-    // 检查是否已经访问了目标路由
-    if (from.path === to.path) {
-        next(); // 如果目标路由与当前路由相同，则不进行重定向
-        return;
-    }
+        console.log(`[Navigation] Trying to navigate to: ${to.path}`);
+        console.log(`[Navigation] User role: ${userRole}, Permission: ${permission}, Allowed route prefix: ${allowedRoutePrefix}`);
 
-    // 检查用户是否已认证
-    if (to.matched.some(record => record.meta.requiresAuth)) {
-        if (!isAuthenticated) {
-            // 用户未认证，重定向到登录页
-            ElMessage.error('请先登录'); // 显示提示消息
-            next('/');
-        } else if (userRole && to.path.startsWith(allowedRoutePrefix)) {
-            // 用户已认证，且访问的是允许的路由前缀
-            next();
-        } else {
-            // 用户已认证，但访问的不是允许的路由前缀，重定向到角色对应的首页
-            ElMessage.warning('您没有权限访问该页面');
-            const homeRoute = '/';
-            next(homeRoute);
+        // 特殊处理：如果用户是老师且有特殊权限，则允许访问审核老师的路径
+        if (userRole === 'teacher' && permission === 1 && to.path.startsWith('/audit-teacher')) {
+            allowedRoutePrefix = '/audit-teacher';
+            console.log('[Navigation] Teacher with special permission accessing audit-teacher path.');
         }
-    } else {
-        // 如果路由不需要认证，直接放行
-        next();
+
+        // 如果当前路由已经在白名单中，直接放行
+        if (whiteList.includes(to.path)) {
+            console.log('[Navigation] Path is in whitelist, proceeding...');
+            next();
+            return;
+        }
+
+        // 检查是否已经访问了目标路由
+        if (from.path === to.path) {
+            console.log('[Navigation] Same path, not redirecting...');
+            next(); // 如果目标路由与当前路由相同，则不进行重定向
+            return;
+        }
+
+        // 检查用户是否已认证
+        if (to.matched.some(record => record.meta.requiresAuth)) {
+            if (!isAuthenticated) {
+                // 用户未认证，重定向到登录页
+                console.log('[Navigation] User is not authenticated, redirecting to login...');
+                ElMessage.error('请先登录'); // 显示提示消息
+                next('/');
+            } else if (userRole && to.path.startsWith(allowedRoutePrefix)) {
+                // 用户已认证，且访问的是允许的路由前缀
+                console.log('[Navigation] User has the correct role and is accessing an allowed route.');
+                next();
+            } else {
+                // 用户已认证，但访问的不是允许的路由前缀，重定向到角色对应的首页
+                console.log('[Navigation] User does not have permission for this page.');
+                ElMessage.warning('您没有权限访问该页面');
+                const homeRoute = '/';
+                next(homeRoute);
+            }
+        } else {
+            // 如果路由不需要认证，直接放行
+            console.log('[Navigation] Route does not require authentication, proceeding...');
+            next();
+        }
+    } catch (error) {
+        console.error('[Navigation] Error during navigation guard:', error);
+        ElMessage.error('发生错误，请稍后再试');
+        next('/');
     }
 });
-
 export default router;

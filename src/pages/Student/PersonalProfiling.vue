@@ -55,7 +55,7 @@
                                 <div class="bar-container">
                                     <div class="bar"
                                          :style="{
-                                             width: Math.max(weakness.weaknessScore * 100, 5) + '%',
+                                             width: Math.max(weakness.weaknessScore * 100) + '%',
                                              backgroundColor: colors[index % colors.length],
                                              minWidth: '5px'
                                          }"
@@ -63,7 +63,7 @@
                                     ></div>
                                 </div>
                                 <!-- 具体参数信息 -->
-                                <p style="font-size: 10px; color: red;">{{ weakness.weaknessName }} - 正确率: {{ Math.max(weakness.weaknessScore * 100, 5) }}%</p>
+                                <p style="font-size: 10px; color: red;">{{ weakness.weaknessName }} - 正确率: {{ Math.max(weakness.weaknessScore * 100) }}%</p>
                             </div>
                         </div>
                     </div>
