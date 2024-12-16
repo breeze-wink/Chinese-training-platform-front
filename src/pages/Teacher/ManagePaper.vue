@@ -331,7 +331,7 @@ const previewPaper = async (paper) => {
 const deletePaper = async (paper) => {
     try {
         // 调用后端删除接口
-        const response = await axios.delete(`/api/teacher/${teacherId.value}/delete-paper/${paper.id}`);
+        const response = await axios.delete(`/api/teacher/delete-paper/${paper.id}`);
 
         if (response.status === 200) {
             ElMessage.success(`试卷 ${paper.name} 已删除`);
@@ -467,7 +467,7 @@ const publishHomework = async () => {
     const payload = {
         name: publishForm.value.name,
         description: publishForm.value.description,
-        referencePaperId: publishForm.value.referencePaperId,
+        referencedPaperId: publishForm.value.referencePaperId,
         targetIds:targetIds,
         targetType: publishForm.value.targetType,
         publishTime: publishForm.value.publishTime,
@@ -476,7 +476,7 @@ const publishHomework = async () => {
     console.log(payload);
 
     try {
-        const response = await axios.post(`/api/teacher/${teacherId.value}/homework/publish`, {payload});
+        const response = await axios.post(`/api/teacher/homework/publish`, payload);
         if (response.status === 200) {
             ElMessage.success('试卷发布成功');
             dialogVisible.value = false;  // 关闭弹窗
