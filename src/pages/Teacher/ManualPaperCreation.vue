@@ -202,18 +202,6 @@
                 </div>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
                 <!-- 分页控件 -->
                 <div v-if="totalPages > 1" class="pagination">
                     <el-pagination
@@ -422,7 +410,6 @@ const addToBasket = (question, isBigQuestion = false, parentId = null) => {
         });
         return;
     }
-
     // 构建题目对象
     const basketQuestion = isBigQuestion ? {
         id: questionId,
