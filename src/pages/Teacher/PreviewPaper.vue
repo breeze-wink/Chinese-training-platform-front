@@ -328,6 +328,7 @@ const  generatePaper = async () => {
     flex: 1;
     margin-right: 100px;
     margin-left: 100px;
+    background-color: #f0f0f0; /* 背景改为浅灰色 */
 }
 
 .content {

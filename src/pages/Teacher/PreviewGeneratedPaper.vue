@@ -143,6 +143,7 @@ const returnToPaperList = () => {
 .main-container {
     display: flex;
     flex: 1;
+    background-color: #f0f0f0; /* 背景改为浅灰色 */
     margin-right: 100px;
     margin-left: 100px;
 }
