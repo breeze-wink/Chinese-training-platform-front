@@ -14,6 +14,8 @@ import ManualPaperCreation from "@/pages/Teacher/ManualPaperCreation.vue";
 import PreviewPaper from "@/pages/Teacher/PreviewPaper.vue";
 import ManagePaper from "@/pages/Teacher/ManagePaper.vue";
 import PreviewGeneratedPaper from "@/pages/Teacher/PreviewGeneratedPaper.vue";
+import ManageHomework from "@/pages/Teacher/ManageHomework.vue";
+
 //知识点
 import KnowledgePoint from '@/pages/system-admin/KnowledgePoint.vue';
 import CourseStandard from '@/pages/system-admin/CourseStandard.vue';
@@ -37,6 +39,7 @@ import ManageTest from "@/pages/Student/ManageTest.vue";
 import AnswerTemporary from "@/pages/Student/AnswerTemporary.vue";
 import PersonalProfiling from "@/pages/Student/PersonalProfiling.vue";
 import store from '@/store/user';
+
 
 
 
@@ -136,6 +139,14 @@ const routes = [
         component:ManagePaper,
         meta: { requiresAuth: true }
     },
+    //管理作业
+    {
+        path: '/teacher/homework-manage',
+        name: 'ManageHomework',
+        component:ManageHomework,
+        meta: { requiresAuth: true }
+    },
+
 
 
 

@@ -115,11 +115,12 @@ const menuItems = computed(() => {
                 },
                 {
                     index: '5',
-                    label: '生成试卷',
+                    label: '管理试卷',
                     icon: Edit,
                     children: [
                         { index: '5-1', label: '生成试卷', path: '/teacher/test-generation-strategy'},
                         { index: '5-2', label: '查看试卷', path: '/teacher/paper-manage' },
+                        { index: '5-3', label: '查看作业', path: '/teacher/homework-manage'  }
                     ],
 
                 },
