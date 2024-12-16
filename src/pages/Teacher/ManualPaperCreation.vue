@@ -552,15 +552,7 @@ const prepareRequestData = () => {
     return requestData;
 };
 
-// ===========================
-// 新增的 Base64 处理函数
-// ===========================
-
-/**
- * 提取内容中的 Base64 图片
- * @param {string} content - HTML 内容
- * @returns {string[]} - Base64 图片的 src 数组
- */
+// 从内容中提取Base64编码的图像
 const extractBase64ImagesFromContent = (content) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(content, 'text/html');
@@ -578,102 +570,58 @@ const extractBase64ImagesFromContent = (content) => {
   return images;
 };
 
-/**
- * 将 Base64 转换为 Blob
- * @param {string} base64 - Base64 字符串
- * @param {string} mimeType - MIME 类型
- * @returns {Blob} - Blob 对象
- */
-const base64ToBlob = (base64, mimeType) => {
-  const byteCharacters = atob(base64.split(',')[1]); // 解码Base64数据
-  const byteArrays = [];
-
-  for (let offset = 0; offset < byteCharacters.length; offset++) {
-    const byte = byteCharacters.charCodeAt(offset);
-    byteArrays.push(byte);
-  }
-
-  const byteArray = new Uint8Array(byteArrays);
-  return new Blob([byteArray], { type: mimeType });
-};
-
-/**
- * 上传图片并返回图片 URL
- * @param {File} file - 图片文件
- * @returns {string|null} - 上传后的图片 URL 或 null
- */
-const uploadImage = async (file) => {
+// 获取服务器上的图片并返回其URL
+const fetchImage = async (type, imageName) => {
   try {
-    const formData = new FormData();
-    formData.append("image", file);  // 假设 imageSrc 是一个 File 对象
-    formData.append("type", "content");  // 固定图片类型为 "content"
-
-    const response = await axios.post('/api/uploads/image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    const response = await axios.get(`/api/uploads/images/${type}/${imageName}`, {
+      responseType: 'blob' // 设置响应类型为blob以处理二进制文件
     });
-
     if (response.status === 200) {
-      console.log(response.data.imageUrl);
-      return response.data.imageUrl;
-    } else {
-      console.error('图片上传失败');
-      return null;
+      return URL.createObjectURL(response.data); // 创建一个对象URL
     }
   } catch (error) {
-    console.error('上传图片失败:', error);
+    console.error('获取图片失败:', error);
     return null;
   }
 };
 
-/**
- * 替换内容中的图片 src
- * @param {string} content - HTML 内容
- * @param {string} oldSrc - 旧的 src
- * @param {string} newSrc - 新的 src
- * @returns {string} - 修改后的 HTML 内容
- */
-const replaceImagePlaceholder = (content, oldSrc, newSrc) => {
+// 替换内容中的Base64图片为服务器上的图片URL
+const replaceBase64Images = async (content, type) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(content, 'text/html');
 
-  // 查找所有 img 标签
-  const imgs = doc.querySelectorAll('img');
+  const imgTags = doc.querySelectorAll('img');
+  const replacePromises = [];
 
-  imgs.forEach(img => {
+  // 使用 for...of 循环来正确处理异步操作
+  for (const img of imgTags) {
     const src = img.getAttribute('src');
-    if (src && src === oldSrc) {
-      img.setAttribute('src', newSrc); // 替换 src
-    }
-  });
-  // 返回修改后的 HTML 字符串
-  return doc.body.innerHTML;
-};
-/**
- * 处理内容中的 Base64 图片并替换为上传后的 URL
- * @param {string} content - HTML 内容
- * @returns {Promise<string>} - 处理后的 HTML 内容
- */
-const processContentImages = async (content) => {
-  const base64Images = extractBase64ImagesFromContent(content);
-  let processedContent = content;
+    if (src && src.startsWith('data:image/')) {
+      // 您需要根据实际情况提取 imageName
+      // 例如，可以通过上传 Base64 图片到服务器并获取 imageName
+      // 这里假设 imageName 从 Base64 中提取或另有逻辑
+      // 这里使用一个占位符名称作为示例
+      const imageName = `image_${Date.now()}.png`; // 示例名称，请根据实际情况调整
 
-  for (const base64Src of base64Images) {
-    const mimeType = base64Src.substring(base64Src.indexOf(':') + 1, base64Src.indexOf(';'));
-    const blob = base64ToBlob(base64Src, mimeType);
-    const file = new File([blob], `image.${mimeType.split('/')[1]}`, { type: mimeType });
+      // 将 fetchImage 的调用推入 replacePromises 数组
+      const promise = fetchImage(type, imageName).then((url) => {
+        if (url) {
+          img.setAttribute('src', url);
+        }
+      });
 
-    const uploadedUrl = await uploadImage(file);
-    if (uploadedUrl) {
-      processedContent = replaceImagePlaceholder(processedContent, base64Src, uploadedUrl);
-    } else {
-      // 如果上传失败，可以选择保留原始 Base64 或做其他处理
-      console.warn(`图片上传失败，保留原始 Base64 图片: ${base64Src}`);
+      replacePromises.push(promise);
     }
   }
 
-  return processedContent;
+  // 等待所有图片替换完成
+  await Promise.all(replacePromises);
+  return doc.body.innerHTML;
 };
 
+  await Promise.all(replacePromises);
+  return doc.body.innerHTML;
+};
 // 发送请求
 const fetchQuestions = async () => {
     const requestData = prepareRequestData();
