@@ -282,6 +282,7 @@ const previewPaper = async (paper) => {
                             answer: sub.answer,
                             explanation: sub.explanation,
                             options: sub.options || [],
+                            score: sub.score,
                             type: sub.type,
                             knowledge: sub.knowledge,
                             subScores: sub.subScores || []
@@ -312,7 +313,6 @@ const previewPaper = async (paper) => {
                     name: paper.name,
                     difficulty: paper.difficulty, // 假设试卷对象中有 difficulty 字段
                     totalScore: paper.totalScore
-
                 }
             });
             ElMessage.success(`试卷 "${paper.name}" 已添加到试卷篮`);

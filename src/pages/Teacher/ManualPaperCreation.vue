@@ -551,147 +551,107 @@ const prepareRequestData = () => {
 
     return requestData;
 };
+const replaceImageSrc = async (htmlContent) => {
+  if (!htmlContent) return htmlContent;
 
-// 从内容中提取Base64编码的图像
-const extractBase64ImagesFromContent = (content) => {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(content, 'text/html');
-  const images = [];
+  // 创建一个临时的 DOM 元素来解析 HTML
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = htmlContent;
 
   // 查找所有 img 标签
-  const imgTags = doc.querySelectorAll('img');
-  imgTags.forEach(img => {
+  const images = tempDiv.querySelectorAll('img');
+
+  // 遍历所有 img 标签并替换 src
+  const replacePromises = Array.from(images).map(async (img) => {
     const src = img.getAttribute('src');
-    if (src && src.startsWith('data:image/')) {  // 判断是否为Base64图像
-      images.push(src);
+    if (src && src.startsWith('/uploads/content/')) {
+      const imageName = src.replace('/uploads/content/', '');
+      const imageUrl = `/api/uploads/images/content/${imageName}`;
+      const token = store.getters.getToken; // 直接使用 store 实例访问 getters
+
+      try {
+        // 使用 Axios 获取图片数据，设置响应类型为 blob
+        const response = await axios.get(imageUrl, {
+          responseType: 'blob',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.status === 200) {
+          // 创建 Blob URL
+          const blobUrl = URL.createObjectURL(response.data);
+          img.setAttribute('src', blobUrl);
+        } else {
+          console.error(`获取图片失败: ${imageUrl}`);
+          // 可以设置一个占位图或保留原始 src
+        }
+      } catch (error) {
+        console.error(`获取图片失败: ${imageUrl}`, error);
+        // 可以设置一个占位图或保留原始 src
+      }
     }
   });
 
-  return images;
-};
-
-// 获取服务器上的图片并返回其URL
-const fetchImage = async (type, imageName) => {
-  try {
-    const response = await axios.get(`/api/uploads/images/${type}/${imageName}`, {
-      responseType: 'blob' // 设置响应类型为blob以处理二进制文件
-    });
-    if (response.status === 200) {
-      return URL.createObjectURL(response.data); // 创建一个对象URL
-    }
-  } catch (error) {
-    console.error('获取图片失败:', error);
-    return null;
-  }
-};
-
-// 替换内容中的Base64图片为服务器上的图片URL
-const replaceBase64Images = async (content, type) => {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(content, 'text/html');
-
-  const imgTags = doc.querySelectorAll('img');
-  const replacePromises = [];
-
-  // 使用 for...of 循环来正确处理异步操作
-  for (const img of imgTags) {
-    const src = img.getAttribute('src');
-    if (src && src.startsWith('data:image/')) {
-      // 您需要根据实际情况提取 imageName
-      // 例如，可以通过上传 Base64 图片到服务器并获取 imageName
-      // 这里假设 imageName 从 Base64 中提取或另有逻辑
-      // 这里使用一个占位符名称作为示例
-      const imageName = `image_${Date.now()}.png`; // 示例名称，请根据实际情况调整
-
-      // 将 fetchImage 的调用推入 replacePromises 数组
-      const promise = fetchImage(type, imageName).then((url) => {
-        if (url) {
-          img.setAttribute('src', url);
-        }
-      });
-
-      replacePromises.push(promise);
-    }
-  }
-
   // 等待所有图片替换完成
   await Promise.all(replacePromises);
-  return doc.body.innerHTML;
+
+  return tempDiv.innerHTML;
 };
 
-  await Promise.all(replacePromises);
-  return doc.body.innerHTML;
-};
-// 发送请求
 const fetchQuestions = async () => {
-    const requestData = prepareRequestData();
+  const requestData = prepareRequestData();
 
-    try {
+  try {
+    const response = await axios.post('/api/teacher/search-questions', requestData);
+    console.log('发送请求的数据:', requestData);
+    if (response.status === 200) {
+      console.log('传回的题目数据');
+      const data = response.data;
 
-        const response = await axios.post('/api/teacher/search-questions', requestData);
-        console.log('发送请求的数据:', requestData);
-        if (response.status === 200) {
-            console.log('传回的题目数据');
-            const data = response.data;
-            console.log(data);
+      // 处理 bigQuestions
+      const processedBigQuestions = await Promise.all(
+          (data.bigQuestions || []).map(async (bigQuestion) => ({
+            ...bigQuestion,
+            showExplanation: false, // 默认不显示解析
+            body: await replaceImageSrc(bigQuestion.body),
+            subQuestion: bigQuestion.subQuestion.map(sub => ({
+              ...sub,
+              showExplanation: false, // 默认不显示解析
+              // 如果 subQuestion 中也包含 body 或其他 HTML 内容需要处理，可在此添加
+            }))
+          }))
+      );
 
-          // 处理 bigQuestions
-          const processedBigQuestions = await Promise.all(
-              (data.bigQuestions || []).map(async (bigQuestion) => {
-                const processedBody = await processContentImages(bigQuestion.body); // 只处理 bigQuestion.body
-                return {
-                  ...bigQuestion,
-                  body: processedBody,
-                  showExplanation: false, // 默认不显示解析
-                };
-              })
-          );
+      // 处理 questions
+      const processedQuestions = await Promise.all(
+          (data.questions || []).map(async (question) => ({
+            ...question,
+            showExplanation: false, // 默认不显示解析
+            body: question.body ? await replaceImageSrc(question.body) : '',
+            question: !question.body ? await replaceImageSrc(question.question) : question.question
+          }))
+      );
 
-          // 处理 questions
-          const processedQuestions = await Promise.all(
-              (data.questions || []).map(async (question) => {
-                if (question.body) {
-                  // 如果 body 不为空，处理 body
-                  const processedBody = await processContentImages(question.body);
-                  return {
-                    ...question,
-                    body: processedBody,
-                    showExplanation: false, // 默认不显示解析
-                  };
-                } else if (question.question) {
-                  // 如果 body 为空，处理 question
-                  const processedQuestion = await processContentImages(question.question);
-                  return {
-                    ...question,
-                    question: processedQuestion,
-                    showExplanation: false, // 默认不显示解析
-                  };
-                }
-                return question; // 保持原样
-              })
-          );
+      bigQuestions.value = processedBigQuestions;
+      questions.value = processedQuestions;
 
+      console.log('questions:', questions.value);
+      console.log('big:', bigQuestions.value);
 
+      currentPage.value = data.currentPage || 1;
+      totalPages.value = data.totalPages || 1;
+      totalCount.value = data.totalCount || 0;
 
-          bigQuestions.value = processedBigQuestions;
-          questions.value = processedQuestions;
-          console.log('bigQuestions',bigQuestions.value);
-          console.log('questions',questions.value)
-
-
-
-            currentPage.value = data.currentPage || 1;
-            totalPages.value = data.totalPages || 1;
-            totalCount.value = data.totalCount || 0;
-
-            console.log('totalPages',totalPages.value)
-        } else {
-            console.error('获取题目失败：', response.data.message);
-        }
-    } catch (error) {
-        console.error('获取题目失败：', error.message);
+      console.log('totalPages', totalPages.value);
+    } else {
+      console.error('获取题目失败：', response.data.message);
     }
+  } catch (error) {
+    console.error('获取题目失败：', error.message);
+  }
 };
+
 
 
 // 翻页逻辑

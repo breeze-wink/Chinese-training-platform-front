@@ -13,11 +13,11 @@
                 <div class="question-list">
                     <div v-for="(question, index) in basket" :key="question.id" class="question-item">
                         <div v-if="question.type === 'big'">
-                            <strong>题目 {{ index + 1 }}: {{ question.body }}</strong>
+                            <strong>题目 {{ index + 1 }}({{question.score}}分): <span v-html="question.body"></span></strong>
                             <div class="sub-questions">
                                 <div v-for="(sub, subIndex) in question.subQuestions" :key="sub.id"
                                      class="sub-question">
-                                    <p>{{ subIndex + 1 }}. {{ sub.question }}</p>
+                                    <p>{{ subIndex + 1 }}. {{ sub.question }} ({{sub.score}}分)</p>
 
                                     <div v-if="sub.options && sub.options.length > 0" class="options">
                                         <p><strong>选项：</strong></p>
@@ -38,11 +38,12 @@
                         <div v-else>
 
                             <strong>
-                                题目{{ index + 1 }}.
+                                题目{{ index + 1 }}
+                              ({{question.score}}分) .
                                 <!-- 如果有题干，紧跟在序号后面显示题干 -->
-                                <span v-if="question.body">{{ question.body }}</span>
+                                <span v-if="question.body" v-html="question.body"></span>
                                 <!-- 如果没有题干，紧跟在序号后面显示问题 -->
-                                <span v-if="!question.body">{{ question.question }}</span>
+                                <span v-if="!question.body" v-html="question.question"></span>
                             </strong>
 
                             <!-- 如果有题干，则将 sub.question 换行显示 -->
@@ -128,7 +129,7 @@ const toggleExplanations = () => {
 
 // 返回试卷列表
 const returnToPaperList = () => {
-    router.push('/teacher/paper-management'); // 根据实际路由调整
+    router.push('/teacher/paper-manage'); // 根据实际路由调整
 };
 </script>
 
