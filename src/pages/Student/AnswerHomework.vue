@@ -4,13 +4,12 @@
         <div class="main-container">
             <div class="content">
                 <div class="generated-questions">
-                    <h2 class="practice-name">{{ practiceName }}</h2>
+                    <h2 class="practice-name">{{ assignmentName }}</h2>
                     <form @submit.prevent="submitAnswers">
-                        <div v-for="(question, index) in parsedQuestions" :key="index" class="question" :id="'question-' + question.practiceQuestionId" ref="questionElements">
+                        <div v-for="(question, index) in parsedQuestions" :key="index" class="question" :id="'question-' + question.submissionAnswerId" ref="questionElements">
                             <div v-if="shouldShowQuestionBody(question)" class="question-body">
-                                {{ getPrefixOfSequence(question.sequence) }} {{ question.questionBody }}
+                                {{ getPrefixOfSequence(question.sequence) }} {{ question.body }}
                             </div>
-                            <!-- 显示问题序号和内容 -->
                             <div class="question-sequence-content">
                                 <span class="sequence">{{ question.sequence }}. </span>
                                 <span v-html="question.questionContent" class="question-content"></span>
@@ -18,33 +17,30 @@
                             <div v-if="question.questionType === 'CHOICE'" class="options">
                                 <label v-for="option in getOptions(question.questionOptions)" :key="option.label" class="option">
                                     <input type="radio"
-                                           :name="`question-${question.practiceQuestionId}`"
+                                           :name="`question-${question.submissionAnswerId}`"
                                            :value="option.label"
-                                           v-model="studentAnswers[question.practiceQuestionId]">
+                                           v-model="studentAnswers[question.submissionAnswerId]">
                                     <span>{{ option.label }}. {{ option.text }}</span>
                                 </label>
                             </div>
                             <div v-else-if="question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER'" class="quill-editor-container">
-                                <!-- 创建独立的 Quill 编辑器容器 -->
                                 <div
-                                    :id="`quill-editor-${question.practiceQuestionId}`"
+                                    :id="'quill-editor-' + question.submissionAnswerId"
                                     ref="quillEditors"
                                     class="quill-editor"
                                 ></div>
                             </div>
                         </div>
-
                         <div class="button-group">
                             <button type="submit" class="submit-button">提交答案</button>
-                            <button type="button" class="save-button" @click="saveAnswers">暂存答案</button>
                         </div>
                     </form>
                 </div>
             </div>
             <div class="navigation">
                 <ul>
-                    <li v-for="(question, index) in parsedQuestions" :key="index" :class="{ active: currentIndex === question.practiceQuestionId }">
-                        <a :href="'#question-' + question.practiceQuestionId" class="nav-link" @click.prevent="scrollToQuestion(index, question.practiceQuestionId)">
+                    <li v-for="(question, index) in parsedQuestions" :key="index" :class="{ active: currentIndex === question.submissionAnswerId }">
+                        <a :href="'#question-' + question.submissionAnswerId" class="nav-link" @click.prevent="scrollToQuestion(index, question.submissionAnswerId)">
                             <div class="nav-option">
                                 {{ question.sequence }}
                             </div>
@@ -52,11 +48,6 @@
                     </li>
                 </ul>
             </div>
-        </div>
-
-        <!-- 加载提示框 -->
-        <div v-if="loading" class="loading-overlay">
-            <div class="loading-spinner"></div>
         </div>
     </div>
 </template>
@@ -71,7 +62,7 @@ export default {
     components: {
         Header,
     },
-    props: ['practiceId', 'mode', 'practiceName'],
+    props: ['assignmentId', 'assignmentName'],
     data() {
         return {
             studentAnswers: {},
@@ -84,25 +75,29 @@ export default {
     created() {
         this.initialize();
         console.log('Received parameters:', {
-            practiceId: this.practiceId,
-            mode: this.mode,
-            practiceName: this.practiceName
+            assignmentId: this.assignmentId,
+            assignmentName: this.assignmentName
         });
 
-        // 输出问题类型数据，确保问题数据格式正确
         this.parsedQuestions.forEach((question) => {
-            console.log(`Question ID: ${question.practiceQuestionId}, Type: ${question.type}`);
+            const questionId = question.submissionAnswerId || 'Unknown ID';
+            const type = question.questionType || 'Unknown Type';
+            const content = question.questionContent || 'No content available';
+            const options = question.questionOptions || [];
+
+            console.log(`Question ID: ${question.submissionAnswerId}, Type: ${type}`);
+            console.log(`Content: ${content}`);
+            console.log(`Options: ${options}`);
         });
 
         this.logQuestionsInfo();
     },
     mounted() {
-        this.setupIntersectionObserver();
         this.loadImagesInContent(); // 确保DOM更新完成后再加载图片
         this.initQuillEditors();
     },
     updated() {
-        this.setupIntersectionObserver();
+        this.initQuillEditors();
     },
     beforeDestroy() {
         if (this.observer) this.observer.disconnect();
@@ -125,40 +120,34 @@ export default {
         loadImagesInContent() {
             console.log('开始加载题目中的图片');
             this.parsedQuestions.forEach(question => {
-                console.log(`处理问题 ${question.practiceQuestionId}:`, question);
+                console.log(`处理问题 ${question.submissionAnswerId}:`, question);
 
-                // 确保 question.questionContent 是一个字符串
                 if (typeof question.questionContent !== 'string' || !question.questionContent) {
-                    console.error(`问题 ${question.practiceQuestionId} 的 questionContent 不是有效的字符串:`, typeof question.questionContent);
+                    console.error(`问题 ${question.submissionAnswerId} 的 questionContent 不是有效的字符串:`, typeof question.questionContent);
                     return;
                 }
 
-                // 使用DOMParser来解析HTML字符串
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(question.questionContent, 'text/html');
 
-                // 查找所有 img 标签
                 const imgTags = doc.querySelectorAll('img');
                 let hasImage = false;
 
-                // 移除原有的图片标签
                 for (const img of imgTags) {
                     img.remove();
                     hasImage = true;
                 }
 
-                // 将图片插入到新的行中
                 if (hasImage) {
                     const contentDiv = doc.createElement('div');
                     imgTags.forEach(img => {
                         const src = img.getAttribute('src');
                         if (src) {
-                            // 如果是Base64图片，上传并替换为服务器上的图片URL
                             if (src.startsWith('data:image/')) {
                                 const base64Image = src;
                                 const mimeType = base64Image.split(';')[0].split(':')[1];
                                 const blob = this.base64ToBlob(base64Image, mimeType);
-                                const file = new File([blob], 'image.png', { type: mimeType });
+                                const file = new File([blob], 'image.png', {type: mimeType});
                                 this.uploadImage(file).then(newImageUrl => {
                                     if (newImageUrl) {
                                         img.setAttribute('src', newImageUrl);
@@ -166,8 +155,8 @@ export default {
                                 }).catch(error => {
                                     console.error('上传图片失败:', error);
                                 });
-                            } else { // 否则直接替换为新的后端接口路径
-                                const imageName = src.split('/').pop(); // 获取文件名
+                            } else {
+                                const imageName = src.split('/').pop();
                                 const newSrc = `/api/uploads/images/content/${imageName}`;
                                 img.setAttribute('src', newSrc);
                             }
@@ -177,7 +166,6 @@ export default {
                     doc.body.appendChild(contentDiv);
                 }
 
-                // 更新question.questionContent
                 question.questionContent = doc.body.innerHTML;
             });
         },
@@ -220,7 +208,7 @@ export default {
                     this.parsedQuestions = JSON.parse(decodeURIComponent(questionsFromQuery));
                     console.log('Parsed Questions:', this.parsedQuestions);
                     this.parsedQuestions.forEach(question => {
-                        this.studentAnswers[question.practiceQuestionId] = question.answerContent || '';
+                        this.studentAnswers[question.submissionAnswerId] = question.answerContent || '';
                     });
                 } catch (error) {
                     console.error('解析题目失败', error);
@@ -230,131 +218,47 @@ export default {
                 console.error('questions 未定义');
                 this.parsedQuestions = [];
             }
-
-            this.localPracticeId = this.$route.query.practiceId;
-            this.localPracticeName = this.$route.query.practiceName || '未知练习';
-            this.localMode = this.$route.query.mode || 'unknown';
         },
         async submitAnswers() {
-            this.toggleLoading(true);
-
             console.log('开始提交答案');
 
-            if (!this.practiceId) {
-                console.error('practiceId 未定义');
-                this.$message.error('练习ID未定义，请重试。');
+            if (!this.assignmentId) {
+                console.error('assignmentId 未定义');
+                this.$message.error('作业ID未定义，请重试。');
                 return;
             }
 
+            // 构建提交的答案数据
             const answers = this.parsedQuestions.map((question) => ({
-                practiceQuestionId: question.practiceQuestionId,
-                answerContent: this.studentAnswers[question.practiceQuestionId]
+                submissionAnswerId: question.submissionAnswerId, // 假设每个问题都有 submissionAnswerId
+                answerContent: this.studentAnswers[question.submissionAnswerId]
             }));
 
-            answers.forEach(answer => {
-                const question = this.parsedQuestions.find(q => q.practiceQuestionId === answer.practiceQuestionId);
-                if (question && question.questionType === 'CHOICE' && answer.answerContent) {
-                    const options = this.getOptions(question.questionOptions);
-                    const matchedOption = options.find(option => option.text.trim() === answer.answerContent.trim());
-                    if (matchedOption) {
-                        answer.answerContent = matchedOption.label;
-                    } else {
-                        console.warn(`无法匹配到选项: ${answer.answerContent} for question: ${question.questionContent}`);
-                    }
-                }
-            });
-
-            setTimeout(() => {
-                this.toggleLoading(false); // 提交后隐藏加载提示框
-                alert('答案已提交！');
-            }, 2000);
-
-            console.log('即将发送的答案数据:', answers);
-
             try {
-                const response = await axios.post(`/api/student/${this.practiceId}/practice/complete`, {
+                // 发送 POST 请求
+                const response = await axios.post(`/api/student/${this.assignmentId}/homework/complete`, {
                     data: answers
                 });
 
-                if (response.status === 200 && response.data.message === '练习提交成功') {
-                    const score = response.data.score;
-                    if (score !== undefined && score !== null) {
-                        this.$router.push({
-                            name:
-                                'AnswerDetail',
-                            params: {
-                                practiceId: this.practiceId
-                            },
-                            query: {
-                                score: score,
-                                practiceName: this.practiceName
-                            }
-                        });
-                    } else {
-                        console.error('响应中缺少 score 字段', response.data);
-                        this.$message.error('提交答案失败: 响应中缺少 score 字段');
-                    }
-                } else {
-                    console.error('提交答案失败', response.data.message);
-                    this.$message.error('提交答案失败: ${response.data.message}');
-                }
-            } catch (error) {
-                console.error('提交答案失败', error.response ? error.response.data : error.message);
-                this.$message.error('提交答案失败: ${error.response ? error.response.data.message : error.message}');
-            }
-        },
-        async saveAnswers() {
-            this.toggleLoading(true);
-            console.log('开始保存答案');
-            const answers = this.parsedQuestions.map((question) => ({
-                practiceQuestionId: question.practiceQuestionId,
-                answerContent: this.studentAnswers[question.practiceQuestionId]
-            }));
-
-            answers.forEach(answer => {
-                const question = this.parsedQuestions.find(q => q.practiceQuestionId === answer.practiceQuestionId);
-                if (question && question.questionType === 'CHOICE' && answer.answerContent) {
-                    const options = this.getOptions(question.questionOptions);
-                    const matchedOption = options.find(option => option.text.trim() === answer.answerContent.trim());
-                    if (matchedOption) {
-                        answer.answerContent = matchedOption.label;
-                    } else {
-                        console.warn(`无法匹配到选项: ${answer.answerContent} for question: ${question.questionContent}`);
-                    }
-                }
-            });
-
-            setTimeout(() => {
-                this.toggleLoading(false); // 保存后隐藏加载提示框
-                alert('答案已暂存！');
-            }, 2000);
-
-            console.log('即将发送的答案数据:', answers);
-
-            try {
-                const response = await axios.post(`/api/student/${this.practiceId}/practice/save`, {
-                    data: answers
-                });
-
+                // 检查接口返回状态和数据
                 if (response.status === 200) {
-                    this.$message.success('暂存成功');
-                    this.$router.push({name: 'QuestionOptions'});
+                    const message = response.data.message || ''; // 确保 message 存在
+                    if (message === 'success' || message === '练习提交成功') {
+                        // 成功时跳转到 ManageTest 页面
+                        console.log('提交成功，跳转中...');
+                        this.$router.push({ name: 'ManageTest' });
+                    } else {
+                        console.error('提交答案失败：未预期的响应信息', message);
+                        this.$message.error(`提交答案失败：${message}`);
+                    }
                 } else {
-                    this.$message.error('暂存失败');
+                    console.error('提交答案失败：HTTP 状态码非 200', response);
+                    this.$message.error(`提交答案失败：HTTP 状态码 ${response.status}`);
                 }
             } catch (error) {
-                console.error('暂存答案失败', error.response ? error.response.data : error.message);
-                this.$message.error('暂存答案失败');
-            }
-        },
-        toggleLoading(state) {
-            this.loading = state;
-            if (state) {
-                // 禁用页面滑动
-                document.body.style.overflow = 'hidden';
-            } else {
-                // 允许页面滑动
-                document.body.style.overflow = 'auto';
+                console.error('提交答案失败', error);
+                const errorMessage = error.response?.data?.message || error.message || '未知错误';
+                this.$message.error(`提交答案失败：${errorMessage}`);
             }
         },
         setupIntersectionObserver() {
@@ -423,45 +327,39 @@ export default {
             return parts[0];
         },
         initQuillEditors() {
-            this.parsedQuestions.forEach((question) => {
-                if (question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER') {
-                    const editorId = `quill-editor-${question.practiceQuestionId}`;
-                    const editorContainer = document.getElementById(editorId);
+            console.log('Initializing Quill editors...');
+            this.$nextTick(() => {  // 确保 DOM 已更新
+                this.parsedQuestions.forEach((question) => {
+                    if (['FILL_IN_BLANK', 'SHORT_ANSWER'].includes(question.questionType)) {
+                        const editorId = `quill-editor-${question.submissionAnswerId}`;
+                        const editorContainer = document.getElementById(editorId);
 
-                    if (!editorContainer) {
-                        console.error(`未找到 Quill 容器: ${editorId}`);
-                        return;
-                    }
+                        // 确保容器存在并且 Quill 编辑器还没有被初始化
+                        if (editorContainer && !this.quillEditors[question.submissionAnswerId]) {
+                            const quill = new Quill(editorContainer, {
+                                theme: 'snow',
+                                modules: {
+                                    toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }]],
+                                },
+                            });
 
-                    if (!this.quillEditors[question.practiceQuestionId]) {  // 只有当编辑器尚未初始化时才初始化它
-                        const quill = new Quill(editorContainer, {
-                            theme: 'snow',
-                            modules: {
-                                toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }]],
-                            },
-                        });
+                            // 恢复已保存的答案
+                            if (this.studentAnswers[question.submissionAnswerId]) {
+                                quill.root.innerHTML = this.studentAnswers[question.submissionAnswerId];
+                            }
 
-                        // 恢复已保存的答案
-                        if (this.studentAnswers[question.practiceQuestionId]) {
-                            quill.root.innerHTML = this.studentAnswers[question.practiceQuestionId];
+                            // 存储 Quill 实例
+                            this.quillEditors[question.submissionAnswerId] = quill;
+
+                            // 同步答案数据
+                            quill.on('text-change', () => {
+                                this.studentAnswers[question.submissionAnswerId] = quill.root.innerHTML;
+                            });
                         }
-
-                        // 存储 Quill 实例
-                        this.quillEditors[question.practiceQuestionId] = quill;
-
-                        // 同步答案数据
-                        quill.on('text-change', () => {
-                            this.studentAnswers[question.practiceQuestionId] = quill.root.innerHTML;
-                        });
                     }
-                }
+                });
             });
         },
-        getSimpleText(html) {
-            var re1 = new RegExp("<.+?>", "g"); // 匹配HTML标签的正则表达式
-            var msg = html.replace(re1, ''); // 执行替换成空字符
-            return msg;
-        }
     },
     computed: {
         displayedQuestions() {
@@ -694,30 +592,5 @@ input[type="text"]:focus, textarea:focus {
     background-color: #0056b3; /* 更深的蓝色背景 */
     transform: scale(1.1); /* 鼠标悬停时放大效果 */
 }
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
 
-.loading-spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #007BFF;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
 </style>

@@ -9,12 +9,12 @@
                         <p>加载中...</p>
                     </div>
                     <div v-else-if="answers.length > 0" class="answers-container">
-                        <h2>{{ practiceName }} 练习答案</h2>
-                        <p class="score-text"><strong>客观题得分: {{ score }}</strong></p>
+                        <h2>{{ assignmentName }} 作业答案</h2>
+                        <p class="score-text"><strong>分数: {{ score }}</strong></p>
                         <div v-for="(answer, index) in answers" :key="index" :id="'question-' + answer.sequence" class="answer">
                             <p v-if="answer.showQuestionContent" class="question-body">
                                 <span class="question-prefix">{{ getMainQuestionNumber(answer.sequence) }}</span>
-                                {{ answer.questionBody }}
+                                {{ answer.body }}
                             </p>
                             <div class="question-sequence-content">
                                 <span class="sequence">{{ answer.sequence }}. </span>
@@ -37,6 +37,7 @@
                             <p v-if="answer.analysis" class="analysis">
                                 <strong class="highlight">解析:</strong> <span class="answer-text"> {{ answer.analysis }}</span>
                             </p>
+                            <p v-if="answer.feedback"><strong class="highlight">教师反馈:</strong> <span class="answer-text">{{ answer.feedback }}</span></p>
                         </div>
                     </div>
                     <div v-else-if="!isLoading && answers.length === 0">
@@ -68,18 +69,13 @@ export default {
         Header,
         Sidebar,
     },
-    props: {
-        practiceId: {
-            type: Number,
-            required: true
-        }
-    },
     data() {
         return {
             answers: [],
             isLoading: true,
             score: null,
-            practiceName: '',
+            assignmentId: null,
+            assignmentName: '',
             displayedQuestions: new Set() // 用于存储已经显示过的题目编号
         };
     },
@@ -91,9 +87,12 @@ export default {
         }
     },
     created() {
-        if (!this.practiceId) {
-            console.error('practiceId 未定义');
-            this.$message.error('练习ID未定义，请重试。');
+        this.assignmentId = this.$route.params.assignmentId;
+        console.log('从路由中获取的 assignmentId:', this.assignmentId); // 增加调试日志
+
+        if (!this.assignmentId) {
+            console.error('assignmentId 未定义');
+            this.$message.error('作业ID未定义，请重试。');
             this.isLoading = false;
             return;
         }
@@ -107,27 +106,27 @@ export default {
             return;
         }
 
-        console.log('PracticeId:', this.practiceId); // 增加日志以查看 practiceId
+        console.log('AssignmentId:', this.assignmentId); // 增加日志以查看 assignmentId
 
-        // 从路由参数中获取 score 和 practiceName
-        this.score = this.$route.query.score;
-        this.practiceName = this.$route.query.practiceName || this.practiceName;  // 初始化 practiceName
+        // 从路由参数中获取 score 和 assignmentName
+        this.score = this.$route.query.score || null;
+        this.assignmentName = this.$route.query.assignmentName || '';  // 初始化 assignmentName
 
         this.fetchAnswers(studentId);
     },
     methods: {
         async fetchAnswers(studentId) {
             try {
-                const response = await axios.get(`/api/student/${studentId}/practice/get-answer`, {
+                const response = await axios.get(`/api/student/${studentId}/homework/get-answer`, {
                     params: {
-                        practiceId: this.practiceId
+                        assignmentId: this.assignmentId
                     }
                 });
 
                 console.log('响应状态码:', response.status); // 增加日志以查看响应状态码
                 console.log('响应数据:', response.data); // 增加日志以查看响应内容
 
-                if (response.status === 200 && response.data.message === '答案获取成功') {
+                if (response.status === 200 && response.data.message === 'success') {
                     this.score = response.data.totalScore;  // 更新为 totalScore
                     this.answers = response.data.data || [];
 
@@ -203,7 +202,7 @@ export default {
             console.log('开始加载题目中的图片');
             for (let i = 0; i < this.answers.length; i++) {
                 const answer = this.answers[i];
-                // 确保 question.questionContent 是一个字符串
+                // 确保 answer.questionContent 是一个字符串
                 if (typeof answer.questionContent !== 'string' || !answer.questionContent) {
                     console.error(`问题 ${answer.practiceQuestionId} 的 questionContent 不是有效的字符串:`, typeof answer.questionContent);
                     continue;
@@ -291,7 +290,7 @@ export default {
 </script>
 
 <style scoped>
-/* 改进页面字体和颜色风格 */
+/* 使用柔和的色调和优雅的字体 */
 body {
     font-family: 'Arial', sans-serif; /* 使用统一的无衬线字体，现代简洁 */
     background-color: #f8f8f8; /* 浅灰色背景 */
@@ -385,13 +384,13 @@ body {
     margin-bottom: 20px;
 }
 
-.question-content, .question-sequence-content {
-    font-size: 1.1em;
-}
-
 h2, h3, h4, .option-label, .option, .highlight, .answer-text, .question-body, .analysis {
     font-family: 'Arial', sans-serif; /* 统一字体 */
     line-height: 1.6; /* 提高可读性 */
+}
+
+.question-content, .question-sequence-content, .sequence {
+    font-size: 1.1em;
 }
 
 h2 {
@@ -408,11 +407,6 @@ h3 {
     font-weight: 500;
 }
 
-h4, .question-body, .analysis {
-    font-size: 1.4em;
-    color: #444;
-    margin-bottom: 10px;
-}
 
 .option-label {
     font-size: 1.4em;
@@ -467,5 +461,4 @@ h4, .question-body, .analysis {
         margin-top: 20px;
     }
 }
-
 </style>

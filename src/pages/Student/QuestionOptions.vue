@@ -29,16 +29,37 @@
         <el-dialog title="考点选择" v-model="dialogVisible" width="50%" :close-on-click-modal="false" :before-close="handleClose">
             <el-checkbox-group v-model="checkList">
                 <div v-for="(group, type) in groupedKnowledgePoints" :key="type" class="knowledge-group">
-                    <!-- 添加type显示 -->
-                    <div class="knowledge-type">{{ type }}</div>
-                    <h4 @click="logGroupType(type)" style="cursor: pointer; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
-                        {{ type }}
-                    </h4>
+                    <div class="knowledge-type">
+                        <el-checkbox
+                            :label="`${type}-all`"
+                            @change="selectAllType(type, $event)"
+                            class="type-checkbox"
+                        >
+                            {{ type }}
+                        </el-checkbox>
+                        <input
+                            v-if="checkList.includes(`${type}-all`)"
+                            type="number"
+                            min="1"
+                            max="10"
+                            v-model.number="typeQuestionNumbers[type]"
+                            class="type-question-number"
+                            @focus="validateQuestionNumber"
+                            @input="validateQuestionNumber"
+                        />
+                    </div>
                     <div class="knowledge-points">
                         <el-row :gutter="20">
                             <el-col :span="8" v-for="item in group" :key="item.id">
-                                <div class="checkbox-with-input">
-                                    <el-checkbox :label="item.id" @change="toggleQuestionInput(item.id)">
+                                <div
+                                    class="checkbox-with-input"
+                                    :class="{ disabled: checkList.includes(`${type}-all`) }"
+                                >
+                                    <el-checkbox
+                                        :label="item.id"
+                                        @change="toggleQuestionInput(item.id)"
+                                        :disabled="checkList.includes(`${type}-all`)"
+                                    >
                                         {{ item.name }}
                                     </el-checkbox>
                                     <transition name="fade">
@@ -49,6 +70,7 @@
                                             max="10"
                                             v-model.number="questionInputs[item.id].num"
                                             class="question-number"
+                                            :disabled="checkList.includes(`${type}-all`)"
                                             @focus="validateQuestionNumber"
                                             @input="validateQuestionNumber"
                                         />
@@ -100,6 +122,7 @@ export default {
             practiceName: 'Custom Practice',
             isProcessing: false,
             questionInputs: {},
+            typeQuestionNumbers: {},
         };
     },
     computed: {
@@ -158,17 +181,122 @@ export default {
             }
         },
         toggleQuestionInput(knowledgePointId) {
+            // 如果某个 item.name 被选中，则显示或隐藏对应的输入框
             if (this.questionInputs[knowledgePointId]) {
+                // 隐藏当前知识点的输入框
                 delete this.questionInputs[knowledgePointId];
+                this.checkList = this.checkList.filter((id) => id !== knowledgePointId);
             } else {
+                // 显示当前知识点的输入框
                 this.questionInputs[knowledgePointId] = { num: 1 };
+                this.checkList.push(knowledgePointId);
             }
         },
-        async confirmSelection() {
-            // Your confirm logic here
+
+        selectAllType(type, checked) {
+            const group = this.groupedKnowledgePoints[type];
+
+            if (checked) {
+                // 全选该类型的所有知识点
+                group.forEach((item) => {
+                    if (!this.checkList.includes(item.id)) {
+                        this.checkList.push(item.id);  // 将该知识点的ID加入选择列表
+                    }
+                });
+
+                // 仅显示该类型下的题目数量输入框
+                this.showOnlyTypeInputs(type);
+            } else {
+                // 取消全选该类型的所有知识点
+                group.forEach((item) => {
+                    this.checkList = this.checkList.filter((id) => id !== item.id); // 从选择列表中移除该知识点ID
+                });
+
+                // 清除该类型下的所有题目数量输入框
+                this.clearTypeInputs(type);
+
+                // 隐藏所有输入框
+                this.hideAllInputs();
+            }
         },
-        logGroupType(type) {
-            console.log('Clicked Group Type:', type);
+
+        showOnlyTypeInputs(type) {
+            // 重置所有输入框状态为隐藏
+            this.hideAllInputs();
+
+            // 显示该类型的题目数量输入框
+            this.typeQuestionNumbers[type] = 1; // 默认每个类型的题目数量为 1
+        },
+
+        hideAllInputs() {
+            // 隐藏所有输入框
+            for (let key in this.questionInputs) {
+                delete this.questionInputs[key];
+            }
+        },
+
+        clearTypeInputs(type) {
+            const group = this.groupedKnowledgePoints[type];
+            group.forEach((item) => {
+                // 清除输入框数据
+                if (this.questionInputs[item.id]) {
+                    delete this.questionInputs[item.id];
+                }
+            });
+        },
+
+        async confirmSelection() {
+            this.isProcessing = true;
+            this.dialogVisible = false;
+
+            const requestBody = {
+                name: this.practiceName,
+                knowledgePoints: [],
+                questionBodyTypes: [],
+            };
+
+            for (const [type, group] of Object.entries(this.groupedKnowledgePoints)) {
+                if (this.typeQuestionNumbers[type]) {
+                    requestBody.questionBodyTypes.push({ type, num: this.typeQuestionNumbers[type] });
+                } else {
+                    group.forEach((item) => {
+                        if (this.checkList.includes(item.id)) {
+                            requestBody.knowledgePoints.push({
+                                knowledgePointId: parseInt(item.id, 10),
+                                num: this.questionInputs[item.id]?.num || 1,
+                            });
+                        }
+                    });
+                }
+            }
+
+            try {
+                const url = `/api/student/${this.studentId}/practice/generate-define`;
+                const response = await axios.post(url, requestBody, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                const practiceId = response.data.practiceId;
+                if (practiceId !== undefined) {
+                    const questions = response.data.data;
+                    this.$router.push({
+                        name: 'AnswerPractice',
+                        query: {
+                            practiceId: practiceId,
+                            questions: encodeURIComponent(JSON.stringify(questions)),
+                            mode: 'custom',
+                            practiceName: this.practiceName,
+                        },
+                    });
+                } else {
+                    console.error('PracticeId is undefined');
+                }
+            } catch (error) {
+                console.error('考点和题目发送失败', error.response ? error.response.data : error.message);
+            } finally {
+                this.isProcessing = false;
+            }
         },
         validateQuestionNumber(event) {
             const value = parseInt(event.target.value, 10);
@@ -187,6 +315,7 @@ export default {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    background-color: #f0f0f0; /* 背景改为浅灰色 */
 }
 
 .main-container {
@@ -229,6 +358,31 @@ export default {
     padding: 5px;
     border: 1px solid #ccc;
     border-radius: 4px;
+}
+
+.type-selection {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px; /* 在类型选择之间增加间距 */
+}
+
+.type-selection .el-checkbox {
+    margin-right: 20px; /* 增加复选框和文本间的间距 */
+}
+
+.type-selection .type-question-number {
+    width: 50px; /* 增加输入框宽度 */
+    padding: 6px 12px; /* 增加输入框内边距 */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center; /* 居中对齐输入框内的数字 */
+    transition: all 0.3s ease; /* 添加过渡效果 */
+}
+
+.type-selection .type-question-number:focus {
+    border-color: #007BFF; /* 输入框聚焦时改变边框颜色 */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* 输入框聚焦时添加阴影 */
 }
 
 button {
@@ -311,18 +465,25 @@ button:hover {
 .checkbox-with-input {
     display: flex;
     align-items: center;
+    margin-bottom: 10px; /* 在每个考点项之间增加间距 */
 }
 
 .checkbox-with-input .el-checkbox {
-    margin-right: 10px;
+    margin-right: 20px; /* 增加复选框和文本间的间距 */
 }
 
 .checkbox-with-input .question-number {
-    width: 30px;
-    padding: 5px;
+    width: 50px; /* 增加输入框宽度 */
+    padding: 6px 12px; /* 增加输入框内边距 */
     border: 1px solid #ccc;
     border-radius: 4px;
-    transition: opacity 0.3s ease;
+    text-align: center; /* 居中对齐输入框内的数字 */
+    transition: all 0.3s ease; /* 添加过渡效果 */
+}
+
+.checkbox-with-input .question-number:focus {
+    border-color: #007BFF; /* 输入框聚焦时改变边框颜色 */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* 输入框聚焦时添加阴影 */
 }
 
 .fade-enter-active, .fade-leave-active {

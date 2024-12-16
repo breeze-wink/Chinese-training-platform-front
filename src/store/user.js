@@ -8,7 +8,8 @@ export default createStore({
         user: {
             id: null, // 用户唯一标识符
             role: null, // 用户角色，比如 'teacher' 或 'student'
-            token: null
+            token: null,
+            permission: null
         },
         isAuthenticated: false, // 登录状态
         basket: [] // 添加试卷篮状态
@@ -19,6 +20,7 @@ export default createStore({
             state.user.id = user.id;
             state.user.role = user.role;
             state.user.token = user.token;
+            state.user.permission = user.permission;
             state.isAuthenticated = true;
 
             // 保存用户信息到 localStorage 使用角色作为键的一部分
@@ -30,6 +32,7 @@ export default createStore({
             state.user.id = null;
             state.user.role = null;
             state.user.token = null;
+            state.user.permission = null;
             state.isAuthenticated = false;
 
             // 清除 localStorage 中的用户信息
@@ -55,7 +58,7 @@ export default createStore({
             }
 
             // 如果没有找到最近登录的角色，或者最近登录的角色信息无效，则继续检查其他角色
-            const roles = ['teacher', 'sys-adm', 'sch-adm', 'student'];
+            const roles = ['teacher', 'audit-teacher','sys-adm', 'sch-adm', 'student'];
             for (const role of roles) {
                 const roleKey = `user_${role}`;
                 const user = JSON.parse(localStorage.getItem(roleKey));
@@ -144,6 +147,10 @@ export default createStore({
                 return user ? user.token : null;
             }
             return null;
+        },
+        // 获取用户permission
+        getPermission(state) {
+            return state.user.permission;
         },
         // 检查当前用户是否为教师
         isTeacher(state) {

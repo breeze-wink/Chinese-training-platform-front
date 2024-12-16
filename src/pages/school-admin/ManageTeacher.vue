@@ -14,6 +14,7 @@
           <el-input v-model="search" placeholder="输入教师姓名" style="width: 300px;"></el-input>
           <el-button type="primary" @click="searchTeacher">查询</el-button>
           <el-button type="warning" @click="resetSearch">重置</el-button>
+            <el-button type="success" @click="showCreateManagerDialog">创建审核老师账号</el-button>
         </div>
 
         <el-table :data="paginatedData" style="width: 100%; margin-top: 20px;">
@@ -21,8 +22,6 @@
           <el-table-column prop="email" label="邮箱" width="250"></el-table-column>
           <el-table-column prop="username" label="用户名" width="150"></el-table-column>
           <el-table-column prop="phoneNumber" label="联系电话"></el-table-column>
-          
-
           <el-table-column label="操作">
             <template #default="{ row }">
               <el-button size="small" type="danger" @click="deleteTeacher(row)">删除</el-button>
@@ -38,6 +37,24 @@
             layout="prev, pager, next"
             :total="filteredData.length"
         />
+
+          <!-- 创建审核老师弹窗 -->
+          <el-dialog v-model="createManagerDialogVisible" width="50%" title="创建审核老师账号">
+              <el-form :model="managerForm" status-icon :rules="rules" ref="managerFormRef">
+                  <el-form-item label="邮箱" prop="email">
+                      <el-input v-model="managerForm.email" autocomplete="off"></el-input>
+                  </el-form-item>
+                  <el-form-item label="密码" prop="password">
+                      <el-input type="password" v-model="managerForm.password" autocomplete="off"></el-input>
+                  </el-form-item>
+              </el-form>
+              <span slot="footer" class="dialog-footer">
+            <div class="button-container">
+                <el-button @click="createManagerDialogVisible = false">取 消</el-button>
+                <el-button type="primary" @click="submitCreateManager">确 定</el-button>
+            </div>
+          </span>
+          </el-dialog>
       </div>
     </div>
   </div>
@@ -47,7 +64,7 @@
 import { ref, computed, onMounted } from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination } from 'element-plus';
+import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination, ElDialog, ElForm, ElFormItem } from 'element-plus';
 import axios from 'axios';
 import { useStore } from 'vuex'; // 引入 Vuex
 
@@ -128,6 +145,54 @@ const deleteTeacher = async (teacher) => {
     ElMessage({ message: '删除教师失败，请稍后再试', type: 'error' });
   }
 };
+
+// 创建审核老师相关
+const createManagerDialogVisible = ref(false);
+const managerForm = ref({
+    email: '',
+    password: ''
+});
+const rules = {
+    email: [
+        { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+        { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
+    ],
+    password: [
+        { required: true, message: '请输入密码', trigger: 'blur' },
+        { min: 6, max: 18, message: '长度在 6 到 18 个字符', trigger: 'blur' }
+    ]
+};
+const managerFormRef = ref();
+
+// 显示创建审核老师对话框
+const showCreateManagerDialog = () => {
+    console.log('创建审核老师对话框显示'); // 调试信息
+    createManagerDialogVisible.value = true;
+};
+// 提交创建审核老师请求
+const submitCreateManager = async () => {
+    try {
+        await managerFormRef.value.validate(async (valid) => {
+            if (valid) {
+                const response = await axios.post('/api/school-admin/create-manager', {
+                    email: managerForm.value.email,
+                    password: managerForm.value.password
+                });
+
+                if (response.status === 200) {
+                    ElMessage({ message: '创建成功', type: 'success' });
+                    createManagerDialogVisible.value = false;
+                    managerForm.value.email = '';
+                    managerForm.value.password = '';
+                } else {
+                    ElMessage({ message: '创建失败', type: 'error' });
+                }
+            }
+        });
+    } catch (error) {
+        ElMessage({ message: error.response?.data.message || '创建失败', type: 'error' });
+    }
+};
 </script>
 
 <style scoped>
@@ -163,5 +228,12 @@ const deleteTeacher = async (teacher) => {
   appearance: auto;
   -webkit-appearance: auto;
   -moz-appearance: auto;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center; /* 水平居中 */
+    align-items: center;     /* 垂直居中 */
+    gap: 10px;               /* 按钮之间的间距 */
 }
 </style>

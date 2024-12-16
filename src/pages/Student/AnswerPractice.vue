@@ -6,37 +6,31 @@
                 <div class="generated-questions">
                     <h2 class="practice-name">{{ practiceName }}</h2>
                     <form @submit.prevent="submitAnswers">
-                        <!-- 显示问题 -->
                         <template v-for="question in displayedQuestions" :key="question.practiceQuestionId">
-                            <!-- 显示问题内容 -->
                             <div :id="'question-' + question.practiceQuestionId" ref="questionElements" class="question">
-                                <!-- 显示 questionBody -->
                                 <div v-if="question.showBody" class="question-body">
-                                    <strong>{{ question.number }}. {{ question.questionBody }}</strong>
+                                    <strong>{{ question.number }}. </strong>
+                                      <span v-html="question.questionBody"></span>
                                 </div>
-                                <!-- 显示问题序号和内容 -->
                                 <div class="question-sequence-content">
                                     <span class="sequence">{{ question.sequence }}. </span>
                                     <span v-html="question.questionContent" class="question-content"></span>
                                 </div>
-                                <!-- 选择题 -->
                                 <div v-if="question.type === 'CHOICE'" class="options">
                                     <label v-for="(option, optionIndex) in getOptions(question.questionOptions)" :key="optionIndex" class="option">
                                         <input type="radio" :name="`question-${question.practiceQuestionId}`" :value="option.text" v-model="studentAnswers[question.practiceQuestionId]" @change="logQuestionsInfo">
                                         <span>{{ option.label }}. {{ option.text }}</span>
                                     </label>
                                 </div>
-                                <!-- 填空题或简答题 -->
                                 <div v-else-if="question.type === 'FILL_IN_BLANK' || question.type === 'SHORT_ANSWER'" class="input-field">
-                                    <!-- 创建独立的 Quill 编辑器容器 -->
                                     <div :id="`quill-editor-${question.practiceQuestionId}`" ref="quillEditors" class="quill-editor"></div>
                                 </div>
                             </div>
                         </template>
 
                         <div class="button-group">
-                            <button type="submit" class="submit-button">提交答案</button>
-                            <button type="button" class="save-button" @click="saveAnswers">暂存答案</button>
+                            <button type="submit" class="submit-button" @click="showLoading">提交答案</button>
+                            <button :disabled="isProcessing" type="button" class="save-button" @click="saveAnswers">暂存答案</button>
                         </div>
                     </form>
                 </div>
@@ -54,7 +48,6 @@
             </div>
         </div>
 
-        <!-- 加载提示 -->
         <div v-if="isProcessing" class="loading-modal">
             <div class="modal-content">
                 <p>正在处理，请稍候...</p>
@@ -62,7 +55,6 @@
             </div>
         </div>
 
-        <!-- 遮罩层 -->
         <div v-if="isProcessing" class="overlay"></div>
     </div>
 </template>
@@ -224,6 +216,7 @@ export default {
         if (this.observer) this.observer.disconnect();
         Object.values(this.quillEditors).forEach((editor) => editor.destroy());
     },
+
     methods: {
         loadImagesInContent() {
             console.log('开始加载题目中的图片');
@@ -302,7 +295,19 @@ export default {
             return content;
         },
 
+        showLoading() {
+            this.isProcessing = true;
+            document.body.style.overflow = 'hidden'; // 禁止页面滚动
+        },
+
+        hideLoading() {
+            this.isProcessing = false;
+            document.body.style.overflow = ''; // 恢复页面滚动
+        },
+
         async submitAnswers() {
+            this.showLoading();
+
             this.isProcessing = true;  // 请求开始前设置为 true
 
             console.log('开始提交答案');
@@ -385,6 +390,8 @@ export default {
         },
 
         async saveAnswers() {
+            this.showLoading();
+
             this.isProcessing = true;  // 请求开始前设置为 true
 
             console.log('开始保存答案');
@@ -537,14 +544,15 @@ export default {
 
                         // 恢复已保存的答案
                         if (this.studentAnswers[question.practiceQuestionId]) {
-                            let content = this.studentAnswers[question.practiceQuestionId];
-                            // 移除了上传图片的处理
-                            // uploadAndReplaceImagesInContent(content, question.practiceQuestionId).then(updatedContent => {
-                            //     quill.root.innerHTML = updatedContent; // 更新Quill编辑器的内容
-                            quill.root.innerHTML = content; // 直接设置内容
+                            quill.root.innerHTML = this.studentAnswers[question.practiceQuestionId];
                         }
 
-                        // 存储 Quill 实例
+                        // 监听内容变化，更新 studentAnswers
+                        quill.on('text-change', () => {
+                            const richText = quill.root.innerHTML;
+                            this.studentAnswers[question.practiceQuestionId] = richText;
+                        });
+
                         this.quillEditors[question.practiceQuestionId] = quill;
                     }
                 });
@@ -603,6 +611,7 @@ export default {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    overflow: hidden; /* 禁止整个页面滚动 */
 }
 
 .main-container {
@@ -611,10 +620,11 @@ export default {
 }
 
 .content {
-    flex: 3; /* 增加题目区域的宽度比例 */
-    padding: 20px; /* 为题目区域添加内边距 */
-    padding-left: 200px; /* 与最左方空出一些距离 */
-    height: calc(100vh - 80px); /* 调整高度以适应视口 */
+    flex: 3;
+    padding: 20px;
+    padding-left: 200px;
+    height: calc(100vh - 80px);
+    overflow-y: auto; /* 保持内容区可滚动 */
 }
 
 .generated-questions {
@@ -630,13 +640,13 @@ export default {
 .practice-name {
     font-size: 28px;
     margin-bottom: 20px;
-    font-family: 'SimHei', sans-serif; /* 黑体 */
+    font-family: 'SimHei', sans-serif;
 }
 
 .question {
     margin-bottom: 20px;
-    font-family: 'kaiti', 'Times New Roman', sans-serif; /* 中文宋体，英文新罗马 */
-    font-size: 20px; /* 增大字体大小 */
+    font-family: 'kaiti', 'Times New Roman', sans-serif;
+    font-size: 20px;
 }
 
 .options {
@@ -654,28 +664,25 @@ export default {
     border: 1px solid #ddd;
     border-radius: 5px;
     transition: background 0.3s ease-in-out;
-    font-family: 'kaiti', 'Times New Roman', sans-serif; /* 中文宋体，英文新罗马 */
-    font-size: 18px; /* 增大选项字体大小 */
-}
-
-.option:hover {
-    background: #f0f0f0;
+    font-family: 'kaiti', 'Times New Roman', sans-serif;
+    font-size: 18px;
 }
 
 .option input {
-    appearance: none;
+    appearance: none; /* 移除默认样式 */
     width: 20px;
     height: 20px;
-    border: 2px solid #ccc;
+    border: 2px solid #ccc; /* 默认边框颜色 */
     border-radius: 50%;
     outline: none;
     cursor: pointer;
     position: relative;
-    transition: border 0.3s ease-in-out;
+    transition: border 0.3s ease-in-out, background-color 0.3s ease-in-out;
 }
 
 .option input:checked {
-    border-color: #007BFF;
+    border-color: #007BFF; /* 边框颜色变为蓝色 */
+    background-color: #007BFF; /* 点击时背景填充为蓝色 */
 }
 
 .option input:checked::before {
@@ -686,8 +693,17 @@ export default {
     transform: translate(-50%, -50%);
     width: 12px;
     height: 12px;
-    background: #007BFF;
+    background-color: white; /* 圆圈内部的白色圆点 */
     border-radius: 50%;
+}
+
+.option input:checked:hover {
+    background-color: #0056b3; /* 鼠标悬停时的背景色 */
+    border-color: #0056b3; /* 悬停时边框颜色加深 */
+}
+
+.option:hover {
+    background: #f0f0f0;
 }
 
 .input-field {
@@ -696,31 +712,25 @@ export default {
     gap: 10px;
 }
 
-input[type="text"], textarea {
+.input-field input,
+.input-field textarea {
     width: 100%;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 5px;
-    font-family: 'kaiti', 'Times New Roman', sans-serif; /* 中文宋体，英文新罗马 */
-    font-size: 18px; /* 增大输入框字体大小 */
-    transition: border 0.3s ease-in-out;
-}
-
-input[type="text"]:focus, textarea:focus {
-    border-color: #007BFF;
-    outline: none;
+    font-size: 18px;
 }
 
 .button-group {
     display: flex;
-    justify-content: center; /* 居中对齐按钮 */
+    justify-content: center;
     gap: 10px;
     margin-top: 20px;
 }
 
 .submit-button, .save-button {
     padding: 10px 20px;
-    background-color: #007BFF; /* 设置按钮背景颜色 */
+    background-color: #007BFF;
     color: white;
     border: none;
     border-radius: 5px;
@@ -729,12 +739,12 @@ input[type="text"]:focus, textarea:focus {
 }
 
 .submit-button:hover, .save-button:hover {
-    background-color: #0056b3; /* 更深的蓝色背景 */
+    background-color: #0056b3;
     transform: translateY(-2px);
 }
 
 .navigation {
-    flex: 1; /* 减少导航栏的宽度比例 */
+    flex: 1;
     background: white;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
@@ -742,27 +752,27 @@ input[type="text"]:focus, textarea:focus {
     width: 100%;
     text-align: left;
     transition: transform 0.3s ease-in-out;
-    margin-left: 20px; /* 添加左边距，使导航栏与题目区域有间隔 */
-    font-family: 'SimHei', sans-serif; /* 黑体 */
-    color: #000; /* 黑色 */
+    margin-left: 20px;
+    font-family: 'SimHei', sans-serif;
+    color: #000;
 }
 
 .navigation ul {
     list-style-type: none;
     padding: 0;
     margin: 0;
-    display: flex; /* 使用Flexbox布局 */
-    flex-wrap: wrap; /* 允许换行 */
-    gap: 10px; /* 项目之间的间距 */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .navigation li {
-    margin: 0; /* 移除默认的margin */
+    margin: 0;
 }
 
 .nav-link {
     text-decoration: none;
-    color: #000; /* 黑色 */
+    color: #000;
     display: block;
 }
 
@@ -772,11 +782,11 @@ input[type="text"]:focus, textarea:focus {
     align-items: center;
     width: 40px;
     height: 40px;
-    background: #007BFF; /* 纯蓝色背景 */
+    background: #007BFF;
     border: 1px solid #ddd;
     border-radius: 5px;
-    color: white; /* 白色文字 */
-    font-family: 'SimHei', sans-serif; /* 黑体 */
+    color: white;
+    font-family: 'SimHei', sans-serif;
     transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
     cursor: pointer;
 }
@@ -784,25 +794,23 @@ input[type="text"]:focus, textarea:focus {
 .nav-option:hover,
 .nav-link:hover .nav-option,
 .navigation li.active .nav-option {
-    background-color: #0056b3; /* 更深的蓝色背景 */
-    transform: scale(1.1); /* 鼠标悬停时放大效果 */
+    background-color: #0056b3;
+    transform: scale(1.1);
 }
 
-/* 遮罩层样式 */
 .overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
-    z-index: 999; /* 确保遮罩层在最上层 */
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-/* 加载提示模态窗样式 */
 .loading-modal {
     position: fixed;
     top: 0;
@@ -812,7 +820,7 @@ input[type="text"]:focus, textarea:focus {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000; /* 确保模态窗在遮罩层之上 */
+    z-index: 1000;
 }
 
 .modal-content {
@@ -823,32 +831,6 @@ input[type="text"]:focus, textarea:focus {
     text-align: center;
     max-width: 300px;
     width: 100%;
-}
-
-.generated-questions p {
-    margin: 0 0 1em; /* 为段落提供适当的间距 */
-}
-
-.generated-questions p:empty,
-.generated-questions p:blank {
-    display: none; /* 隐藏空的 <p> 标签 */
-}
-
-.generated-questions p:only-child {
-    margin: 0; /* 当 <p> 是唯一的子元素时，移除默认的外边距 */
-}
-
-.generated-questions img {
-    display: block; /* 使图片独占一行 */
-    margin: 1em 0; /* 为图片前后提供适当的间距 */
-    max-width: 100%; /* 确保图片不会超出容器宽度 */
-    height: auto; /* 保持图片的宽高比 */
-}
-
-.modal-content p {
-    margin: 0 0 10px;
-    font-size: 16px;
-    color: #333;
 }
 
 .spinner {
@@ -865,6 +847,5 @@ input[type="text"]:focus, textarea:focus {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-
 
 </style>
