@@ -8,6 +8,7 @@
                 <div class="question-list">
                     <div v-for="(question, index) in basket" :key="question.id" class="question-item">
                         <div v-if="question.type === 'big'">
+                          v-html="question.question"
                             <strong>题目 {{ index + 1 }}: {{ question.body }}</strong>
                             <div class="sub-questions">
                                 <div v-for="(sub, subIndex) in question.subQuestions" :key="sub.id"

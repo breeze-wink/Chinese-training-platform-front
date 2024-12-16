@@ -131,7 +131,7 @@
                                 <span class="difficulty">正确率: {{ formatDifficulty(bigQuestion.difficulty) }}</span>
                             </div>
                             <div class="question-body">
-                                <strong>{{ bigQuestion.body }}</strong>
+                                <strong v-html="bigQuestion.body"></strong>
                             </div>
                             <div class="sub-questions">
                                 <div v-for="(sub, idx) in bigQuestion.subQuestion" :key="idx" class="sub-question">
@@ -173,10 +173,11 @@
                                 <span class="difficulty">正确率: {{ formatDifficulty(question.difficulty) }}</span>
                             </div>
                             <div class="question-body">
-                                <strong>{{ question.body }}</strong>
+                                <strong v-html="question.body"></strong>
                             </div>
                             <div class="question">
-                                <p>{{ question.question }}</p>
+                              <p v-if="!question.body" v-html="question.question"></p>
+                              <p v-else>{{ question.question }}</p>
                                 <!-- 显示选项 -->
                                 <div v-if="question.options && question.options.length > 0">
                                     <ul class="options-list">
@@ -551,6 +552,128 @@ const prepareRequestData = () => {
     return requestData;
 };
 
+// ===========================
+// 新增的 Base64 处理函数
+// ===========================
+
+/**
+ * 提取内容中的 Base64 图片
+ * @param {string} content - HTML 内容
+ * @returns {string[]} - Base64 图片的 src 数组
+ */
+const extractBase64ImagesFromContent = (content) => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(content, 'text/html');
+  const images = [];
+
+  // 查找所有 img 标签
+  const imgTags = doc.querySelectorAll('img');
+  imgTags.forEach(img => {
+    const src = img.getAttribute('src');
+    if (src && src.startsWith('data:image/')) {  // 判断是否为Base64图像
+      images.push(src);
+    }
+  });
+
+  return images;
+};
+
+/**
+ * 将 Base64 转换为 Blob
+ * @param {string} base64 - Base64 字符串
+ * @param {string} mimeType - MIME 类型
+ * @returns {Blob} - Blob 对象
+ */
+const base64ToBlob = (base64, mimeType) => {
+  const byteCharacters = atob(base64.split(',')[1]); // 解码Base64数据
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset++) {
+    const byte = byteCharacters.charCodeAt(offset);
+    byteArrays.push(byte);
+  }
+
+  const byteArray = new Uint8Array(byteArrays);
+  return new Blob([byteArray], { type: mimeType });
+};
+
+/**
+ * 上传图片并返回图片 URL
+ * @param {File} file - 图片文件
+ * @returns {string|null} - 上传后的图片 URL 或 null
+ */
+const uploadImage = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append("image", file);  // 假设 imageSrc 是一个 File 对象
+    formData.append("type", "content");  // 固定图片类型为 "content"
+
+    const response = await axios.post('/api/uploads/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    if (response.status === 200) {
+      console.log(response.data.imageUrl);
+      return response.data.imageUrl;
+    } else {
+      console.error('图片上传失败');
+      return null;
+    }
+  } catch (error) {
+    console.error('上传图片失败:', error);
+    return null;
+  }
+};
+
+/**
+ * 替换内容中的图片 src
+ * @param {string} content - HTML 内容
+ * @param {string} oldSrc - 旧的 src
+ * @param {string} newSrc - 新的 src
+ * @returns {string} - 修改后的 HTML 内容
+ */
+const replaceImagePlaceholder = (content, oldSrc, newSrc) => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(content, 'text/html');
+
+  // 查找所有 img 标签
+  const imgs = doc.querySelectorAll('img');
+
+  imgs.forEach(img => {
+    const src = img.getAttribute('src');
+    if (src && src === oldSrc) {
+      img.setAttribute('src', newSrc); // 替换 src
+    }
+  });
+  // 返回修改后的 HTML 字符串
+  return doc.body.innerHTML;
+};
+/**
+ * 处理内容中的 Base64 图片并替换为上传后的 URL
+ * @param {string} content - HTML 内容
+ * @returns {Promise<string>} - 处理后的 HTML 内容
+ */
+const processContentImages = async (content) => {
+  const base64Images = extractBase64ImagesFromContent(content);
+  let processedContent = content;
+
+  for (const base64Src of base64Images) {
+    const mimeType = base64Src.substring(base64Src.indexOf(':') + 1, base64Src.indexOf(';'));
+    const blob = base64ToBlob(base64Src, mimeType);
+    const file = new File([blob], `image.${mimeType.split('/')[1]}`, { type: mimeType });
+
+    const uploadedUrl = await uploadImage(file);
+    if (uploadedUrl) {
+      processedContent = replaceImagePlaceholder(processedContent, base64Src, uploadedUrl);
+    } else {
+      // 如果上传失败，可以选择保留原始 Base64 或做其他处理
+      console.warn(`图片上传失败，保留原始 Base64 图片: ${base64Src}`);
+    }
+  }
+
+  return processedContent;
+};
+
 // 发送请求
 const fetchQuestions = async () => {
     const requestData = prepareRequestData();
@@ -562,27 +685,55 @@ const fetchQuestions = async () => {
         if (response.status === 200) {
             console.log('传回的题目数据');
             const data = response.data;
+            console.log(data);
 
-            // 给 bigQuestions 添加 showExplanation 字段
-            bigQuestions.value = (data.bigQuestions || []).map(bigQuestion => ({
-                ...bigQuestion,
-                showExplanation: false, // 默认不显示解析
-                subQuestion: bigQuestion.subQuestion.map(sub => ({
-                    ...sub,
-                    showExplanation: false // 默认不显示解析
-                }))
-            }));
-            // 给 questions 添加 showExplanation 字段
-            questions.value = (data.questions || []).map(question => ({
-                ...question,
-                showExplanation: false // 默认不显示解析
-            }));
-            console.log('questions:',questions.value);
-            console.log('big:',bigQuestions.value);
+          // 处理 bigQuestions
+          const processedBigQuestions = await Promise.all(
+              (data.bigQuestions || []).map(async (bigQuestion) => {
+                const processedBody = await processContentImages(bigQuestion.body); // 只处理 bigQuestion.body
+                return {
+                  ...bigQuestion,
+                  body: processedBody,
+                  showExplanation: false, // 默认不显示解析
+                };
+              })
+          );
+
+          // 处理 questions
+          const processedQuestions = await Promise.all(
+              (data.questions || []).map(async (question) => {
+                if (question.body) {
+                  // 如果 body 不为空，处理 body
+                  const processedBody = await processContentImages(question.body);
+                  return {
+                    ...question,
+                    body: processedBody,
+                    showExplanation: false, // 默认不显示解析
+                  };
+                } else if (question.question) {
+                  // 如果 body 为空，处理 question
+                  const processedQuestion = await processContentImages(question.question);
+                  return {
+                    ...question,
+                    question: processedQuestion,
+                    showExplanation: false, // 默认不显示解析
+                  };
+                }
+                return question; // 保持原样
+              })
+          );
+
+
+
+          bigQuestions.value = processedBigQuestions;
+          questions.value = processedQuestions;
+          console.log('bigQuestions',bigQuestions.value);
+          console.log('questions',questions.value)
+
+
 
             currentPage.value = data.currentPage || 1;
             totalPages.value = data.totalPages || 1;
-
             totalCount.value = data.totalCount || 0;
 
             console.log('totalPages',totalPages.value)

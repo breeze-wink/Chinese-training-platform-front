@@ -74,6 +74,18 @@
                     <el-input v-model="publishForm.referencePaper" :readonly="true" placeholder="引用试卷" style="width: 220px;"></el-input>
                 </el-form-item>
 
+                <!-- 作业描述 -->
+
+                <el-form-item label="作业描述" :label-width="formLabelWidth">
+                    <el-input
+                            v-model="publishForm.description"
+                            type="textarea"
+                            placeholder="请输入此作业相关描述（若无，填写‘无’）"
+                            :autosize="{ minRows: 4, maxRows: 10 }"
+                            style="width: 220px;"></el-input>
+                </el-form-item>
+
+
 
 
                 <el-form-item label="发布对象" :label-width="formLabelWidth">
@@ -243,7 +255,6 @@ const handleSortChange = (sort) => {
 
 
 /*****************按钮逻辑：开始********************/
-const basket = ref([]);  // 用于存储题目信息
 
 // 在 <script setup> 标签内
 const router = useRouter();
@@ -371,6 +382,10 @@ const validationRules = {
         validate: (value) => !!value,
         message: '请填写作业名称'
     },
+    description: {
+        validate: (value) => !!value,
+        message: '请填写作业描述'
+    },
     publishTime: {
         validate: (value) => !!value,
         message: '请选择发布时间'
@@ -430,7 +445,8 @@ const publishForm = ref({
     classes: [],
     groups: [],
     selectedClass: '',
-    selectedStudents: []
+    selectedStudents: [],
+    description: '无'
 });
 // 发布试卷
 const publishHomework = async () => {
@@ -450,6 +466,7 @@ const publishHomework = async () => {
 
     const payload = {
         name: publishForm.value.name,
+        description: publishForm.value.description,
         referencePaperId: publishForm.value.referencePaperId,
         targetIds:targetIds,
         targetType: publishForm.value.targetType,
