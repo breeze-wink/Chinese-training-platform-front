@@ -69,10 +69,16 @@ export default createStore({
                     break;
                 }
             }
+
+            const storedBasket = localStorage.getItem('basket');
+            if (storedBasket) {
+                state.basket = JSON.parse(storedBasket);
+            }
         },
         // 添加试卷篮相关的 mutations
         addQuestionToBasket(state, question) {
             state.basket.push(question);
+            localStorage.setItem('basket', JSON.stringify(state.basket));
         },
         addQuestionsToBasket(state, questions) {
             // 检查并添加新问题，避免重复
@@ -88,9 +94,11 @@ export default createStore({
         },
         removeQuestionFromBasket(state, questionId) {
             state.basket = state.basket.filter(q => q.id !== questionId);
+            localStorage.setItem('basket', JSON.stringify(state.basket));
         },
         clearBasket(state) {
             state.basket = [];
+            localStorage.setItem('basket', JSON.stringify(state.basket));
         }
     },
 
@@ -116,7 +124,6 @@ export default createStore({
         //试卷篮
         addQuestionToBasket({ commit }, question) {
             commit('addQuestionToBasket', question);
-
         },
         addQuestionsToBasket({ commit }, questions) {
             commit('addQuestionsToBasket', questions);
