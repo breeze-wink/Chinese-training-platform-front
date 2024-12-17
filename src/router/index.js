@@ -47,6 +47,8 @@ import PersonalProfiling from "@/pages/Student/PersonalProfiling.vue";
 import AnswerHomework from "@/pages/Student/AnswerHomework.vue";
 import HomeworkDetail from "@/pages/Student/HomeworkDetail.vue";
 import store from '@/store/user';
+import PreviewAutoPaper from "@/pages/Teacher/PreviewAutoPaper.vue";
+import CorrectingPaper from "@/pages/Teacher/CorrectingPaper.vue";
 
 
 
@@ -128,6 +130,13 @@ const routes = [
         component:PreviewPaper,
         meta: { requiresAuth: true }
     },
+    //预览自动生成试卷
+    {
+        path: '/teacher/preview-paper/auto',
+        name: 'PreviewAutoPaper',
+        component:PreviewAutoPaper,
+        meta: { requiresAuth: true }
+    },
     //预览已生成试卷
     {
         path: '/teacher/paper-generated-preview',
@@ -152,6 +161,13 @@ const routes = [
         path: '/teacher/homework-manage',
         name: 'ManageHomework',
         component:ManageHomework,
+        meta: { requiresAuth: true }
+    },
+    //批改作业
+    {
+        path: '/teacher/correcting-paper',
+        name: 'CorrectingPaper',
+        component:CorrectingPaper,
         meta: { requiresAuth: true }
     },
 
