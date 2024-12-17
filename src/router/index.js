@@ -108,6 +108,13 @@ const routes = [
         component: UploadCombinedQuestion,
         meta: { requiresAuth: true }
     },
+    //查看题目
+    {
+        path: '/teacher/view-question',
+        name: 'ViewQuestion',
+        component: ViewQuestion,
+        meta: { requiresAuth: true }
+    },
     //选择组卷方式
     {
         path: '/teacher/test-generation-strategy',

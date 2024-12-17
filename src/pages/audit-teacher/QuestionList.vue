@@ -211,11 +211,14 @@ export default {
 
         // 审核操作
         handleAudit(row) {
+            console.log(row.questions);
             this.router.push({
                 name: 'AuditStrategy',
                 query: {
-                    questionId: row.id,
-                    type: row.type
+                    id: row.id,
+                    questionId: row.questionId,
+                    type: row.type,
+                    source: 'audit'
                 }
             });
         },
@@ -225,8 +228,10 @@ export default {
             this.router.push({
                 name: 'AuditStrategy',
                 query: {
-                    questionId: row.id,
-                    type: row.type
+                    id: row.id,
+                    questionId: row.questionId,
+                    type: row.type,
+                    source: 'edit'
                 }
             });
         }

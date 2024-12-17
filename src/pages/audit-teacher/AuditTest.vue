@@ -13,8 +13,10 @@
                             <!-- 显示 question.body 内容 -->
                             <div class="card">
                                 <div v-html="question.body"></div>
+                                <hr class="section-divider" /> <!-- 分割线 -->
                             </div>
                         </div>
+
                         <div v-else>
                             <!-- 初始显示状态 -->
                             <div v-if="!editMode.content">
@@ -22,8 +24,9 @@
                                 <div v-html="question.content"></div>
                                 <!-- 编辑按钮 -->
                                 <div class="buttons-container d-flex justify-content-end">
-                                    <button @click="toggleEdit('content')" class="edit-btn">进入编辑</button>
+                                    <button @click="toggleEdit('content')" class="edit-btn">编辑</button>
                                 </div>
+                                <hr class="section-divider" /> <!-- 分割线 -->
                             </div>
 
                             <!-- 编辑模式 -->
@@ -44,7 +47,7 @@
                             </div>
                         </div>
 
-                            <!-- 选项部分 -->
+                        <!-- 选项部分 -->
                         <div v-if="question.options?.length" class="card">
                             <h3 class="card-title">选项</h3>
                             <ul class="option-list">
@@ -67,13 +70,72 @@
                                     </div>
 
                                     <!-- 按钮放置在文本框的下方并靠右对齐 -->
-                                    <div class="buttons-container mt-2">
+                                    <div class="buttons-container mt-4">
                                         <button @click="toggleEdit('options', index)" class="edit-btn">
-                                            {{ editMode.options[index] ? '保存' : '进入编辑' }}
+                                            {{ editMode.options[index] ? '保存' : '编辑' }}
                                         </button>
                                     </div>
                                 </li>
                             </ul>
+                            <hr class="section-divider" /> <!-- 分割线 -->
+                        </div>
+
+                        <!-- 答案部分 -->
+                        <div class="card" v-if="question.answer">
+                            <h3 class="card-title">答案</h3>
+                            <div v-text="question.answer" v-if="!editMode.answer"></div>
+                            <textarea
+                                v-model="question.answer"
+                                class="form-control large-textarea"
+                                placeholder="请输入答案"
+                                @input="adjustTextareaHeight"
+                                v-if="editMode.answer"
+                            ></textarea>
+                            <div class="buttons-container d-flex justify-content-end">
+                                <button @click="toggleEdit('answer')" class="edit-btn">
+                                    {{ editMode.answer ? '保存' : '编辑' }}
+                                </button>
+                            </div>
+                            <hr class="section-divider" /> <!-- 分割线 -->
+                        </div>
+
+                        <!-- 知识点部分 -->
+                        <div class="card" v-if="question.knowledgePoint">
+                            <h3 class="card-title">知识点</h3>
+                            <div v-text="question.knowledgePoint" v-if="!editMode.knowledgePoint"></div>
+                            <textarea
+                                v-model="question.knowledgePoint"
+                                class="form-control large-textarea"
+                                placeholder="请输入知识点"
+                                @input="adjustTextareaHeight"
+                                v-if="editMode.knowledgePoint"
+                            ></textarea>
+                            <hr class="section-divider" /> <!-- 分割线 -->
+                        </div>
+
+                        <!-- 解释部分 -->
+                        <div class="card" v-if="question.explanation">
+                            <h3 class="card-title">解释</h3>
+                            <div v-text="question.explanation" v-if="!editMode.explanation"></div>
+                            <textarea
+                                v-model="question.explanation"
+                                class="form-control large-textarea"
+                                placeholder="请输入解释"
+                                @input="adjustTextareaHeight"
+                                v-if="editMode.explanation"
+                            ></textarea>
+                            <div class="buttons-container d-flex justify-content-end">
+                                <button @click="toggleEdit('explanation')" class="edit-btn">
+                                    {{ editMode.explanation ? '保存' : '编辑' }}
+                                </button>
+                            </div>
+                            <hr class="section-divider" /> <!-- 分割线 -->
+                        </div>
+
+                        <!-- 题目类型部分 -->
+                        <div class="card" v-if="question.type">
+                            <h3 class="card-title">题目类型</h3>
+                            <div v-if="!editMode.type">{{ getQuestionTypeLabel(question.type) }}</div>
                         </div>
 
                         <!-- 子题部分 -->
@@ -115,12 +177,14 @@
                                                 @input="adjustTextareaHeight"
                                                 v-if="editMode.subQuestions[index]?.options[optionIndex]"
                                             ></textarea>
-                                            <div class="buttons-container d-flex justify-content-end">
+                                            <div class="buttons-container d-flex justify-content-end mt-4">
                                                 <button @click="toggleEdit('subQuestions', index, 'options', optionIndex)" class="edit-btn">{{ editMode.subQuestions[index]?.options[optionIndex] ? '保存' : '进入编辑' }}</button>
                                             </div>
                                         </li>
                                     </ul>
                                 </div>
+
+                                <hr class="section-divider" /> <!-- 分割线 -->
 
                                 <div class="two-column">
                                     <div>
@@ -138,6 +202,9 @@
                                             <button @click="toggleEdit('subQuestions', index, 'answer')" class="edit-btn">{{ editMode.subQuestions[index]?.answer ? '保存' : '进入编辑' }}</button>
                                         </div>
                                     </div>
+
+                                    <hr class="section-divider" /> <!-- 分割线 -->
+
                                     <div>
                                         <label :for="'subQKnowledgePoint' + index" class="card-title">知识点：</label>
                                         <div v-text="subQ.knowledgePoint" v-if="!editMode.subQuestions[index].knowledgePoint"></div>
@@ -155,6 +222,8 @@
                                 <!-- 增加知识点与解释之间的间距 -->
                                 <div style="height: 40px;"></div> <!-- 可以根据需要调整高度 -->
 
+                                <hr class="section-divider" /> <!-- 分割线 -->
+
                                 <label :for="'subQExplanation' + index" class="card-title">解释：</label>
                                 <div v-text="subQ.explanation" v-if="!editMode.subQuestions[index].explanation"></div>
                                 <textarea
@@ -168,11 +237,12 @@
                                 <div class="buttons-container d-flex justify-content-end">
                                     <button @click="toggleEdit('subQuestions', index, 'explanation')" class="edit-btn">{{ editMode.subQuestions[index].explanation ? '保存' : '进入编辑' }}</button>
                                 </div>
+                                <hr class="section-divider" /> <!-- 分割线 -->
                             </div>
                         </div>
 
-                        <button type="submit" class="submit-btn">批准</button>
-                        <button type="submit" class="submit-btn">驳回</button>
+                        <button v-if="isAudit" @click="approval" type="submit" class="submit-btn">批准</button>
+                        <button v-else @click="rejectQuestion" type="submit" class="submit-btn">驳回</button>
                     </form>
                 </div>
             </div>
@@ -182,9 +252,9 @@
 
 <script setup>
 import { ref, onMounted, nextTick } from 'vue';
-import { useRoute } from 'vue-router';
+import {useRoute, useRouter} from 'vue-router';
 import axios from 'axios';
-import { ElNotification } from 'element-plus';
+import { ElMessageBox, ElNotification } from 'element-plus';
 import { useStore } from 'vuex';
 import { QuillEditor } from '@vueup/vue-quill';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
@@ -193,12 +263,22 @@ import Header from "@/components/Header.vue";
 
 const route = useRoute();
 const store = useStore();
+const router = useRouter();
+const source = route.query.source; // 获取 source 参数
+const isAudit = source === 'audit';
 const loading = ref(true);
 const error = ref(null);
+const id = ref(null);
+const initialImages = ref([]); // 存储初始图片列表
 const question = ref({
     body: '', // 默认空内容
     options: [],
     subQuestions: [],
+    content: '',
+    answer: '',
+    explanation: '',
+    type: '',
+    knowledgePoint: '',
 });
 
 // 编辑状态控制
@@ -206,9 +286,13 @@ const editMode = ref({
     body: false,
     content: false,
     options: [],
-    subQuestions: []
+    subQuestions: [],
+    answer: false,
+    explanation: false,
+    type: false,
 });
 
+// 富文本框上传图片时的处理
 const editorOptions = {
     theme: "snow",
     placeholder: "请输入题目内容",
@@ -218,7 +302,20 @@ const editorOptions = {
             [{ list: "ordered" }, { list: "bullet" }],
             [{ header: [1, 2, 3, false] }],
             [{ align: [] }],
+            ["link", "image"],
         ],
+        // 上传图片时，调用 uploadImage 方法
+        imageDrop: true,
+        imageResize: true,
+        imageHandler: async function (image) {
+            // 上传图片并获得图片 URL
+            const imageUrl = await uploadImage(image);
+            if (imageUrl) {
+                const editor = this.quill;
+                const range = editor.getSelection();
+                editor.insertEmbed(range.index, 'image', imageUrl);
+            }
+        }
     },
 };
 // 初始化编辑状态
@@ -239,9 +336,18 @@ function onEditorChange() {
     nextTick(() => adjustTextareaHeight({ target: document.querySelector(".ql-editor") }));
 }
 
+// 获取当前 HTML 中的图片列表
+function extractImageList(htmlContent) {
+    if (!htmlContent) return [];
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    return Array.from(tempDiv.querySelectorAll('img')).map(img => img.getAttribute('src'));
+}
+
 // 获取题目信息
 onMounted(async () => {
     await fetchQuestion();
+    initialImages.value = extractImageList(question.value.content);
     await nextTick(() => {
         adjustAllTextareasHeight();
         if (question.value.subQuestions?.length) {
@@ -259,6 +365,177 @@ onMounted(async () => {
         }
     });
 });
+
+function getQuestionTypeLabel(type) {
+    const typeMapping = {
+        CHOICE: '选择题',
+        FILL_IN_BLANK: '填空题',
+        SHORT_ANSWER: '简答题',
+    };
+    return typeMapping[type] || '未知类型'; // 默认值为“未知类型”
+}
+
+// 图片路径替换工具
+async function replaceImageSrcUtil(htmlContent) {
+    if (!htmlContent) return htmlContent;
+
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+
+    const images = tempDiv.querySelectorAll('img');
+    console.log(`Found ${images.length} images to replace.`);
+    const replacePromises = Array.from(images).map(async (img) => {
+        const src = img.getAttribute('src');
+        console.log('Original image src:', src);
+
+        if (src && src.startsWith('/uploads/content/')) {
+            const imageName = src.replace('/uploads/content/', '');
+            const imageUrl = `/api/uploads/images/content/${imageName}`;
+            console.log('Fetching image from:', imageUrl);
+
+            const token = store.getters.getToken;
+
+            if (!token) {
+                console.error('Missing authentication token');
+                return;
+            }
+
+            try {
+                const response = await axios.get(imageUrl, {
+                    responseType: 'blob',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (response.status === 200) {
+                    const blobUrl = URL.createObjectURL(response.data);
+                    console.log('Generated Blob URL:', blobUrl);
+                    img.setAttribute('src', blobUrl);
+                } else {
+                    console.error(`Failed to fetch image: ${imageUrl}`);
+                }
+            } catch (error) {
+                console.error(`Error fetching image: ${imageUrl}`, error);
+            }
+        }
+    });
+
+    await Promise.all(replacePromises);
+
+    return tempDiv.innerHTML;
+}
+
+// 删除图片的 API 调用
+async function deleteImage(type, imageName) {
+    try {
+        const token = store.getters.getToken;
+        if (!token) {
+            console.error('Missing authentication token');
+            return;
+        }
+
+        const response = await axios.delete(`/api/uploads/image/${type}/${imageName}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (response.status === 200) {
+            console.log(`Image ${imageName} deleted successfully.`);
+        } else {
+            console.error(`Failed to delete image: ${imageName}`);
+        }
+    } catch (error) {
+        console.error(`Error deleting image: ${imageName}`, error);
+    }
+}
+
+// 在保存内容时，比较初始图片列表与当前图片列表，并删除多余的图片
+async function saveEditedContent() {
+    const currentImages = extractImageList(question.value.content);
+    const deletedImages = initialImages.value.filter(src => !currentImages.includes(src));
+
+    console.log('当前图片列表:', currentImages);
+    console.log('已删除图片列表:', deletedImages);
+
+    // 删除已删除的图片
+    for (const imageSrc of deletedImages) {
+        if (imageSrc.startsWith('/uploads/content/')) {
+            // const imageName = imageSrc.split('/').pop(); // 获取图片名称
+            const imageName = imageSrc.match(/\/([^\/?#]+)(?:[?#]|$)/i)?.[1];
+            await deleteImage('content', imageName);
+        }
+    }
+
+    // 更新初始图片列表
+    initialImages.value = currentImages;
+
+    // 保存编辑后的内容
+    toggleEdit('content'); // 停止编辑模式
+}
+
+// 富文本编辑器上传图片
+async function uploadImage(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('type', 'content'); // 图片类型为内容图片
+
+    const token = store.getters.getToken;
+    if (!token) {
+        ElNotification.error({ title: '错误', message: '缺少认证令牌，无法上传图片' });
+        return;
+    }
+
+    try {
+        const response = await axios.post('/api/uploads/image', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (response.status === 200 && response.data && response.data.imageUrl) {
+            const imageUrl = response.data.imageUrl;
+            return imageUrl; // 返回图片 URL
+        } else {
+            throw new Error('上传图片失败');
+        }
+    } catch (error) {
+        ElNotification.error({ title: '错误', message: error.message || '图片上传失败' });
+        return null; // 上传失败时返回 null
+    }
+}
+
+// 加载题目中的图片
+async function loadImagesForQuestions() {
+    console.log('开始加载问题中的图片');
+
+    const promises = question.value.subQuestions.map(async (subQuestion) => {
+        if (subQuestion.content) {
+            console.log(`正在处理问题内容: ${subQuestion.practiceQuestionId}`);
+            subQuestion.content = await replaceImageSrcUtil(subQuestion.content);
+        }
+        if (subQuestion.body) {
+            console.log(`正在处理问题体: ${subQuestion.practiceQuestionId}`);
+            subQuestion.body = await replaceImageSrcUtil(subQuestion.body);
+        }
+    });
+
+    // 处理主题的图片
+    if (question.value.content) {
+        console.log(`正在处理主问题内容`);
+        question.value.content = await replaceImageSrcUtil(question.value.content);
+    }
+    if (question.value.body) {
+        console.log(`正在处理主问题体`);
+        question.value.body = await replaceImageSrcUtil(question.value.body);
+    }
+
+    await Promise.all(promises);
+
+    console.log('图片加载完成');
+}
 
 async function fetchQuestion() {
     try {
@@ -280,19 +557,30 @@ async function fetchQuestion() {
         if (response.status === 200) {
             const questionData = response.data;
 
-            if (!questionData || !questionData.content) {
-                throw new Error('题目数据未找到');
+            console.log('Received question data:', response.data);
+
+            // 验证返回的数据是否完整
+            if (!questionData || (!questionData.content && !questionData.subQuestions)) {
+                throw new Error('题目数据未找到或数据不完整');
             }
 
             question.value = {
                 ...response.data,
                 body: response.data.body,
                 options: response.data.options || [],
+                content: response.data.content,
+                answer: response.data.answer,
+                explanation: response.data.explanation,
+                type: response.data.type,
                 subQuestions: response.data.subQuestions?.map(subQ => ({
                     ...subQ,
                     options: subQ.options || []
                 })) || []
             };
+
+            // 在获取题目信息后加载图片
+            await loadImagesForQuestions();
+
             nextTick(() => adjustAllTextareasHeight());
         } else {
             throw new Error('获取题目失败');
@@ -333,18 +621,34 @@ function adjustAllTextareasHeight() {
 // 编辑状态切换
 function toggleEdit(section, index = null, field = null, optionIndex = null) {
     if (section === 'content') {
-        // 切换 content 编辑模式
+        if (editMode.value.content) {
+            saveEditedContent();
+        }
         editMode.value.content = !editMode.value.content;
+        question.value.content = question.value.content || ''; // 确保内容更新
     } else if (section === 'body') {
         editMode.value.body = !editMode.value.body;
+        question.value.body = question.value.body || '';
     } else if (section === 'options') {
         editMode.value.options[index] = !editMode.value.options[index];
+        question.value.options[index] = question.value.options[index] || '';
+    } else if (section === 'answer') {
+        editMode.value.answer = !editMode.value.answer;
+        question.value.answer = question.value.answer || '';
+    } else if (section === 'explanation') {
+        editMode.value.explanation = !editMode.value.explanation;
+        question.value.explanation = question.value.explanation || '';
+    } else if (section === 'type') {
+        editMode.value.type = !editMode.value.type;
+        question.value.type = question.value.type || '';
     } else if (section === 'subQuestions') {
         if (field === 'options') {
             editMode.value.subQuestions[index][field][optionIndex] =
                 !editMode.value.subQuestions[index][field][optionIndex];
+            question.value.subQuestions[index].options[optionIndex] = question.value.subQuestions[index].options[optionIndex] || '';
         } else {
             editMode.value.subQuestions[index][field] = !editMode.value.subQuestions[index][field];
+            question.value.subQuestions[index][field] = question.value.subQuestions[index][field] || '';
         }
     }
 
@@ -355,9 +659,150 @@ function toggleEdit(section, index = null, field = null, optionIndex = null) {
 }
 
 // 提交表单
-function submitChanges() {
-    // 处理提交逻辑
+function approval() {
+    console.log("question.value:", question.value);
+    console.log("subQuestions:", question.value.subQuestions);
+    // 构造请求体
+    const requestPayload = {
+        id: route.query.questionId,
+        body: question.value.body || "",
+        questions: []
+    };
+
+    requestPayload.questions = []; // Resets the questions array
+
+    if (route.query.type === 'small') {
+        if (question.value.content && question.value.answer) {
+            console.log("Checking content:", question.value.content, "answer:", question.value.answer);
+            // 只有一个问题
+            requestPayload.questions.push({
+                problem: question.value.content,
+                choices: question.value.options.length ? question.value.options : [],
+                answer: question.value.answer,
+                analysis: question.value.explanation
+            });
+        } else {
+            ElNotification.error({ title: '错误', message: '题目内容或答案不能为空' });
+            return;
+        }
+    } else {
+        // 大题，可能有多个子题
+        if (question.value.body) {
+            requestPayload.body = question.value.body;
+        }
+        for (let i = 0; i < question.value.subQuestions.length; i++) {
+            const subQuestion = question.value.subQuestions[i];
+            if (subQuestion.content && subQuestion.answer) {
+                requestPayload.questions.push({
+                    problem: subQuestion.content,
+                    choices: subQuestion.options.length ? subQuestion.options : [],
+                    answer: subQuestion.answer,
+                    analysis: subQuestion.explanation
+                });
+            } else {
+                ElNotification.error({ title: '错误', message: '子题内容或答案不能为空' });
+                return;
+            }
+        }
+    }
+
+    console.log("Submitting question with id:", requestPayload);
+
+    // 发送PUT请求
+    axios.put('/api/teacher/modify-question', requestPayload)
+        .then(response => {
+            if (response.status === 200) {
+                ElNotification.success({ title: '成功', message: '题目审核已批准' });
+                router.push({ name: 'QuestionList' });
+            } else {
+                throw new Error('请求失败');
+            }
+        })
+        .catch(error => {
+            let errorMessage = '';
+            if (error.response) {
+                errorMessage = error.response.data?.message || '请求失败';
+            } else {
+                errorMessage = '无法连接到服务器，请稍后再试';
+            }
+            ElNotification.error({ title: '错误', message: errorMessage });
+        });
 }
+
+// 驳回题目
+function rejectQuestion() {
+    ElMessageBox.prompt('请输入拒绝上传的备注', '拒绝上传', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPattern: /.*/,
+        inputErrorMessage: '备注不能为空'
+    }).then(({ value }) => {
+        // 用户输入的备注
+        const requestPayload = {
+            id: route.query.id,
+            body: question.value.body || "",
+            comment: value,
+            questions: []
+        };
+
+        if (route.query.type === 'small') {
+            if (question.value.content && question.value.answer) {
+                requestPayload.questions.push({
+                    problem: question.value.content,
+                    choices: question.value.options.length ? question.value.options : [],
+                    answer: question.value.answer,
+                    analysis: question.value.explanation
+                });
+            } else {
+                ElNotification.error({ title: '错误', message: '题目内容或答案不能为空' });
+                return;
+            }
+        } else {
+            if (question.value.body) {
+                requestPayload.body = question.value.body;
+            }
+            for (let i = 0; i < question.value.subQuestions.length; i++) {
+                const subQuestion = question.value.subQuestions[i];
+                if (subQuestion.content && subQuestion.answer) {
+                    requestPayload.questions.push({
+                        problem: subQuestion.content,
+                        choices: subQuestion.options.length ? subQuestion.options : [],
+                        answer: subQuestion.answer,
+                        analysis: subQuestion.explanation
+                    });
+                } else {
+                    ElNotification.error({ title: '错误', message: '子题内容或答案不能为空' });
+                    return;
+                }
+            }
+        }
+
+        console.log("Submitting question with id:", requestPayload);
+
+        axios.put('/api/teacher/approve-question', requestPayload)
+            .then(response => {
+                if (response.status === 200) {
+                    ElNotification.success({ title: '成功', message: '题目审核已驳回' });
+                    // 成功后跳转到 QuestionList 页面
+                    router.push({ name: 'QuestionList' });
+                } else {
+                    throw new Error('请求失败');
+                }
+            })
+            .catch(error => {
+                let errorMessage = '';
+                if (error.response) {
+                    errorMessage = error.response.data?.message || '请求失败';
+                } else {
+                    errorMessage = '无法连接到服务器，请稍后再试';
+                }
+                ElNotification.error({ title: '错误', message: errorMessage });
+            });
+    }).catch(() => {
+        ElNotification.info({ title: '提示', message: '驳回操作已取消' });
+    });
+}
+
 </script>
 
 <style scoped>
@@ -383,13 +828,14 @@ function submitChanges() {
 }
 
 .title {
-    font-size: 30px;
+    font-size: 28px; /* Increased title font size */
     font-weight: bold;
-    margin-bottom: 30px;
+    margin-bottom: 15px; /* Reduced margin */
 }
 
 textarea {
     transition: height 0.2s ease, box-shadow 0.2s ease;
+    font-size: 18px; /* Increased textarea font size */
 }
 
 textarea:focus {
@@ -400,44 +846,78 @@ textarea:focus {
 .form-container {
     display: flex;
     flex-direction: column;
-    gap: 20px; /* 确保子项之间有合理的间距 */
+    gap: 10px; /* Reduced gap between items */
 }
 
 .card {
     background: #ffffff;
-    padding: 30px;
-    border-radius: 12px;
+    padding: 15px; /* Reduced padding */
+    border-radius: 8px;
     border: 1px solid #e8e8e8;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px; /* 确保卡片之间有足够的间距 */
+    margin-bottom: 10px; /* Reduced margin between cards */
 }
 
 .card-title {
-    font-size: 22px;
+    font-size: 22px; /* Increased font size for card titles */
     font-weight: 600;
     color: #2980b9;
-    margin-bottom: 15px;
+    margin-bottom: 8px; /* Reduced margin */
 }
 
 .sub-question {
-    margin-bottom: 20px;
+    margin-bottom: 10px; /* Reduced margin between sub-questions */
+}
+
+.section-divider {
+    border: 0;
+    height: 1px;
+    background: #dcdcdc;
+    margin: 15px 0; /* Reduced margin around divider */
+}
+
+.custom-select {
+    padding: 10px 15px;
+    font-size: 16px;
+    color: #333;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    appearance: none;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.custom-select:hover {
+    border-color: #aaa;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.custom-select:focus {
+    border-color: #409eff;
+    box-shadow: 0 0 8px rgba(64, 158, 255, 0.4);
+}
+
+.custom-select option {
+    font-size: 14px;
+    padding: 8px 10px;
 }
 
 .form-label {
     font-size: 16px;
     font-weight: 500;
-    margin-bottom: 10px;
+    margin-bottom: 8px; /* Reduced margin */
 }
 
 .form-control {
-    padding: 15px;
+    padding: 12px;
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 8px;
     width: 100%;
     background-color: #fff;
     box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
+    margin-bottom: 16px; /* Reduced margin bottom */
 }
 
 .large-textarea {
@@ -454,23 +934,18 @@ textarea:focus {
 }
 
 .two-column {
-    gap: 20px; /* 确保两列之间有合理的间距 */
-}
-
-/* 新增样式，用于控制知识点与解释之间的间距 */
-.spacer {
-    height: 40px; /* 根据需要调整 */
+    gap: 15px; /* Reduced gap between columns */
 }
 
 .edit-btn {
     background-color: #3498db;
     color: white;
-    padding: 8px 16px;
+    padding: 12px 24px; /* Made buttons larger */
     border: none;
-    border-radius: 4px;
+    border-radius: 6px; /* Rounded corners */
     cursor: pointer;
-    font-size: 14px;
-    margin-top: 10px;
+    font-size: 16px; /* Increased font size */
+    margin-top: 12px; /* Increased space between buttons */
 }
 
 .edit-btn:hover {
@@ -479,7 +954,7 @@ textarea:focus {
 
 .submit-btn {
     padding: 15px 40px;
-    font-size: 18px;
+    font-size: 20px; /* Increased font size */
     background: linear-gradient(90deg, #43cea2, #185a9d);
     color: white;
     border: none;
@@ -489,7 +964,7 @@ textarea:focus {
     text-align: center;
     align-self: center;
     margin-top: 20px;
-    width: 200px;
+    width: 220px; /* Adjusted width */
 }
 
 .submit-btn:hover {
@@ -507,7 +982,7 @@ textarea:focus {
 }
 
 .flex-grow-1 {
-    flex-grow: 1; /* 让内容占据剩余空间 */
+    flex-grow: 1;
 }
 
 .justify-content-between {
@@ -515,7 +990,11 @@ textarea:focus {
 }
 
 .mt-2 {
-    margin-top: 10px; /* 给按钮增加适当的上间距 */
+    margin-top: 10px;
+}
+
+.mt-4 {
+    margin-top: 16px;
 }
 
 .align-items-start {
@@ -528,22 +1007,26 @@ textarea:focus {
 
 .option-label {
     font-weight: bold;
+    font-size: 18px; /* Increased option label font size */
 }
+
 .option-content {
     text-align: left;
 }
 
 .buttons-container {
     display: flex;
-    justify-content: flex-end; /* 按钮对齐到右侧 */
-    width: 100%; /* 确保按钮占据整行宽度 */
-    margin-top: 15px;
+    justify-content: flex-end;
+    width: 100%;
+    margin-top: 10px; /* Reduced margin */
 }
 
 @media (max-width: 768px) {
     .two-column {
         flex-direction: column;
-        gap: 20px;
+        gap: 15px; /* Reduced gap in two-column layout */
     }
 }
 </style>
+
+
