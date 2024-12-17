@@ -25,6 +25,16 @@
                     </ul>
                   </div>
 
+                  <!-- 分数选择器 -->
+                  <div class="action-buttons">
+                    <input
+                        type="number"
+                        v-model.number="sub.score"
+                        min="0"
+                        placeholder="设置分数"
+                    />
+                  </div>
+
                   <div v-if="showExplanations" class="explanation">
                     <p><strong>答案：</strong>{{ sub.answer }}</p>
                     <p><strong>解析：</strong>{{ sub.explanation }}</p>
@@ -64,10 +74,7 @@
                 />
               </div>
             </div>
-            <!-- 删除按钮放在卡片的右下角 -->
-            <div class="card-actions">
-              <button @click="removeQuestion(question.id)"  class="delete-button">删除该题</button>
-            </div>
+
           </div>
         </div>
       </div>
@@ -86,7 +93,7 @@
         <p>题目数量：{{ questionCount }}</p>
         <p>试卷总分：{{ totalScore }}</p>
         <p>难度系数：{{ difficultyCoefficient }}</p>
-        <button @click="clearBasket" class="clear-button">清空题目</button>
+
         <button @click="generatePaper" class="generate-button">生成试卷</button>
       </div>
     </div>
@@ -173,16 +180,6 @@ const questionCount = computed(() => {
   return basket.value.length;
 });
 
-// 删除单题
-const removeQuestion = (id) => {
-  store.dispatch('removeQuestionFromBasket', id);
-};
-
-// 清空试卷篮
-const clearBasket = () => {
-  store.dispatch('clearBasket');
-};
-
 // 切换显示解析
 const toggleExplanations = () => {
   showExplanations.value = !showExplanations.value;
@@ -248,12 +245,7 @@ const generatePaper = async () => {
 
   try {
     // 发送 POST 请求
-    const response = await axios.post('/api/teacher/generate-paper', paperData, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-    });
+    const response = await axios.post('/api/teacher/generate-paper', paperData);
 
     // 处理响应
     if (response.status === 200) {
@@ -522,26 +514,47 @@ onBeforeUnmount(() => {
   border-radius: 4px;
 }
 
-.card-actions {
-  display: flex;
-  justify-content: flex-end; /* 将内容对齐到右侧 */
-}
 
-.delete-button {
-  background-color: #f56c6c;
-  color: white;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.delete-button:hover {
-  background-color: #d9363e;
-}
 
 /* 固定右上和右下内容部分样式 */
+
+.right-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* 让右侧内容区的每个子项占据空间 */
+  gap: 20px;
+  background-color: #a2bbe7;
+}
+
+.right-content.top {
+  position: fixed;
+  top: 100px;
+  right: 100px;
+  display: flex;
+  gap: 10px;
+  background-color: #ffffff;
+  padding: 10px;
+  width: 300px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.right-content.bottom {
+  position: fixed;
+  bottom: 100px;
+  right: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background-color: #a2bbe7;
+  padding: 10px;
+  width: 300px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+
 .right-content.top button,
 .right-content.bottom button {
   padding: 10px 20px;
@@ -586,15 +599,7 @@ onBeforeUnmount(() => {
   border-radius: 4px;
 }
 
-.clear-button {
-  background-color: #f56c6c;
-  color: white;
-  margin-top: 10px;
-}
 
-.clear-button:hover {
-  background-color: #d9363e;
-}
 
 .generate-button {
   background-color: #67c23a;

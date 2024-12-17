@@ -48,6 +48,7 @@ import AnswerHomework from "@/pages/Student/AnswerHomework.vue";
 import HomeworkDetail from "@/pages/Student/HomeworkDetail.vue";
 import store from '@/store/user';
 import PreviewAutoPaper from "@/pages/Teacher/PreviewAutoPaper.vue";
+import CorrectingPaper from "@/pages/Teacher/CorrectingPaper.vue";
 
 
 
@@ -160,6 +161,13 @@ const routes = [
         path: '/teacher/homework-manage',
         name: 'ManageHomework',
         component:ManageHomework,
+        meta: { requiresAuth: true }
+    },
+    //批改作业
+    {
+        path: '/teacher/correcting-paper',
+        name: 'CorrectingPaper',
+        component:CorrectingPaper,
         meta: { requiresAuth: true }
     },
 

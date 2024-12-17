@@ -299,11 +299,9 @@ const updateProblem = (value) => {
 const submitQuestion = async () => {
     // 检查知识点是否选择
     const pointId =ref();
-    if(activeTab.value==='ESSAY'){
-      pointId.value=17;
-    }else{
+
       pointId.value=KnowledgePointId.value
-    }
+
     if (!pointId.value) {
         return ElMessage.warning('请先选择分类和知识点！');
     }
