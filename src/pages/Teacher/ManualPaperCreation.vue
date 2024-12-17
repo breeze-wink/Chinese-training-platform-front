@@ -608,6 +608,7 @@ const fetchQuestions = async () => {
     if (response.status === 200) {
       console.log('传回的题目数据');
       const data = response.data;
+      console.log(data);
 
       // 处理 bigQuestions
       const processedBigQuestions = await Promise.all(

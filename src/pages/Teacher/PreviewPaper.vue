@@ -307,11 +307,6 @@ const  generatePaper = async () => {
         console.error(error);
     }
 
-
-
-
-
-
 };
 </script>
 
