@@ -258,7 +258,10 @@ const routes = [
         path: '/student/homework-detail/:assignmentId',
         name: 'HomeworkDetail',
         component: HomeworkDetail,
-        props: true,
+        props: route => ({
+            assignmentId: route.query.assignmentId,
+            assignmentName: route.query.assignmentName
+        }),
         meta: { requiresAuth: true }
     },
     // 试卷管理

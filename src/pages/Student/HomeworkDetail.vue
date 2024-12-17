@@ -88,8 +88,9 @@ export default {
     },
     created() {
         this.assignmentId = this.$route.params.assignmentId;
+        this.assignmentName = this.$route.params.assignmentName;
         console.log('从路由中获取的 assignmentId:', this.assignmentId); // 增加调试日志
-
+        console.log('从路由中获取的 assignmentName:', this.assignmentName); // 增加调试日
         if (!this.assignmentId) {
             console.error('assignmentId 未定义');
             this.$message.error('作业ID未定义，请重试。');
