@@ -51,6 +51,58 @@
         />
       </div>
     </div>
+
+      <!-- 查看完成情况弹窗 -->
+      <el-dialog title="查看完成情况" v-model="dialogVisible" width=700px align-center>
+          <div class="filter-group">
+              <el-select v-model="filterSubmitted" placeholder="选择提交状态" style="width: 200px">
+                  <el-option label="全部" value=""></el-option>
+                  <el-option label="已提交" value="1"></el-option>
+                  <el-option label="未提交" value="0"></el-option>
+              </el-select>
+              <el-select v-model="filterMarked" placeholder="选择批阅状态" style="width: 200px">
+                  <el-option label="全部" value=""></el-option>
+                  <el-option label="已批阅" value="2"></el-option>
+                  <el-option label="待提交" value="1"></el-option>
+                  <el-option label="未批阅" value="0"></el-option>
+              </el-select>
+          </div>
+
+          <el-table :data="paginatedSubmissions" style="width: 100%">
+              <el-table-column prop="studentName" label="学生姓名" width="150"></el-table-column>
+              <el-table-column prop="submitTime" label="提交时间" width="180" :formatter="formatDate"></el-table-column>
+              <el-table-column prop="totalScore" label="总分" width="100"></el-table-column>
+              <el-table-column label="状态" width="120">
+                  <template #default="{ row }">
+                      <el-tag :type="getStatusTagType(row.isSubmitted === 1 ? '已提交' : '未提交')">
+                          {{ row.isSubmitted === 1 ? '已提交' : '未提交' }}
+                      </el-tag>
+                  </template>
+              </el-table-column>
+              <el-table-column label="批阅状态" width="120">
+                  <template #default="{ row }">
+                      <el-tag :type="getStatusTagType(row.isMarked === 2 ? '已批阅' : row.isMarked === 1 ? '待提交' : '未批阅')">
+                          {{ row.isMarked === 2 ? '已批阅' : row.isMarked === 1 ? '待提交' : '未批阅' }}
+                      </el-tag>
+                  </template>
+              </el-table-column>
+          </el-table>
+
+          <!-- 分页 -->
+          <el-pagination
+                  style="margin-top: 20px; justify-content: center;"
+                  @current-change="handleSubmissionPageChange"
+                  :current-page="currentSubmissionPage"
+                  :page-size="submissionPageSize"
+                  layout="prev, pager, next, jumper"
+                  :total="filteredSubmissions.length"
+          />
+
+          <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">关闭</el-button>
+      </span>
+      </el-dialog>
+
   </div>
 </template>
 
@@ -158,16 +210,74 @@ const handlePageChange = (page) => {
   currentPage.value = page;
 };
 
-// 操作按钮逻辑（暂时只显示提示）
+// 操作按钮逻辑
 const viewCompletion = (assignment) => {
-  ElMessage.info(`查看作业 "${assignment.assignmentTitle}" 的完成情况`);
-  // 这里可以添加跳转到完成情况页面的逻辑
+
+    selectedAssignmentId.value = assignment.assignmentId;
+    dialogVisible.value = true;
+    fetchSubmissions(selectedAssignmentId);
+    console.log(selectedAssignmentId.value);
 };
 
 const reviewAssignment = (assignment) => {
   ElMessage.info(`批阅作业 "${assignment.assignmentTitle}"`);
   // 这里可以添加批阅作业的逻辑
 };
+
+/*****************弹窗逻辑：开始********************/
+
+// 弹窗数据
+const dialogVisible = ref(false);
+const selectedAssignmentId = ref(null);
+const submissions = ref([]);
+const filteredSubmissions = ref([]);
+const filterSubmitted = ref('');
+const filterMarked = ref('');
+const currentSubmissionPage = ref(1);
+const submissionPageSize = ref(10);
+
+// 获取提交数据
+const fetchSubmissions = async (assignmentId) => {
+    try {
+        const response = await axios.get(`/api/teacher/${teacherId.value}/get-submission-list`, {
+            params: { assignmentId: assignmentId.value }
+        });
+        if (response.status === 200) {
+            console.log(response.data);
+            submissions.value = response.data.data;
+            filteredSubmissions.value = submissions.value;
+        } else {
+            ElMessage.error('获取提交列表失败');
+        }
+    } catch (error) {
+        ElMessage.error('获取提交列表失败，请稍后再试');
+    }
+};
+
+// 查看完成情况
+
+
+// 获取分页数据
+const paginatedSubmissions = computed(() => {
+    const start = (currentSubmissionPage.value - 1) * submissionPageSize.value;
+    const end = start + submissionPageSize.value;
+    return filteredSubmissions.value.slice(start, end);
+});
+
+// 页码变更时触发
+const handleSubmissionPageChange = (page) => {
+    currentSubmissionPage.value = page;
+};
+
+// 筛选提交状态
+const filterSubmissions = () => {
+    filteredSubmissions.value = submissions.value.filter(submission => {
+        const isSubmitted = filterSubmitted.value ? submission.isSubmitted === filterSubmitted.value : true;
+        const isMarked = filterMarked.value ? submission.isMarked === filterMarked.value : true;
+        return isSubmitted && isMarked;
+    });
+};
+
 </script>
 
 <style scoped>
@@ -210,5 +320,12 @@ const reviewAssignment = (assignment) => {
   display: flex;
   justify-content: center; /* 居中 */
   gap: 10px; /* 按钮之间的间距 */
+}
+
+
+.filter-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 </style>
