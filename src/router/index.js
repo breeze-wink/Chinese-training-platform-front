@@ -16,6 +16,7 @@ import PreviewPaper from "@/pages/Teacher/PreviewPaper.vue";
 import ManagePaper from "@/pages/Teacher/ManagePaper.vue";
 import PreviewGeneratedPaper from "@/pages/Teacher/PreviewGeneratedPaper.vue";
 import ManageHomework from "@/pages/Teacher/ManageHomework.vue";
+import ViewQuestion from "@/pages/Teacher/ViewQuestion.vue";
 
 import AuditTeacherPersonalInfo from "@/pages/audit-teacher/PersonalInfo.vue"
 import AuditStrategy from "@/pages/audit-teacher/AuditTest.vue"

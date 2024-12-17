@@ -64,104 +64,7 @@ import Header from '@/components/Header.vue';
 import axios from 'axios';
 import { nextTick } from 'vue';
 import Quill from 'quill';
-
-const extractBase64ImagesFromContent = (content) => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(content, 'text/html');
-    const images = [];
-
-    // 查找所有 img 标签
-    const imgTags = doc.querySelectorAll('img');
-    imgTags.forEach(img => {
-        const src = img.getAttribute('src');
-        if (src && src.startsWith('data:image/')) {  // 判断是否为Base64图像
-            images.push(src);
-        }
-    });
-
-    return images;
-};
-
-const base64ToBlob = (base64, mimeType) => {
-    const byteCharacters = atob(base64.split(',')[1]); // 解码Base64数据
-    const byteArrays = [];
-
-    for (let offset = 0; offset < byteCharacters.length; offset++) {
-        const byte = byteCharacters.charCodeAt(offset);
-        byteArrays.push(byte);
-    }
-
-    const byteArray = new Uint8Array(byteArrays);
-    return new Blob([byteArray], { type: mimeType });
-};
-
-const uploadImage = async (file) => {
-    try {
-        const formData = new FormData();
-        formData.append("image", file);  // 假设 imageSrc 是一个 File 对象
-        formData.append("type", "content");  // 固定图片类型为 "content"
-
-        const response = await axios.post('/api/uploads/image', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-        });
-
-        if (response.status === 200) {
-            console.log(response.data.imageUrl);
-            return response.data.imageUrl;
-        } else {
-            console.error('图片上传失败');
-        }
-    } catch (error) {
-        console.error('上传图片失败:', error);
-        return null;
-    }
-};
-
-const replaceImagePlaceholder = (content, oldSrc, newSrc) => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(content, 'text/html');
-
-    // 查找所有 img 标签
-    const imgs = doc.querySelectorAll('img');
-
-    imgs.forEach(img => {
-        const src = img.getAttribute('src');
-        if (src && src === oldSrc) {
-            img.setAttribute('src', newSrc); // 替换 src
-        }
-    });
-    // 返回修改后的 HTML 字符串
-    return doc.body.innerHTML;
-};
-
-const fetchImage = async (type, imageName) => {
-    try {
-        const response = await axios.get(`/api/uploads/images/${type}/${imageName}`, {
-            responseType: 'blob' // 设置响应类型为blob以处理二进制文件
-        });
-        if (response.status === 200) {
-            return URL.createObjectURL(response.data); // 创建一个对象URL
-        }
-    } catch (error) {
-        console.error('获取图片失败:', error);
-        return null;
-    }
-};
-
-const uploadAndReplaceImagesInContent = async (content, questionId) => {
-    const base64Images = extractBase64ImagesFromContent(content);
-    for (const base64Image of base64Images) {
-        const mimeType = base64Image.split(';')[0].split(':')[1];
-        const blob = base64ToBlob(base64Image, mimeType);
-        const file = new File([blob], 'image.png', { type: mimeType });
-        const newImageUrl = await uploadImage(file);
-        if (newImageUrl) {
-            content = replaceImagePlaceholder(content, base64Image, newImageUrl);
-        }
-    }
-    this.studentAnswers[questionId] = content; // 更新学生答案
-    return content;
-};
+import user from "@/store/user.js";
 
 export default {
     components: {
@@ -208,9 +111,7 @@ export default {
     mounted() {
         this.setupIntersectionObserver();
         this.initQuillEditors();
-        this.$nextTick(() => {
-            this.loadImagesInContent(); // 确保DOM更新完成后再加载图片
-        });
+        this.loadImagesForQuestions();
     },
     beforeDestroy() {
         if (this.observer) this.observer.disconnect();
@@ -218,81 +119,73 @@ export default {
     },
 
     methods: {
-        loadImagesInContent() {
-            console.log('开始加载题目中的图片');
-            this.parsedQuestions.forEach(question => {
-                // 确保 question.questionContent 是一个字符串
-                if (typeof question.questionContent !== 'string' || !question.questionContent) {
-                    console.error(`问题 ${question.practiceQuestionId} 的 questionContent 不是有效的字符串:`, typeof question.questionContent);
-                    return;
-                }
+        async replaceImageSrcUtil(htmlContent) {
+            if (!htmlContent) return htmlContent;
 
-                // 使用DOMParser来解析HTML字符串
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(question.questionContent, 'text/html');
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
 
-                // 查找所有 img 标签
-                const imgTags = doc.querySelectorAll('img');
-                let hasImage = false;  // 添加标志变量
-                imgTags.forEach(img => {
-                    const src = img.getAttribute('src');
-                    if (src) {
-                        hasImage = true;  // 设置为true表示至少有一个图片
+            const images = tempDiv.querySelectorAll('img');
+            console.log(`Found ${images.length} images to replace.`); // 查看找到的图片数量
+            const replacePromises = Array.from(images).map(async (img) => {
+                const src = img.getAttribute('src');
+                console.log('Original image src:', src);  // 输出原始的 src
 
-                        // 将图片放入一个新的 <p> 标签中
-                        const newImgTag = document.createElement('p');
-                        newImgTag.appendChild(img.cloneNode(true));
-                        img.parentNode.replaceChild(newImgTag, img);
+                if (src && src.startsWith('/uploads/content/')) {
+                    const imageName = src.replace('/uploads/content/', '');
+                    const imageUrl = `/api/uploads/images/content/${imageName}`;
+                    console.log('Fetching image from:', imageUrl);  // 查看请求的 URL
 
-                        // 如果是Base64图片，上传并替换为服务器上的图片URL
-                        if (src.startsWith('data:image/')) {
-                            const base64Image = src;
-                            const mimeType = base64Image.split(';')[0].split(':')[1];
-                            const blob = base64ToBlob(base64Image, mimeType);
-                            const file = new File([blob], 'image.png', {type: mimeType});
-                            uploadImage(file).then(newImageUrl => {
-                                if (newImageUrl) {
-                                    const newSrc = newImageUrl;
-                                    newImgTag.querySelector('img').setAttribute('src', newSrc);
-                                    // 更新question.questionContent
-                                    question.questionContent = doc.body.innerHTML;
-                                }
-                            }).catch(error => {
-                                console.error('上传图片失败:', error);
-                            });
-                        } else { // 否则直接替换为新的后端接口路径
-                            const imageName = src.split('/').pop(); // 获取文件名
-                            const newSrc = `/api/uploads/images/content/${imageName}`;
-                            newImgTag.querySelector('img').setAttribute('src', newSrc);
-                            // 更新question.questionContent
-                            question.questionContent = doc.body.innerHTML;
-                        }
+                    const token = this.$store.getters.getToken; // 获取 token
+
+                    if (!token) {
+                        console.error('Missing authentication token');
+                        return;
                     }
-                });
 
-                // 如果没有图片，移除可能存在的空行
-                if (!hasImage) {
-                    question.questionContent = question.questionContent.replace(/<p><\/p>/g, '');
-                } else {
-                    // 确保图片总是放在新的 <p> 标签中
-                    question.questionContent = question.questionContent.replace(/(<img[^>]*>)/g, '<p>$1</p>');
+                    try {
+                        const response = await axios.get(imageUrl, {
+                            responseType: 'blob',
+                            headers: {
+                                Authorization: `Bearer ${token}`, // Ensure the token is included
+                            },
+                        });
+
+                        if (response.status === 200) {
+                            const blobUrl = URL.createObjectURL(response.data);
+                            console.log('Generated Blob URL:', blobUrl);  // 查看生成的 blob URL
+                            img.setAttribute('src', blobUrl);
+                        } else {
+                            console.error(`Failed to fetch image: ${imageUrl}`);
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching image: ${imageUrl}`, error);
+                    }
                 }
             });
+
+            await Promise.all(replacePromises);
+
+            return tempDiv.innerHTML;
         },
-        async uploadAndReplaceImagesInContent(content, questionId) {
-            const base64Images = extractBase64ImagesFromContent(content);
-            for (const base64Image of base64Images) {
-                const mimeType = base64Image.split(';')[0].split(':')[1];
-                const blob = base64ToBlob(base64Image, mimeType);
-                const file = new File([blob], 'image.png', {type: mimeType});
-                const newImageUrl = await uploadImage(file);
-                if (newImageUrl) {
-                    content = replaceImagePlaceholder(content, base64Image, newImageUrl);
+
+        async loadImagesForQuestions() {
+            console.log('开始加载问题中的图片');  // 添加调试日志
+
+            const promises = this.parsedQuestions.map(async (question) => {
+                if (question.questionContent) {
+                    console.log(`正在处理问题内容: ${question.practiceQuestionId}`);  // 新增日志
+                    question.questionContent = await this.replaceImageSrcUtil(question.questionContent);
                 }
-            }
-            // 更新 studentAnswers
-            this.studentAnswers[questionId] = content;
-            return content;
+                if (question.questionBody) {
+                    console.log(`正在处理问题体: ${question.practiceQuestionId}`);  // 新增日志
+                    question.questionBody = await this.replaceImageSrcUtil(question.questionBody);
+                }
+            });
+
+            await Promise.all(promises);
+
+            console.log('图片加载完成');  // 确认加载完成
         },
 
         showLoading() {
@@ -319,11 +212,6 @@ export default {
                 return;
             }
 
-            // 处理图片上传
-            for (const [questionId, content] of Object.entries(this.studentAnswers)) {
-                let processedContent = await this.uploadAndReplaceImagesInContent(content, questionId);
-                this.studentAnswers[questionId] = processedContent;
-            }
 
             const answers = this.parsedQuestions.map((question) => ({
                 practiceQuestionId: question.practiceQuestionId,
@@ -395,10 +283,6 @@ export default {
             this.isProcessing = true;  // 请求开始前设置为 true
 
             console.log('开始保存答案');
-
-            for (const [questionId, content] of Object.entries(this.studentAnswers)) {
-                await this.uploadAndReplaceImagesInContent(content, questionId);
-            }
 
             // 构建答案数组，使用 practiceQuestionId 作为键
             const answers = this.parsedQuestions.map((question) => ({

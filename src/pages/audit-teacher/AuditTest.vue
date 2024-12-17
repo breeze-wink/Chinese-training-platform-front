@@ -171,8 +171,8 @@
                             </div>
                         </div>
 
-                        <!-- 提交按钮 -->
-                        <button type="submit" class="submit-btn">提交</button>
+                        <button type="submit" class="submit-btn">批准</button>
+                        <button type="submit" class="submit-btn">驳回</button>
                     </form>
                 </div>
             </div>
@@ -275,12 +275,15 @@ async function fetchQuestion() {
                 questionId: route.query.questionId,
                 type: route.query.type,
             },
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
         });
 
         if (response.status === 200) {
+            const questionData = response.data;
+
+            if (!questionData || !questionData.content) {
+                throw new Error('题目数据未找到');
+            }
+
             question.value = {
                 ...response.data,
                 body: response.data.body,
@@ -295,7 +298,16 @@ async function fetchQuestion() {
             throw new Error('获取题目失败');
         }
     } catch (err) {
-        const errorMessage = err.response?.data?.message || err.message || '无法连接到服务器，请稍后再试';
+        let errorMessage = '';
+        if (err.response) {
+            if (err.response.status === 403) {
+                errorMessage = '您没有权限访问该题目。请确认您的权限设置。';
+            } else {
+                errorMessage = err.response?.data?.message || err.message || '无法连接到服务器，请稍后再试';
+            }
+        } else {
+            errorMessage = '无法连接到服务器，请稍后再试';
+        }
         error.value = errorMessage;
         ElNotification.error({ title: '错误', message: errorMessage });
     } finally {

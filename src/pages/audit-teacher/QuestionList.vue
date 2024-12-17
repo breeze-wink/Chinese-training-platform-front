@@ -110,26 +110,29 @@ export default {
                     throw new Error('用户未登录或 Token 不存在');
                 }
 
-                const apiPath = this.questionType === 'access'
-                    ? '/api/teacher/get-all-access-questions'
-                    : '/api/teacher/get-all-waiting-questions';
+                const apiPath =
+                    this.questionType === 'access'
+                        ? '/api/teacher/get-all-access-questions'
+                        : '/api/teacher/get-all-waiting-questions';
 
+                // 发送请求获取题目
                 const response = await axios.get(apiPath, {
                     headers: {
-                        Authorization: `Bearer ${token}`
-                    }
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
 
                 if (response.status === 200) {
                     this.questions = response.data.questions;
                     this.totalQuestions = this.questions.length;
-                    this.updatePaginatedQuestions();
+                    this.updatePaginatedQuestions(); // 更新分页数据
                     console.log('获取题目成功:', this.questions);
                 } else {
                     throw new Error('获取题目失败');
                 }
             } catch (err) {
-                this.error = err.response?.data?.message || err.message || '无法连接到服务器，请稍后再试';
+                this.error =
+                    err.response?.data?.message || err.message || '无法连接到服务器，请稍后再试';
                 ElMessage.error(this.error);
             } finally {
                 this.loading = false;
@@ -145,7 +148,12 @@ export default {
 
         // 选择题目类型时切换
         handleTypeChange() {
+            // 清空当前列表
+            this.questions = [];
+            this.paginatedQuestions = [];
             this.currentPage = 1;
+
+            // 重新获取数据
             this.fetchQuestions();
         },
 
@@ -158,22 +166,23 @@ export default {
         // 拒绝上传
         async handleDelete(row) {
             const token = this.$store.getters.getToken;
+            console.log("Current token:", token); // 打印 token
             if (!token) {
                 ElMessage.error('Token 不存在，请登录');
                 return;
             }
 
-            ElMessageBox.confirm('确定要拒绝此题目的上传吗?', '拒绝上传提示', {
-                type: 'warning',
+            ElMessageBox.prompt('请输入拒绝上传的备注', '拒绝上传', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
-            }).then(async () => {
+                inputPattern: /.*/,
+                inputErrorMessage: '备注不能为空'
+            }).then(async ({ value }) => {
                 try {
-                    const response = await axios.put(`/deny-upload-question`, null, {
-                        params: {
+                    const response = await axios.put(`/api/teacher/deny-upload-question`,{
                             id: row.id,
-                            type: row.type
-                        },
+                            comment: value || '上传被拒绝'
+                    },{
                         headers: {
                             Authorization: `Bearer ${token}`
                         }
@@ -181,6 +190,8 @@ export default {
 
                     if (response.status === 200) {
                         ElMessage.success('题目上传已被拒绝');
+                        this.questions = []; // 清空当前的题目列表
+                        this.paginatedQuestions = []; // 清空当前的分页列表
                         this.fetchQuestions(); // 重新加载题目列表
                     } else {
                         throw new Error('拒绝上传失败');
@@ -189,7 +200,11 @@ export default {
                     // 打印错误的详细信息，查看返回的具体错误信息
                     console.error('Request error:', err.response ? err.response.data : err.message);
                     const errorMessage = err.response?.data?.message || err.message || '未知错误';
-                    ElMessage.error('拒绝上传失败: ' + errorMessage);
+                    if (err.response && err.response.status === 403) {
+                        ElMessage.error('您没有权限拒绝该上传');
+                    } else {
+                        ElMessage.error('拒绝上传失败: ' + errorMessage);
+                    }
                 }
             }).catch(() => {});  // 用户点击取消时不做任何事
         },
