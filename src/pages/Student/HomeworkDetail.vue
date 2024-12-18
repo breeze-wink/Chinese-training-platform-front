@@ -12,10 +12,10 @@
                         <h2>{{ assignmentName }} 作业答案</h2>
                         <p class="score-text"><strong>分数: {{ score }}</strong></p>
                         <div v-for="(answer, index) in answers" :key="index" :id="'question-' + answer.sequence" class="answer">
-                            <p v-if="answer.showQuestionContent" class="question-body">
+                            <div v-if="answer.showQuestionContent" class="question-body">
                                 <span class="question-prefix">{{ getMainQuestionNumber(answer.sequence) }}</span>
-                                {{ answer.body }}
-                            </p>
+                                <div v-html="answer.body" class="question-content"></div>
+                            </div>
                             <div class="question-sequence-content">
                                 <span class="sequence">{{ answer.sequence }}. </span>
                                 <span v-html="answer.questionContent" class="question-content"></span>

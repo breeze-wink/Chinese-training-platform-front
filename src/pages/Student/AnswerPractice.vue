@@ -23,7 +23,7 @@
                                     </label>
                                 </div>
                                 <div v-else-if="question.type === 'FILL_IN_BLANK' || question.type === 'SHORT_ANSWER'" class="input-field">
-                                    <div :id="`quill-editor-${question.practiceQuestionId}`" ref="quillEditors" class="quill-editor"></div>
+                                    <textarea v-model="studentAnswers[question.practiceQuestionId]" :placeholder="'请输入第 ' + question.sequence + ' 题的答案'" class="answer-textarea"></textarea>
                                 </div>
                             </div>
                         </template>
@@ -65,6 +65,8 @@ import axios from 'axios';
 import { nextTick } from 'vue';
 import Quill from 'quill';
 import user from "@/store/user.js";
+import router from "@/router/index.js";
+import {mapGetters} from "vuex";
 
 export default {
     components: {
@@ -83,6 +85,14 @@ export default {
         };
     },
     created() {
+        const studentId = this.getUserId;
+
+        if (!studentId) {
+            console.error('studentId 未定义');
+            this.$message.error('学生ID未定义，请重试。');
+            this.isLoading = false;
+            return;
+        }
         const questionsFromQuery = this.$route.query.questions;
         const mode = this.$route.query.mode || 'default';
 
@@ -110,12 +120,10 @@ export default {
     },
     mounted() {
         this.setupIntersectionObserver();
-        this.initQuillEditors();
         this.loadImagesForQuestions();
     },
     beforeDestroy() {
         if (this.observer) this.observer.disconnect();
-        Object.values(this.quillEditors).forEach((editor) => editor.destroy());
     },
 
     methods: {
@@ -212,6 +220,13 @@ export default {
                 return;
             }
 
+            const studentId = this.getUserId;
+            if (!studentId) {
+                console.error('studentId 未定义');
+                this.$message.error('学生ID未定义，请重试。');
+                this.isProcessing = false;
+                return;
+            }
 
             const answers = this.parsedQuestions.map((question) => ({
                 practiceQuestionId: question.practiceQuestionId,
@@ -234,7 +249,7 @@ export default {
             console.log('即将发送的答案数据:', answers);
 
             try {
-                const response = await axios.post(`/api/student/${this.practiceId}/practice/complete`, {
+                const response = await axios.post(`/api/student/${studentId}/practice/complete`, {
                     data: answers
                 }, {
                     headers: {
@@ -284,6 +299,14 @@ export default {
 
             console.log('开始保存答案');
 
+            const studentId = this.getUserId;
+            if (!studentId) {
+                console.error('studentId 未定义');
+                this.$message.error('学生ID未定义，请重试。');
+                this.isProcessing = false;
+                return;
+            }
+
             // 构建答案数组，使用 practiceQuestionId 作为键
             const answers = this.parsedQuestions.map((question) => ({
                 practiceQuestionId: question.practiceQuestionId,
@@ -307,7 +330,7 @@ export default {
             });
 
             try {
-                const response = await axios.post(`/api/student/${this.practiceId}/practice/save`, {
+                const response = await axios.post(`/api/student/${studentId}/practice/save`, {
                     data: answers
                 }, {
                     headers: {
@@ -397,53 +420,11 @@ export default {
                     return type;
             }
         },
-
-        initQuillEditors() {
-            nextTick(() => {
-                this.parsedQuestions.forEach((question) => {
-                    if (question.type === 'FILL_IN_BLANK' || question.type === 'SHORT_ANSWER') {
-                        const editorId = `quill-editor-${question.practiceQuestionId}`;
-                        const editorContainer = document.getElementById(editorId);
-
-                        if (!editorContainer) {
-                            console.error(`未找到 Quill 容器: ${editorId}`);
-                            return;
-                        }
-
-                        const quill = new Quill(editorContainer, {
-                            theme: 'snow',
-                            modules: {
-                                // toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['link', 'image']],
-                                toolbar: [['bold', 'italic', 'underline'], [{list: 'ordered'}, {list: 'bullet'}]],
-                            },
-                        });
-
-                        // 同步答案数据，直接更新 studentAnswers
-                        quill.on('text-change', () => {
-                            const richText = quill.root.innerHTML;
-                            // 移除了上传图片的处理
-                            // uploadAndReplaceImagesInContent(richText, question.practiceQuestionId).then(updatedContent => {
-                            //     quill.root.innerHTML = updatedContent; // 更新Quill编辑器的内容
-                        });
-
-                        // 恢复已保存的答案
-                        if (this.studentAnswers[question.practiceQuestionId]) {
-                            quill.root.innerHTML = this.studentAnswers[question.practiceQuestionId];
-                        }
-
-                        // 监听内容变化，更新 studentAnswers
-                        quill.on('text-change', () => {
-                            const richText = quill.root.innerHTML;
-                            this.studentAnswers[question.practiceQuestionId] = richText;
-                        });
-
-                        this.quillEditors[question.practiceQuestionId] = quill;
-                    }
-                });
-            });
-        },
     },
     computed: {
+        ...mapGetters(['getUserId']),
+
+
         displayedQuestions() {
             const seenNumbers = new Set();
             const seenTypes = new Set();
@@ -603,6 +584,50 @@ export default {
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 18px;
+}
+
+.answer-textarea {
+    width: 100%;
+    height: 100px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    resize: vertical;
+}
+
+.answer-box {
+    margin: 20px 0;
+    position: relative;
+}
+
+.line {
+    border-top: 1px solid #000;
+    margin-bottom: 10px;
+    text-align: center;
+    position: relative;
+}
+
+.line .answer-label {
+    position: absolute;
+    top: -10px;
+    background-color: #fff;
+    padding: 0 10px;
+    font-family: 'SimSun', '宋体', serif;  /* 使用宋体字体 */
+}
+
+.text-box-container {
+    margin-bottom: 20px;
+}
+
+.answer-box-text {
+    width: 100%;
+    height: 100px;
+    border: 1px solid #000;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .button-group {

@@ -25,8 +25,11 @@
                     <el-table-column prop="inviteCode" label="邀请码"></el-table-column>
                     <el-table-column label="操作">
                         <template #default="{ row }">
-                            <el-button size="small" type="primary" @click="viewClassDetails(row)">查看详情</el-button>
-                            <el-button size="small" type="danger" @click="deleteClass(row)">删除</el-button>
+                            <div class="action-buttons">
+                                <el-button size="small" type="primary" @click="viewClassDetails(row)">基本信息</el-button>
+                                <el-button size="small" type="primary" @click="viewScore(row)">成绩详情</el-button>
+                                <el-button size="small" type="danger" @click="deleteClass(row)">删除</el-button>
+                            </div>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -43,7 +46,7 @@
                 ></el-pagination>
 
                 <!-- 班级详情弹窗 -->
-                <el-dialog v-model="classDetailsDialogVisible" width="60%" title="班级详情">
+                <el-dialog v-model="classDetailsDialogVisible" width="60%" title="基本信息">
                     <div v-if="classDetails">
                         <!-- 班级信息 -->
                         <div class="class-info">
@@ -70,6 +73,20 @@
                                 <el-table-column prop="studentName" label="学生姓名"></el-table-column>
                             </el-table>
                         </div>
+                    </div>
+                </el-dialog>
+
+                <!-- 成绩详情弹窗 -->
+                <el-dialog v-model="scoreDetailsDialogVisible" width="60%" title="成绩详情">
+                    <div v-if="scoreDetails.length > 0">
+                        <h4>班级成绩详情</h4>
+                        <el-table :data="scoreDetails" style="width: 100%" stripe>
+                            <el-table-column prop="name" label="知识点"></el-table-column>
+                            <el-table-column prop="score" label="掌握情况" width="180"></el-table-column>
+                        </el-table>
+                    </div>
+                    <div v-else>
+                        <p>暂无成绩数据。</p>
                     </div>
                 </el-dialog>
 
@@ -166,6 +183,37 @@ const deleteClass = async (item) => {
         ElMessage({ message: '班级删除失败', type: 'error' });
     }
 };
+
+// 定义成绩详情弹窗相关变量
+const scoreDetailsDialogVisible = ref(false);  // 控制成绩详情弹窗的显示
+const scoreDetails = ref([]);  // 存储成绩数据
+
+// 查看成绩详情
+const viewScore = async (item) => {
+    const token = store.getters.getToken;
+    console.log(item.classId)
+    try {
+        // 调用成绩详情 API
+        const response = await axios.get('/api/school-admin/class/knowledge-point-status', {
+            params: { classId: item.classId }
+        });
+
+        if (response.status === 200 && response.data.data) {
+            scoreDetails.value = response.data.data.map(info => ({
+                name: info.name || '未知知识点',
+                score: info.score !== null && info.score !== undefined ? `${info.score}%` : '暂无数据', // 判断 score 是否为空
+            }));
+            scoreDetailsDialogVisible.value = true;  // 显示弹窗
+            ElMessage({ message: '成绩详情获取成功', type: 'success' });
+        } else {
+            ElMessage({ message: '成绩详情获取失败', type: 'error' });
+        }
+    } catch (error) {
+        ElMessage({ message: '成绩详情获取失败', type: 'error' });
+        console.error("Error fetching score details:", error);
+    }
+};
+
 
 // 加载初始数据
 onMounted(() => {
@@ -265,5 +313,43 @@ onMounted(() => {
 .el-pagination {
     margin-top: 20px;
     text-align: center;
+}
+
+.el-dialog__header {
+    background-color: #f4f7fc;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.el-dialog__footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 15px;
+}
+
+.el-table {
+    margin-top: 10px;
+}
+
+.el-table th {
+    background-color: #409eff;
+    color: #fff;
+    font-weight: bold;
+}
+.action-buttons {
+    display: flex;
+    gap: 10px;  /* 增加按钮之间的间距 */
+    flex-wrap: nowrap;  /* 确保按钮不换行 */
+    justify-content: flex-start;  /* 左对齐 */
+    width: 100%;  /* 容器宽度为100%，确保容纳所有按钮 */
+    max-width: 450px;  /* 设置最大宽度，避免按钮被挤压 */
+    overflow: hidden;  /* 确保按钮不溢出 */
+}
+
+/* 如果按钮文字过长，添加省略号 */
+.action-buttons .el-button {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 </style>

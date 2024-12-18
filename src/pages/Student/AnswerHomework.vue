@@ -8,7 +8,8 @@
                     <form @submit.prevent="submitAnswers">
                         <div v-for="(question, index) in parsedQuestions" :key="index" class="question" :id="'question-' + question.submissionAnswerId" ref="questionElements">
                             <div v-if="shouldShowQuestionBody(question)" class="question-body">
-                                {{ getPrefixOfSequence(question.sequence) }} {{ question.body }}
+                                {{ getPrefixOfSequence(question.sequence) }}
+                                <span v-html="question.body" class="question-content"></span>
                             </div>
                             <div class="question-sequence-content">
                                 <span class="sequence">{{ question.sequence }}. </span>
@@ -23,12 +24,15 @@
                                     <span>{{ option.label }}. {{ option.text }}</span>
                                 </label>
                             </div>
-                            <div v-else-if="question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER'" class="quill-editor-container">
-                                <div
-                                    :id="'quill-editor-' + question.submissionAnswerId"
-                                    ref="quillEditors"
-                                    class="quill-editor"
-                                ></div>
+                            <!-- 将富文本框替换为普通文本框 -->
+                            <div v-else-if="question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER'" class="text-editor-container">
+                                <textarea
+                                    :id="'textarea-' + question.submissionAnswerId"
+                                    v-model="studentAnswers[question.submissionAnswerId]"
+                                    class="answer-textarea"
+                                    rows="4"
+                                    placeholder="请输入答案...">
+                                </textarea>
                             </div>
                         </div>
                         <div class="button-group">
@@ -57,6 +61,7 @@ import Header from '@/components/Header.vue';
 import axios from 'axios';
 import { nextTick } from 'vue';
 import Quill from 'quill';
+import {mapGetters} from "vuex";
 
 export default {
     components: {
@@ -73,6 +78,15 @@ export default {
         };
     },
     created() {
+        const studentId = this.getUserId;
+
+        if (!studentId) {
+            console.error('studentId 未定义');
+            this.$message.error('学生ID未定义，请重试。');
+            this.isLoading = false;
+            return;
+        }
+
         this.initialize();
         console.log('Received parameters:', {
             assignmentId: this.assignmentId,
@@ -94,10 +108,6 @@ export default {
     },
     mounted() {
         this.loadImagesForQuestions(); // 确保DOM更新完成后再加载图片
-        this.initQuillEditors();
-    },
-    updated() {
-        this.initQuillEditors();
     },
     beforeDestroy() {
         if (this.observer) this.observer.disconnect();
@@ -209,6 +219,14 @@ export default {
         async submitAnswers() {
             console.log('开始提交答案');
 
+            const studentId = this.getUserId;
+            if (!studentId) {
+                console.error('studentId 未定义');
+                this.$message.error('学生ID未定义，请重试。');
+                this.isProcessing = false;
+                return;
+            }
+
             if (!this.assignmentId) {
                 console.error('assignmentId 未定义');
                 this.$message.error('作业ID未定义，请重试。');
@@ -223,7 +241,7 @@ export default {
 
             try {
                 // 发送 POST 请求
-                const response = await axios.post(`/api/student/${this.assignmentId}/homework/complete`, {
+                const response = await axios.post(`/api/student/${studentId}/homework/complete`, {
                     data: answers
                 });
 
@@ -313,42 +331,10 @@ export default {
             const parts = sequence.split('.');
             return parts[0];
         },
-        initQuillEditors() {
-            console.log('Initializing Quill editors...');
-            this.$nextTick(() => {  // 确保 DOM 已更新
-                this.parsedQuestions.forEach((question) => {
-                    if (['FILL_IN_BLANK', 'SHORT_ANSWER'].includes(question.questionType)) {
-                        const editorId = `quill-editor-${question.submissionAnswerId}`;
-                        const editorContainer = document.getElementById(editorId);
-
-                        // 确保容器存在并且 Quill 编辑器还没有被初始化
-                        if (editorContainer && !this.quillEditors[question.submissionAnswerId]) {
-                            const quill = new Quill(editorContainer, {
-                                theme: 'snow',
-                                modules: {
-                                    toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }]],
-                                },
-                            });
-
-                            // 恢复已保存的答案
-                            if (this.studentAnswers[question.submissionAnswerId]) {
-                                quill.root.innerHTML = this.studentAnswers[question.submissionAnswerId];
-                            }
-
-                            // 存储 Quill 实例
-                            this.quillEditors[question.submissionAnswerId] = quill;
-
-                            // 同步答案数据
-                            quill.on('text-change', () => {
-                                this.studentAnswers[question.submissionAnswerId] = quill.root.innerHTML;
-                            });
-                        }
-                    }
-                });
-            });
-        },
     },
     computed: {
+        ...mapGetters(['getUserId']),
+
         displayedQuestions() {
             return this.parsedQuestions.map(question => ({
                 ...question,
@@ -480,6 +466,35 @@ export default {
     height: 12px;
     background: #007BFF;
     border-radius: 50%;
+}
+
+.answer-textarea {
+    width: 100%;
+    height: 100px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    resize: vertical;
+}
+
+.answer-box {
+    margin: 20px 0;
+    position: relative;
+}
+
+.text-box-container {
+    margin-bottom: 20px;
+}
+
+.answer-box-text {
+    width: 100%;
+    height: 100px;
+    border: 1px solid #000;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .input-field {
