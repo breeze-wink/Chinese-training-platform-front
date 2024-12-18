@@ -241,6 +241,7 @@ onMounted(() => {
     background-color: #fff;
     overflow-y: auto;
     margin-right: 50px;
+    margin-left: 300px;
 }
 
 /* 确保弹窗背景不被遮挡 */

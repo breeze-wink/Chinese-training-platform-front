@@ -459,6 +459,7 @@ export default {
 .content {
     flex: 1;
     padding: 20px;
+    margin-left: 300px;
 }
 
 section {

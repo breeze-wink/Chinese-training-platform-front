@@ -1,6 +1,6 @@
 <template>
     <div class="page-container">
-        <Header />
+        <Header/>
 
         <div class="main-container">
             <Sidebar />
@@ -38,10 +38,11 @@ import {
 } from '@/store/poems';
 import Sidebar from "@/components/Sidebar.vue";
 import { useRouter } from 'vue-router';
+import Header from "@/components/Header.vue";
 
 export default {
     name: 'PoemDetail',
-    components: { Sidebar },
+    components: {Header, Sidebar },
     props: {
         id: {
             type: String,
@@ -127,6 +128,7 @@ export default {
     padding-top: 20px; /* 上方内边距，使内容从顶部开始 */
     flex: 1; /* 占据剩余空间 */
     padding-left: 20px; /* 左侧内边距，与 Sidebar 对齐 */
+    margin-left: 300px;
 }
 
 .back-button {

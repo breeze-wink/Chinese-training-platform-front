@@ -75,6 +75,7 @@ onMounted(() => {
     background-color: #fff;
     overflow-y: auto;
     margin-right: 50px; /* 右侧留空隙 */
+    margin-left: 300px;
 }
 
 .pdf-container {
