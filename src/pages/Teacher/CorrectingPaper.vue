@@ -165,6 +165,10 @@ const feedback = ref('');
 
 // 获取当前 submission details
 const fetchSubmissionDetails = async () => {
+
+  const currentIndex = computed(() => store.getters.getCurrentSubmissionIndex);
+  console.log('存起来的',currentIndex.value);
+
   const assignmentIdValue = assignmentId.value;
   const studentIdValue = studentId.value;
 

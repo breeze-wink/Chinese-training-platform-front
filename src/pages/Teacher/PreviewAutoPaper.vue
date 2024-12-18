@@ -27,6 +27,7 @@
 
                   <!-- 分数选择器 -->
                   <div class="action-buttons">
+                    <p><strong>分值:</strong></p>
                     <input
                         type="number"
                         v-model.number="sub.score"
@@ -42,7 +43,7 @@
                 </div>
               </div>
             </div>
-            <div v-else>
+            <div  v-else-if="question.type !== 'essay'">
               <strong>
                 题目 {{ index + 1 }} ({{question.score}}分):
                 <!-- 如果有题干，紧跟在序号后面显示题干 -->
@@ -66,6 +67,27 @@
               </div>
               <!-- 分数选择器和删除按钮紧跟在单题下面 -->
               <div class="action-buttons">
+                <p><strong>分值:</strong></p>
+                <input
+                    type="number"
+                    v-model.number="question.score"
+                    min="0"
+                    placeholder="设置分数"
+                />
+              </div>
+            </div>
+
+            <div v-else-if="question.type === 'essay'">
+              <strong>论文题目 {{ index + 1 }} ({{ question.score }}分): <span v-html="question.content"></span></strong>
+
+              <div v-if="showExplanations" class="explanation">
+                <p><strong>答案：</strong>{{ question.answer }}</p>
+                <p><strong>解析：</strong>{{ question.explanation }}</p>
+              </div>
+
+              <!-- 分数选择器 -->
+              <div class="action-buttons">
+                <p><strong>分值:</strong></p>
                 <input
                     type="number"
                     v-model.number="question.score"
@@ -88,7 +110,7 @@
         <div class="paper-name">
           <label for="paperName">试卷命名：</label>
           <input type="text" id="paperName" v-model="paperName" placeholder="请输入试卷名称"
-                 style="width: 280px"/>
+                 style="width: 280px;margin-top: 10px"/>
         </div>
         <p>题目数量：{{ questionCount }}</p>
         <p>试卷总分：{{ totalScore }}</p>
@@ -315,6 +337,15 @@ const regeneratePaper = async () => {
           }))
       );
 
+      // 处理 essay
+      const processedEssay = data.essay ? {
+        ...data.essay,
+        showExplanation: false, // 默认不显示解析
+        content: await replaceImageSrc(data.essay.content),
+        options: data.essay.options || [],
+        score: 0
+      } : null;
+
       // 清空现有试题篮
       await store.dispatch('clearBasket');
 
@@ -350,11 +381,27 @@ const regeneratePaper = async () => {
           knowledgePoint: bq.knowledgePoint || ''
         }))
       ];
+      // 添加 essay 题目到试题篮
+      if (processedEssay) {
+        basketQuestions.push({
+          id: `essay-${processedEssay.id}`, // 确保唯一性
+          type: 'essay',
+          content: processedEssay.content,
+          answer: processedEssay.answer,
+          explanation: processedEssay.explanation,
+          options: processedEssay.options,
+          score: processedEssay.score,
+          difficulty: processedEssay.difficulty,
+          knowledgePoint: processedEssay.knowledgePoint
+        });
+      }
 
       // 将试题添加到试题篮
       basketQuestions.forEach(question => {
         store.dispatch('addQuestionToBasket', question);
       });
+      const ba = computed(() => store.getters.getBasket);
+      console.log('ba',ba.value);
 
       ElNotification.success({
         title: '重新生成成功',
@@ -483,14 +530,14 @@ onBeforeUnmount(() => {
 
 .sub-questions {
   margin-left: 20px;
-  margin-top: 10px;
+
 }
 
 .sub-question {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 0;
+  margin-bottom: 0;
 }
 
 .explanation {
@@ -566,7 +613,6 @@ onBeforeUnmount(() => {
 .regenerate-button {
   background-color: #67c23a; /* 重新生成按钮的颜色 */
   color: white;
-  margin-right: 10px;
 }
 
 .toggle-explanation-button {
@@ -605,7 +651,6 @@ onBeforeUnmount(() => {
   background-color: #67c23a;
   color: white;
   margin-top: 10px;
-  margin-left: 10px;
 }
 
 .generate-button:hover {

@@ -51,6 +51,7 @@ import HomeworkDetail from "@/pages/Student/HomeworkDetail.vue";
 import store from '@/store/user';
 import PreviewAutoPaper from "@/pages/Teacher/PreviewAutoPaper.vue";
 import CorrectingPaper from "@/pages/Teacher/CorrectingPaper.vue";
+import PreviewKnowledgeLimitedPaper from "@/pages/Teacher/PreviewKnowledgeLimitedPaper.vue";
 
 
 
@@ -146,6 +147,13 @@ const routes = [
         component:PreviewAutoPaper,
         meta: { requiresAuth: true }
     },
+    //预览按知识点生成试卷
+    {
+        path: '/teacher/preview-paper/knowledge-limited',
+        name: 'PreviewKnowledgeLimitedPaper',
+        component:PreviewKnowledgeLimitedPaper,
+        meta: { requiresAuth: true }
+    },
     //预览已生成试卷
     {
         path: '/teacher/paper-generated-preview',
@@ -179,8 +187,6 @@ const routes = [
         component:CorrectingPaper,
         meta: { requiresAuth: true }
     },
-
-
     // 审核老师
     // 个人信息
     {

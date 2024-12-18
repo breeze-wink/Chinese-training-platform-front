@@ -32,8 +32,8 @@
         <input type="file" ref="fileInput" style="display: none;" @change="handleFileUpload" />
 
         <!-- 查看文件的 PDF 视图 -->
-        <div v-if="pdfUrl" class="pdf-container">
-          <iframe :src="pdfUrl" type="application/pdf" width="100%" height="600px"></iframe>
+        <div v-if="pdfUrl" class="pdf-container" >
+          <iframe :src="pdfUrl" type="application/pdf" width="100%" height="800px"></iframe>
         </div>
       </div>
     </div>
@@ -122,6 +122,7 @@ const handleFileUpload = async (event) => {
 
 // 查看文件
 const viewFile = async (item) => {
+
     try {
         const response = await axios.get(`/api/system-admin/query-course-standard/${item.id}`, {
             responseType: 'blob',
@@ -144,6 +145,7 @@ const viewFile = async (item) => {
             ElMessage({ message: '文件查看失败: ' + error.message, type: 'error' });
         }
     }
+
 };
 
 // 删除课标
@@ -176,6 +178,7 @@ onMounted(() => {
 .main-container {
   display: flex;
   flex: 1;
+  background-color: #f0f0f0;
 }
 
 .content {
@@ -185,7 +188,7 @@ onMounted(() => {
   background-color: #fff;
   overflow-y: auto;
   margin-right: 50px;
-    margin-left: 300px;
+  margin-left: 300px;
 }
 
 .input-button-group {
@@ -203,9 +206,5 @@ iframe {
   border: none;
 }
 
-.el-button {
-  appearance: button;
-  -webkit-appearance: button;
-  -moz-appearance: button;
-}
+
 </style>
