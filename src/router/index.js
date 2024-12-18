@@ -30,6 +30,7 @@ import Name from '@/pages/system-admin/name.vue';
 import GenerateSchadm from '@/pages/system-admin/GenerateSchadm.vue';
 import { ElMessage } from 'element-plus'; // 引入 ElMessage
 //学管
+import ManageClassForSchool from '@/pages/school-admin/ManageClass.vue';
 import ManageStudent from '@/pages/school-admin/ManageStudent.vue';
 import ManageTeacher from '@/pages/school-admin/ManageTeacher.vue';
 import AuthorizationCode from '@/pages/school-admin/AuthorizationCode.vue';
@@ -48,6 +49,8 @@ import PersonalProfiling from "@/pages/Student/PersonalProfiling.vue";
 import AnswerHomework from "@/pages/Student/AnswerHomework.vue";
 import HomeworkDetail from "@/pages/Student/HomeworkDetail.vue";
 import store from '@/store/user';
+import PreviewAutoPaper from "@/pages/Teacher/PreviewAutoPaper.vue";
+import CorrectingPaper from "@/pages/Teacher/CorrectingPaper.vue";
 
 
 
@@ -136,6 +139,13 @@ const routes = [
         component:PreviewPaper,
         meta: { requiresAuth: true }
     },
+    //预览自动生成试卷
+    {
+        path: '/teacher/preview-paper/auto',
+        name: 'PreviewAutoPaper',
+        component:PreviewAutoPaper,
+        meta: { requiresAuth: true }
+    },
     //预览已生成试卷
     {
         path: '/teacher/paper-generated-preview',
@@ -160,6 +170,13 @@ const routes = [
         path: '/teacher/homework-manage',
         name: 'ManageHomework',
         component:ManageHomework,
+        meta: { requiresAuth: true }
+    },
+    //批改作业
+    {
+        path: '/teacher/correcting-paper',
+        name: 'CorrectingPaper',
+        component:CorrectingPaper,
         meta: { requiresAuth: true }
     },
 
@@ -198,7 +215,7 @@ const routes = [
 
     // 学管
     { path: '/school-admin/manage-student', component: ManageStudent, meta: { requiresAuth: true } },
-    { path: '/school-admin/manage-class', component: ManageClass, meta: { requiresAuth: true } },
+    { path: '/school-admin/manage-class', component: ManageClassForSchool, meta: { requiresAuth: true } },
     { path: '/school-admin/manage-teacher', component: ManageTeacher, meta: { requiresAuth: true } },
     { path: '/school-admin/authorization-code', name:'AuthorizationCode',component: AuthorizationCode, meta: { requiresAuth: true } },
 

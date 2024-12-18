@@ -22,9 +22,11 @@
           <el-table-column prop="email" label="邮箱" width="250"></el-table-column>
           <el-table-column prop="username" label="用户名" width="150"></el-table-column>
           <el-table-column prop="phoneNumber" label="联系电话"></el-table-column>
+            <el-table-column prop="permission" label="是否为审核老师"></el-table-column>
+
           <el-table-column label="操作">
             <template #default="{ row }">
-              <el-button size="small" type="danger" @click="deleteTeacher(row)">删除</el-button>
+                <el-button size="small" type="danger" @click="confirmDeleteTeacher(row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -64,7 +66,18 @@
 import { ref, computed, onMounted } from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination, ElDialog, ElForm, ElFormItem } from 'element-plus';
+import {
+    ElButton,
+    ElInput,
+    ElTable,
+    ElTableColumn,
+    ElMessage,
+    ElPagination,
+    ElDialog,
+    ElForm,
+    ElFormItem,
+    ElMessageBox
+} from 'element-plus';
 import axios from 'axios';
 import { useStore } from 'vuex'; // 引入 Vuex
 
@@ -90,6 +103,7 @@ const getTeachers = async () => {
       teachers.value = response.data.data;
       totalItems.value = response.data.data.length;
       filteredData.value = teachers.value;  // 默认加载所有数据
+        console.log(filteredData.value)
     } else {
       ElMessage({ message: '教师账号信息查询失败：' + response.data.message, type: 'error' });
     }
@@ -104,30 +118,51 @@ onMounted(() => {
   getTeachers(); // 使用动态的 adminId 获取信息
 });
 
-// 根据当前页和每页的行数来获取显示的数据
+// 计算分页数据
 const paginatedData = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return filteredData.value.slice(start, end);
+    const start = (currentPage.value - 1) * pageSize.value;
+    const end = start + pageSize.value;
+    return filteredData.value.slice(start, end);
 });
+
+// 更新当前页
+const handlePageChange = (page) => {
+    currentPage.value = page;
+};
 
 // 查询教师
 const searchTeacher = () => {
-  // 执行筛选操作
-  filteredData.value = teachers.value.filter(teacher =>
-      teacher.name.includes(search.value)
-  );
-  ElMessage({ message: '查询成功', type: 'success' });
+    filteredData.value = teachers.value.filter(teacher =>
+        teacher.name.includes(search.value)
+    );
+    currentPage.value = 1; // 重置到第一页
+    ElMessage({ message: '查询成功', type: 'success' });
 };
 
 // 重置搜索
 const resetSearch = () => {
-  search.value = '';
-  filteredData.value = teachers.value;  // 重置筛选结果为所有教师
-  ElMessage({ message: '重置成功', type: 'success' });
+    search.value = '';
+    filteredData.value = teachers.value;
+    currentPage.value = 1; // 重置到第一页
+    ElMessage({ message: '重置成功', type: 'success' });
 };
 
 // 删除教师
+const confirmDeleteTeacher = (teacher) => {
+    ElMessageBox.confirm(
+        `确定要删除教师 "${teacher.name}" 吗？`,
+        '提示',
+        {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+        }
+    ).then(() => {
+        deleteTeacher(teacher);
+    }).catch(() => {
+        ElMessage({ message: '已取消删除', type: 'info' });
+    });
+};
 const deleteTeacher = async (teacher) => {
   try {
     const response = await axios.delete(`/api/school-admin/${adminId.value}/delete-teacher/${teacher.id}`);

@@ -74,6 +74,18 @@
                     <el-input v-model="publishForm.referencePaper" :readonly="true" placeholder="引用试卷" style="width: 220px;"></el-input>
                 </el-form-item>
 
+                <!-- 作业描述 -->
+
+                <el-form-item label="作业描述" :label-width="formLabelWidth">
+                    <el-input
+                            v-model="publishForm.description"
+                            type="textarea"
+                            placeholder="请输入此作业相关描述（若无，填写‘无’）"
+                            :autosize="{ minRows: 4, maxRows: 10 }"
+                            style="width: 220px;"></el-input>
+                </el-form-item>
+
+
 
 
                 <el-form-item label="发布对象" :label-width="formLabelWidth">
@@ -243,7 +255,6 @@ const handleSortChange = (sort) => {
 
 
 /*****************按钮逻辑：开始********************/
-const basket = ref([]);  // 用于存储题目信息
 
 // 在 <script setup> 标签内
 const router = useRouter();
@@ -271,6 +282,7 @@ const previewPaper = async (paper) => {
                             answer: sub.answer,
                             explanation: sub.explanation,
                             options: sub.options || [],
+                            score: sub.score,
                             type: sub.type,
                             knowledge: sub.knowledge,
                             subScores: sub.subScores || []
@@ -301,7 +313,6 @@ const previewPaper = async (paper) => {
                     name: paper.name,
                     difficulty: paper.difficulty, // 假设试卷对象中有 difficulty 字段
                     totalScore: paper.totalScore
-
                 }
             });
             ElMessage.success(`试卷 "${paper.name}" 已添加到试卷篮`);
@@ -320,7 +331,7 @@ const previewPaper = async (paper) => {
 const deletePaper = async (paper) => {
     try {
         // 调用后端删除接口
-        const response = await axios.delete(`/api/teacher/${teacherId.value}/delete-paper/${paper.id}`);
+        const response = await axios.delete(`/api/teacher/delete-paper/${paper.id}`);
 
         if (response.status === 200) {
             ElMessage.success(`试卷 ${paper.name} 已删除`);
@@ -370,6 +381,10 @@ const validationRules = {
     name: {
         validate: (value) => !!value,
         message: '请填写作业名称'
+    },
+    description: {
+        validate: (value) => !!value,
+        message: '请填写作业描述'
     },
     publishTime: {
         validate: (value) => !!value,
@@ -430,7 +445,8 @@ const publishForm = ref({
     classes: [],
     groups: [],
     selectedClass: '',
-    selectedStudents: []
+    selectedStudents: [],
+    description: '无'
 });
 // 发布试卷
 const publishHomework = async () => {
@@ -450,7 +466,8 @@ const publishHomework = async () => {
 
     const payload = {
         name: publishForm.value.name,
-        referencePaperId: publishForm.value.referencePaperId,
+        description: publishForm.value.description,
+        referencedPaperId: publishForm.value.referencePaperId,
         targetIds:targetIds,
         targetType: publishForm.value.targetType,
         publishTime: publishForm.value.publishTime,
@@ -459,7 +476,7 @@ const publishHomework = async () => {
     console.log(payload);
 
     try {
-        const response = await axios.post(`/api/teacher/${teacherId.value}/homework/publish`, {payload});
+        const response = await axios.post(`/api/teacher/homework/publish`, payload);
         if (response.status === 200) {
             ElMessage.success('试卷发布成功');
             dialogVisible.value = false;  // 关闭弹窗

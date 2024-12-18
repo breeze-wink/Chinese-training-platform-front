@@ -12,7 +12,18 @@ export default createStore({
             permission: null
         },
         isAuthenticated: false, // 登录状态
-        basket: [] // 添加试卷篮状态
+        basket: [], // 添加试卷篮状态
+
+
+        unmarkedSubmissions: [], // 存储未批阅的学生列表
+        currentSubmissionIndex: 0, // 当前批阅的学生索引
+        currentStudent: { // 当前批阅的学生信息
+            studentId: null,
+            studentName: '',
+            totalScore: 0
+        },
+
+
     },
     mutations: {
         setUser(state, user) {
@@ -69,10 +80,16 @@ export default createStore({
                     break;
                 }
             }
+
+            const storedBasket = localStorage.getItem('basket');
+            if (storedBasket) {
+                state.basket = JSON.parse(storedBasket);
+            }
         },
         // 添加试卷篮相关的 mutations
         addQuestionToBasket(state, question) {
             state.basket.push(question);
+            localStorage.setItem('basket', JSON.stringify(state.basket));
         },
         addQuestionsToBasket(state, questions) {
             // 检查并添加新问题，避免重复
@@ -88,10 +105,53 @@ export default createStore({
         },
         removeQuestionFromBasket(state, questionId) {
             state.basket = state.basket.filter(q => q.id !== questionId);
+            localStorage.setItem('basket', JSON.stringify(state.basket));
         },
         clearBasket(state) {
             state.basket = [];
-        }
+            localStorage.setItem('basket', JSON.stringify(state.basket));
+        },
+
+        // 新增开始
+        setUnmarkedSubmissions(state, submissions) {
+            state.unmarkedSubmissions = submissions;
+            localStorage.setItem('unmarkedSubmissions', JSON.stringify(submissions));
+        },
+        setCurrentSubmissionIndex(state, index) {
+            state.currentSubmissionIndex = index;
+            localStorage.setItem('currentSubmissionIndex', index);
+        },
+        removeSubmission(state, studentId) {
+            state.unmarkedSubmissions = state.unmarkedSubmissions.filter(s => s.studentId !== studentId);
+            localStorage.setItem('unmarkedSubmissions', JSON.stringify(state.unmarkedSubmissions));
+        },
+        setCurrentStudent(state, student) {
+            state.currentStudent = student;
+            localStorage.setItem('currentStudent', JSON.stringify(student));
+        },
+        initializeUnmarkedSubmissions(state) {
+            const storedSubmissions = localStorage.getItem('unmarkedSubmissions');
+            const storedIndex = localStorage.getItem('currentSubmissionIndex');
+            const storedStudent = localStorage.getItem('currentStudent');
+
+            if (storedSubmissions) {
+                state.unmarkedSubmissions = JSON.parse(storedSubmissions);
+            }
+
+            if (storedIndex) {
+                state.currentSubmissionIndex = Number(storedIndex);
+            }
+
+            if (storedStudent) {
+                state.currentStudent = JSON.parse(storedStudent);
+            }
+        },
+        // 新增结束
+        setBasket(state, questions) {
+            state.basket = questions;
+            localStorage.setItem('basket', JSON.stringify(state.basket));
+        },
+
     },
 
     actions: {
@@ -104,19 +164,20 @@ export default createStore({
             localStorage.setItem('recentRole', user.role);
         },
         // 注销操作
-        async logout({ commit }) {
-            // 在这里可以添加登出的逻辑
-            commit('clearUser');
+        async logout({ commit, state }) {
+            commit('clearUser', state.user.role); // 传递 userRole
+            commit('clearBasket');
+            commit('setUnmarkedSubmissions', []);
             await router.push('/');
             console.log('导航成功');
         },
         initializeUser({ commit }) {
             commit('initializeUser');
+            commit('initializeUnmarkedSubmissions'); // 新增
         },
         //试卷篮
         addQuestionToBasket({ commit }, question) {
             commit('addQuestionToBasket', question);
-
         },
         addQuestionsToBasket({ commit }, questions) {
             commit('addQuestionsToBasket', questions);
@@ -126,7 +187,25 @@ export default createStore({
         },
         clearBasket({ commit }) {
             commit('clearBasket');
-        }
+        },
+
+        // 新增开始
+        setUnmarkedSubmissions({ commit }, submissions) {
+            commit('setUnmarkedSubmissions', submissions);
+        },
+        setCurrentSubmissionIndex({ commit }, index) {
+            commit('setCurrentSubmissionIndex', index);
+        },
+        removeSubmission({ commit }, studentId) {
+            commit('removeSubmission', studentId);
+        },
+        setCurrentStudent({ commit }, student) {
+            commit('setCurrentStudent', student);
+        },
+        // 新增结束
+        setBasket({ commit }, questions) {
+            commit('setBasket', questions);
+        },
     },
     getters: {
         // 获取当前用户信息
@@ -170,6 +249,16 @@ export default createStore({
         },
         getBasketCount(state) {
             return state.basket.length;
-        }
+        },
+        // 新增开始
+        getUnmarkedSubmissions(state) {
+            return state.unmarkedSubmissions;
+        },
+        getCurrentSubmissionIndex(state) {
+            return state.currentSubmissionIndex;
+        },
+        getCurrentStudent(state) {
+            return state.currentStudent;
+        },
     }
 });

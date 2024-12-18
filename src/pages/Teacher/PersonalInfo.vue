@@ -77,9 +77,44 @@
                     <div class="info-item">
                         <label>绑定邮箱：</label>
                         <span>{{ teacherInfo.email }}</span>
+                        <el-icon @click="showChangeEmailModal" class="edit-icon">
+                            <Edit />
+                        </el-icon>
+                    </div>
+                    <div class="info-item">
+                        <label>账号注销：</label>
+                        <el-button type="danger" @click="requestAccountDeactivation" class="delete-button">申请注销账号</el-button>
+                        <!-- 显示错误和成功消息 -->
+                        <p v-if="accountDeactivationErrorMessage" class="error-message">{{ accountDeactivationErrorMessage }}</p>
+                        <p v-if="accountDeactivationSuccessMessage" class="success-message">{{ accountDeactivationSuccessMessage }}</p>
+                        <p v-if="deletionResultMessage" class="result-message">{{ deletionResultMessage }}</p>
                     </div>
                 </el-card>
             </div>
+
+            <!-- 更换邮箱模态窗口 -->
+            <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal">
+                <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef">
+                <el-form-item label="新邮箱" prop="newEmail">
+                        <el-input v-model="emailForm.newEmail" placeholder="请输入新邮箱地址"></el-input>
+                    </el-form-item>
+                    <el-form-item label="验证码" prop="verificationCode">
+                        <el-row :gutter="10">
+                            <el-col :span="16">
+                                <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码"></el-input>
+                            </el-col>
+                            <el-col :span="8">
+                                <el-button @click="sendVerificationCode" class="verify-button">发送验证码</el-button>
+                            </el-col>
+                        </el-row>
+                    </el-form-item>
+                    <div class="form-buttons">
+                        <el-button type="primary" @click="handleChangeEmail" class="action-button">确认修改</el-button>
+                    </div>
+                </el-form>
+                <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+                <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
+            </el-dialog>
 
             <!-- 实名认证对话框 -->
             <el-dialog title="实名认证" v-model="realNameDialogVisible" width="500px">
@@ -109,10 +144,11 @@ import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import {computed, ref, onMounted} from 'vue';
 //图标引入
-import {ElIcon, ElCard, ElInput} from 'element-plus';
+import {ElIcon, ElCard, ElInput, ElMessageBox, ElMessage} from 'element-plus';
 import {Edit} from '@element-plus/icons-vue';
 import {useStore} from "vuex";
 import axios from "axios";
+import { useRouter } from 'vue-router';
 
 //从全局中ID信息
 const store = useStore();
@@ -138,8 +174,32 @@ const editPhone = ref(false);
 const editName = ref(false);
 const realNameDialogVisible = ref(false);
 
-// 错误消息
+const isChangeEmailModalVisible = ref(false);
+const successMessage = ref('');
 const errorMessage = ref('');
+
+const accountDeactivationErrorMessage = ref('');
+const accountDeactivationSuccessMessage = ref('');
+const deletionResultMessage = ref('');
+const router = useRouter();
+
+const emailFormRef = ref(null);
+const emailForm = ref({
+    newEmail: '',
+    verificationCode: '',
+});
+const emailRules = ref({
+    newEmail: [
+        {required: true, message: '请输入新的邮箱地址', trigger: 'blur'},
+        {type: 'email', message: '请输入正确的邮箱格式', trigger: ['blur', 'change']}
+    ],
+        verificationCode: [
+        {required: true, message: '请输入验证码', trigger: 'blur'},
+        {len: 6, message: '验证码长度应为6位', trigger: 'blur'}
+    ]
+});
+
+
 
 // 获取教师信息
 const getTeacherInfo = async () => {
@@ -271,6 +331,115 @@ const submitRealNameVerification = async () => {
 function editPassword() {
     console.log('编辑密码');
 }
+
+
+
+
+
+const showChangeEmailModal = () => {
+    isChangeEmailModalVisible.value = true;
+};
+
+const hideChangeEmailModal = () => {
+    isChangeEmailModalVisible.value = false;
+    emailForm.value.newEmail = '';
+    emailForm.value.verificationCode = '';
+    errorMessage.value = '';
+    successMessage.value = '';
+};
+
+// 发送验证码
+const sendVerificationCode = async () => {
+    try {
+        const response = await axios.get(`/api/teacher/send-email-code`, {
+            params: {
+                email: emailForm.value.newEmail
+            },
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.status === 200) {
+            successMessage.value = '验证码已发送，请查收您的邮箱';
+        } else {
+            errorMessage.value = '验证码发送失败';
+        }
+    } catch (error) {
+        errorMessage.value = '验证码发送失败，请稍后再试';
+        console.error('验证码发送失败:', error.response ? error.response.data : error.message);
+    }
+};
+
+// 处理邮箱更换
+const handleChangeEmail = async () => {
+    const formRef = emailFormRef.value; // 使用 emailFormRef 来访问 form 实例
+    formRef.validate(async (valid) => { // 使用正确的 refs 调用 validate
+        if (valid) {
+            try {
+                const response = await axios.get(`/api/teacher/change-email`, {
+                    params: {
+                        newEmail: emailForm.value.newEmail
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.status === 200) {
+                    successMessage.value = '邮箱更换成功';
+                    teacherInfo.value.email = emailForm.value.newEmail;
+                    hideChangeEmailModal();
+                } else {
+                    errorMessage.value = '邮箱更换失败';
+                }
+            } catch (error) {
+                errorMessage.value = '邮箱更换失败，请稍后再试';
+                console.error('邮箱更换失败:', error.response ? error.response.data : error.message);
+            }
+        } else {
+            console.log('表单验证失败');
+            return false;
+        }
+    });
+};
+
+
+// 请求注销账号
+const requestAccountDeactivation = () => {
+    ElMessageBox.confirm(
+        '您确定要注销您的账号吗？这将永久删除您的账号信息。',
+        '警告',
+        {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        }
+    ).then(async () => {
+        try {
+            const response = await axios.delete(`/api/teacher/delete-account`, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.status === 200) {
+                accountDeactivationSuccessMessage.value = '账号注销成功';
+                accountDeactivationErrorMessage.value = ''; // 清除错误消息
+                navigateToHome();
+            } else {
+                accountDeactivationErrorMessage.value = '账号注销失败';
+            }
+        } catch (error) {
+            accountDeactivationErrorMessage.value = '账号注销失败，请检查网络连接或稍后再试';
+            console.error('账号注销失败:', error.response ? error.response.data : error.message);
+        }
+    }).catch(() => {
+        ElMessage.info('已取消注销账号');
+    });
+};
+
+const navigateToHome = () => {
+    router.push({ name: 'Home' }); // 使用 router.push 来跳转到首页
+};
 </script>
 
 <style scoped>
@@ -284,6 +453,7 @@ function editPassword() {
 .main-container {
     display: flex;
     flex: 1;
+    background-color: #f0f0f0; /* 背景改为浅灰色 */
 }
 
 .content {
@@ -348,6 +518,49 @@ function editPassword() {
 .input-limited {
     width: 300px; /* 限定输入框的宽度 */
     max-width: 100%; /* 防止超出父容器 */
+}
+
+.delete-button {
+    background-color: #f56c6c;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.delete-button:hover {
+    background-color: #ff7875;
+    transform: scale(1.05);
+}
+
+.delete-button:active {
+    transform: scale(0.95);
+}
+.error-message,
+.success-message,
+.result-message {
+    font-size: 14px;
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.error-message {
+    color: #f56c6c;
+    background-color: #fef0f0;
+}
+
+.success-message {
+    color: #67c23a;
+    background-color: #f0f9eb;
+}
+.result-message {
+    color: #909399;
+    background-color: #f4f4f5;
 }
 
 </style>
