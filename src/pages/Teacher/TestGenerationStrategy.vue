@@ -36,15 +36,17 @@
                                     你只需挑选知识点和题目数量，系统就会为你搜寻符合条件的题目
                                     。高级感满满！</p>
                                 </div>
-                                <button>自定义出题</button>
+                                <button @click="navigateTo('/teacher/preview-paper/knowledge-limited')">
+                                    自定义出题
+                                </button>
                             </div>
                             <div class="card-image">
-                                <img src="../../static/dingzhi.jpeg" alt="定制">
+                                <img src="../../static/knowledge.png" alt="定制">
                             </div>
                         </div>
                         <div class="card">
                             <div class="card-image">
-                                <img src="../../static/typing.png" alt="手动">
+                                <img src="../../static/customized.png" alt="手动">
                             </div>
                             <div class="card-content">
                                 <h3>【匠心独运】手动选题艺术家</h3>

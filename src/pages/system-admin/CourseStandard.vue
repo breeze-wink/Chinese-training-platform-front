@@ -32,8 +32,8 @@
         <input type="file" ref="fileInput" style="display: none;" @change="handleFileUpload" />
 
         <!-- 查看文件的 PDF 视图 -->
-        <div v-if="pdfUrl" class="pdf-container">
-          <iframe :src="pdfUrl" type="application/pdf" width="100%" height="600px"></iframe>
+        <div v-if="pdfUrl" class="pdf-container" >
+          <iframe :src="pdfUrl" type="application/pdf" width="100%" height="800px"></iframe>
         </div>
       </div>
     </div>
@@ -122,27 +122,31 @@ const handleFileUpload = async (event) => {
 
 // 查看文件
 const viewFile = async (item) => {
-  try {
-    const response = await axios.get(`/api/system-admin/query-course-standard/${item.id}`, {
-      // 确保与后端服务的端口一致
-      responseType: 'blob'
-    });
-    if (response.status === 200) {
-      const file = new Blob([response.data], { type: 'application/pdf' });
-      pdfUrl.value = URL.createObjectURL(file);
-    } else {
-      throw new Error('查看请求失败');
+  if(pdfUrl.value==='') {
+    try {
+      const response = await axios.get(`/api/system-admin/query-course-standard/${item.id}`, {
+        // 确保与后端服务的端口一致
+        responseType: 'blob'
+      });
+      if (response.status === 200) {
+        const file = new Blob([response.data], {type: 'application/pdf'});
+        pdfUrl.value = URL.createObjectURL(file);
+      } else {
+        throw new Error('查看请求失败');
+      }
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        ElMessage({message: '文件未找到，请检查ID是否正确', type: 'error'});
+      } else if (error.message.includes('ERR_CONNECTION_REFUSED')) {
+        ElMessage({message: '无法连接到服务器，请检查服务器是否启动并确保端口配置正确', type: 'error'});
+      } else if (error.message.includes('CORS')) {
+        ElMessage({message: '跨域请求被阻止，请确保服务器配置允许跨域访问', type: 'error'});
+      } else {
+        ElMessage({message: '文件查看失败: ' + error.message, type: 'error'});
+      }
     }
-  } catch (error) {
-    if (error.response && error.response.status === 404) {
-      ElMessage({ message: '文件未找到，请检查ID是否正确', type: 'error' });
-    } else if (error.message.includes('ERR_CONNECTION_REFUSED')) {
-      ElMessage({ message: '无法连接到服务器，请检查服务器是否启动并确保端口配置正确', type: 'error' });
-    } else if (error.message.includes('CORS')) {
-      ElMessage({ message: '跨域请求被阻止，请确保服务器配置允许跨域访问', type: 'error' });
-    } else {
-      ElMessage({ message: '文件查看失败: ' + error.message, type: 'error' });
-    }
+  }else {
+    pdfUrl.value='';
   }
 };
 
@@ -176,6 +180,7 @@ onMounted(() => {
 .main-container {
   display: flex;
   flex: 1;
+  background-color: #f0f0f0;
 }
 
 .content {
@@ -185,6 +190,7 @@ onMounted(() => {
   background-color: #fff;
   overflow-y: auto;
   margin-right: 50px;
+  margin-bottom: 50px;
 }
 
 .input-button-group {
@@ -202,9 +208,5 @@ iframe {
   border: none;
 }
 
-.el-button {
-  appearance: button;
-  -webkit-appearance: button;
-  -moz-appearance: button;
-}
+
 </style>

@@ -12,11 +12,10 @@
             <el-main>
                 <el-scrollbar>
                     <el-carousel height="400px"><!--  走马灯部分-->
-                        <el-carousel-item v-for="item in 4" :key="item">
-                            <img class="carousel-image" src="../static/1.jpg" v-if="item === 1">
-                            <img class="carousel-image" src="../static/2.jpg" v-if="item === 2">
-                            <img class="carousel-image" src="../static/1.jpg" v-if="item === 3">
-                            <img class="carousel-image" src="../static/2.jpg" v-if="item === 4">
+                        <el-carousel-item v-for="item in 3" :key="item">
+                            <img class="carousel-image" src="../static/1.png" v-if="item === 1">
+                            <img class="carousel-image" src="../static/2.png" v-if="item === 2">
+                            <img class="carousel-image" src="../static/3.png" v-if="item === 3">
                         </el-carousel-item>
                     </el-carousel>
 
