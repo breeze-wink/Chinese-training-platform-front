@@ -18,7 +18,7 @@
                 </div>
 
                 <!-- 班级表格 -->
-                <el-table :data="filteredClasses" style="width: 100%; margin-top: 20px;">
+                <el-table :data="paginatedClasses" style="width: 100%; margin-top: 20px;">
                     <el-table-column prop="classId" label="班级ID" width="180"></el-table-column>
                     <el-table-column prop="name" label="班级名称"></el-table-column>
                     <el-table-column prop="teacherName" label="老师姓名"></el-table-column>
@@ -31,27 +31,48 @@
                     </el-table-column>
                 </el-table>
 
+                <!-- 分页组件 -->
+                <el-pagination
+                    v-if="filteredClasses.length > 0"
+                    :page-size="pageSize"
+                    :current-page="currentPage"
+                    :total="filteredClasses.length"
+                    @current-change="handlePageChange"
+                    layout="prev, pager, next, jumper"
+                    background
+                ></el-pagination>
+
                 <!-- 班级详情弹窗 -->
-                <el-dialog :visible.sync="classDetailsDialogVisible" width="100%" title="班级详情">
-                    <div v-if="classDetails.value">
-                        <h3>班级信息</h3>
-                        <p><strong>班级名称：</strong>{{ classDetails.value.className }}</p>
-                        <p><strong>班级描述：</strong>{{ classDetails.value.classDescription || '暂无描述' }}</p>
+                <el-dialog v-model="classDetailsDialogVisible" width="60%" title="班级详情">
+                    <div v-if="classDetails">
+                        <!-- 班级信息 -->
+                        <div class="class-info">
+                            <h3 class="class-info-title">班级信息</h3>
+                            <p><strong>班级名称：</strong>{{ classDetails.className }}</p>
+                            <p><strong>班级描述：</strong>{{ classDetails.classDescription || '暂无描述' }}</p>
+                        </div>
 
-                        <h4>小组信息</h4>
-                        <el-table :data="classDetails.value.groups" style="width: 100%">
-                            <el-table-column prop="groupId" label="小组ID" width="100"></el-table-column>
-                            <el-table-column prop="groupName" label="小组名称"></el-table-column>
-                            <el-table-column prop="groupDescription" label="小组描述"></el-table-column>
-                        </el-table>
+                        <!-- 小组信息 -->
+                        <div class="group-info">
+                            <h4>小组信息</h4>
+                            <el-table :data="classDetails.groups" style="width: 100%" stripe>
+                                <el-table-column prop="groupId" label="小组ID" width="100"></el-table-column>
+                                <el-table-column prop="groupName" label="小组名称"></el-table-column>
+                                <el-table-column prop="groupDescription" label="小组描述"></el-table-column>
+                            </el-table>
+                        </div>
 
-                        <h4>学生信息</h4>
-                        <el-table :data="classDetails.value.students" style="width: 100%">
-                            <el-table-column prop="studentId" label="学号" width="100"></el-table-column>
-                            <el-table-column prop="studentName" label="学生姓名"></el-table-column>
-                        </el-table>
+                        <!-- 学生信息 -->
+                        <div class="student-info">
+                            <h4>学生信息</h4>
+                            <el-table :data="classDetails.students" style="width: 100%" stripe>
+                                <el-table-column prop="studentId" label="学号" width="100"></el-table-column>
+                                <el-table-column prop="studentName" label="学生姓名"></el-table-column>
+                            </el-table>
+                        </div>
                     </div>
                 </el-dialog>
+
             </div>
         </div>
     </div>
@@ -94,6 +115,21 @@ const filteredClasses = computed(() => {
         item.teacherName.includes(teacherSearch.value) // 添加按教师名字的本地筛选
     );
 });
+// 分页设置
+const pageSize = ref(10); // 每页显示的数量
+const currentPage = ref(1); // 当前页码
+
+// 计算分页后的数据
+const paginatedClasses = computed(() => {
+    const start = (currentPage.value - 1) * pageSize.value;
+    const end = start + pageSize.value;
+    return filteredClasses.value.slice(start, end);
+});
+
+// 分页切换
+const handlePageChange = (newPage) => {
+    currentPage.value = newPage;
+};
 
 // 查看班级详情
 const viewClassDetails = async (item) => {
@@ -166,10 +202,68 @@ onMounted(() => {
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 9999;  /* 确保弹窗显示在最上层 */
+    border-radius: 8px; /* 添加圆角 */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 添加阴影 */
 }
 
-/* 避免父容器 overflow 限制弹窗显示 */
-.page-container, .main-container, .content {
-    overflow: visible;
+/* 使标题更有视觉层次感 */
+.el-dialog__header {
+    background-color: #f4f7fc;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+/* 班级信息区域 */
+.class-info {
+    padding: 20px;
+    border-bottom: 1px solid #e5e9f2;
+}
+
+.class-info-title {
+    color: #409eff;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+/* 小组信息和学生信息区域 */
+.group-info, .student-info {
+    padding: 20px;
+    margin-top: 20px;
+}
+
+/* 设置表格的样式 */
+.el-table {
+    border: none;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+/* 表格列标题样式 */
+.el-table th {
+    background-color: #409eff;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* 表格内容 */
+.el-table td {
+    background-color: #fff;
+}
+
+/* 操作按钮样式 */
+.el-button {
+    font-weight: 500;
+}
+
+/* 弹窗底部按钮区域 */
+.el-dialog__footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 15px;
+}
+
+.el-pagination {
+    margin-top: 20px;
+    text-align: center;
 }
 </style>
