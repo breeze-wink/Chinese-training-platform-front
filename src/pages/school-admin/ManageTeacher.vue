@@ -22,9 +22,14 @@
           <el-table-column prop="email" label="邮箱" width="250"></el-table-column>
           <el-table-column prop="username" label="用户名" width="150"></el-table-column>
           <el-table-column prop="phoneNumber" label="联系电话"></el-table-column>
-            <el-table-column prop="permission" label="是否为审核老师"></el-table-column>
+            <el-table-column label="是否为审核老师">
+                <template #default="{ row }">
+                    <span>{{ row.permission === 1 ? '是' : '否' }}</span>
+                </template>
+            </el-table-column>
 
-          <el-table-column label="操作">
+
+            <el-table-column label="操作">
             <template #default="{ row }">
                 <el-button size="small" type="danger" @click="confirmDeleteTeacher(row)">删除</el-button>
             </template>
