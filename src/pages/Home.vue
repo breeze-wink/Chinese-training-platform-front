@@ -186,7 +186,13 @@
             </el-dialog>
 
             <!-- 注册浮窗 -->
-            <el-dialog v-model="registerDialogVisible" title="注册" width="500px" align-center :close-on-click-modal="false">
+            <el-dialog
+                    v-model="registerDialogVisible"
+                    title="注册"
+                    width="500px"
+                    align-center
+                    :close-on-click-modal="false">
+
               <el-tabs v-model="activeTab">
                 <el-tab-pane label="学生" name="student">
                   <el-form :model="registerForm.student" :rules="rules" ref="registerFormStudent"
@@ -265,10 +271,6 @@
 </template>
 
 <script setup>
-
-
-
-
 import axios from 'axios'
 import {User} from "@element-plus/icons-vue";
 import {useStore} from 'vuex'; // 引入 useStore 来使用 Vuex
@@ -447,6 +449,24 @@ const login = async () => {
     }
 
 }
+
+function handleLoginKeydown(event) {
+    if (event.key === "Enter") {
+        this.login(); // 调用登录方法
+    }
+}
+
+function handleRegisterKeydown(event) {
+    if (event.key === "Enter") {
+        // 根据当前选中的注册类型调用对应的提交方法
+        if (this.activeTab === "student") {
+            this.submitForm("registerFormStudent", "student");
+        } else if (this.activeTab === "teacher") {
+            this.submitForm("registerFormTeacher", "teacher");
+        }
+    }
+}
+
 const sendVerification = async () => {
     try {
         const response = await axios.post('/api/student/send-verification', {

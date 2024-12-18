@@ -238,13 +238,13 @@ export default {
                 if (response.status === 200) {
                     const questions = response.data.data;
                     console.log('Received homework details:', questions); // 调试日志
-
+                    console.log(item.title);
                     this.$router.push({
                         name: 'AnswerHomework',
                         query: {
                             assignmentId: item.assignmentId,
                             questions: JSON.stringify(questions),
-                            assignmentName: item.assignmentName
+                            assignmentName: item.title
                         }
                     });
                 } else {
@@ -331,7 +331,10 @@ export default {
                 // 跳转到 HomeworkDetail 页面，并通过路由传递 assignmentId 参数
                 this.$router.push({
                     name: 'HomeworkDetail',
-                    params: { assignmentId: item.assignmentId }
+                    params: {
+                        assignmentId: item.assignmentId,
+                        assignmentName: item.title
+                    }
                 });
             } catch (error) {
                 console.error('跳转到作业详情页面失败', error);
