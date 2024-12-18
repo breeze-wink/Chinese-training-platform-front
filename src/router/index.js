@@ -16,6 +16,7 @@ import PreviewPaper from "@/pages/Teacher/PreviewPaper.vue";
 import ManagePaper from "@/pages/Teacher/ManagePaper.vue";
 import PreviewGeneratedPaper from "@/pages/Teacher/PreviewGeneratedPaper.vue";
 import ManageHomework from "@/pages/Teacher/ManageHomework.vue";
+import ViewQuestion from "@/pages/Teacher/ViewQuestion.vue";
 
 import AuditTeacherPersonalInfo from "@/pages/audit-teacher/PersonalInfo.vue"
 import AuditStrategy from "@/pages/audit-teacher/AuditTest.vue"
@@ -29,6 +30,7 @@ import Name from '@/pages/system-admin/name.vue';
 import GenerateSchadm from '@/pages/system-admin/GenerateSchadm.vue';
 import { ElMessage } from 'element-plus'; // 引入 ElMessage
 //学管
+import ManageClassForSchool from '@/pages/school-admin/ManageClass.vue';
 import ManageStudent from '@/pages/school-admin/ManageStudent.vue';
 import ManageTeacher from '@/pages/school-admin/ManageTeacher.vue';
 import AuthorizationCode from '@/pages/school-admin/AuthorizationCode.vue';
@@ -108,6 +110,13 @@ const routes = [
         path: '/teacher/upload-combined-question',
         name: 'UploadCombinedQuestion',
         component: UploadCombinedQuestion,
+        meta: { requiresAuth: true }
+    },
+    //查看题目
+    {
+        path: '/teacher/view-question',
+        name: 'ViewQuestion',
+        component: ViewQuestion,
         meta: { requiresAuth: true }
     },
     //选择组卷方式
@@ -212,7 +221,7 @@ const routes = [
 
     // 学管
     { path: '/school-admin/manage-student', component: ManageStudent, meta: { requiresAuth: true } },
-    { path: '/school-admin/manage-class', component: ManageClass, meta: { requiresAuth: true } },
+    { path: '/school-admin/manage-class', component: ManageClassForSchool, meta: { requiresAuth: true } },
     { path: '/school-admin/manage-teacher', component: ManageTeacher, meta: { requiresAuth: true } },
     { path: '/school-admin/authorization-code', name:'AuthorizationCode',component: AuthorizationCode, meta: { requiresAuth: true } },
 
@@ -272,7 +281,10 @@ const routes = [
         path: '/student/homework-detail/:assignmentId',
         name: 'HomeworkDetail',
         component: HomeworkDetail,
-        props: true,
+        props: route => ({
+            assignmentId: route.query.assignmentId,
+            assignmentName: route.query.assignmentName
+        }),
         meta: { requiresAuth: true }
     },
     // 试卷管理

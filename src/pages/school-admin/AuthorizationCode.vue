@@ -9,7 +9,7 @@
 
       <!-- 内容区 -->
       <div class="content">
-        <h2>个人信息</h2> 
+        <h2>个人信息</h2>
 
         <!-- 个人信息卡片 -->
         <el-card class="info-card">
@@ -64,6 +64,9 @@
             <label>绑定邮箱：</label>
             <span :class="{'text-danger': !email}">{{ email ? email : '还未绑定' }}</span>
             <el-button text bg v-if="!email" type="primary" @click="showBindEmailDialog = true">绑定邮箱</el-button>
+              <el-icon @click="showChangeEmailModal" class="edit-icon">
+                  <Edit />
+              </el-icon>
           </div>
         </el-card>
 
@@ -81,7 +84,7 @@
             <label>创建时间：</label>
             <span>{{ createDate || ''}}</span>
           </div>
-          
+
         </el-card>
       </div>
     </div>
@@ -124,6 +127,30 @@
         </span>
       </template>
     </el-dialog>
+
+      <!-- 更换邮箱模态窗口 -->
+      <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal">
+          <el-form :model="bindEmailForm" :rules="emailRules" ref="emailFormRef">
+              <el-form-item label="新邮箱" prop="newEmail">
+                  <el-input v-model="bindEmailForm.newEmail" placeholder="请输入新邮箱地址"></el-input>
+              </el-form-item>
+              <el-form-item label="验证码" prop="verificationCode">
+                  <el-row :gutter="10">
+                      <el-col :span="16">
+                          <el-input v-model="bindEmailForm.verificationCode" placeholder="请输入验证码"></el-input>
+                      </el-col>
+                      <el-col :span="8">
+                          <el-button @click="sendVerificationCodeForChangeEmail" class="verify-button">发送验证码</el-button>
+                      </el-col>
+                  </el-row>
+              </el-form-item>
+              <div class="form-buttons">
+                  <el-button type="primary" @click="handleChangeEmail" class="action-button">确认修改</el-button>
+              </div>
+          </el-form>
+          <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+          <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
+      </el-dialog>
   </div>
 </template>
 
@@ -131,16 +158,17 @@
 import { ref, onMounted, computed } from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import { ElButton, ElMessage, ElDialog, ElForm, ElFormItem, ElInput } from 'element-plus';
+import {ElButton, ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElIcon} from 'element-plus';
 import axios from 'axios';
 import { useStore } from 'vuex';
-import {Edit} from "@element-plus/icons-vue"; // 使用 Vuex 进行状态管理
+import {Edit} from "@element-plus/icons-vue";
+import {useRouter} from "vue-router"; // 使用 Vuex 进行状态管理
 
 // 定义变量
 const adminName = ref('');
 const schoolName = ref('');
 const name = ref('')
-const email = ref(null);
+let email = ref(null);
 const authorizationCode = ref(''); // 存储授权码
 const createDate = ref('')
 const schoolAdminId = ref(null);
@@ -158,6 +186,25 @@ const countdown = ref(0);
 const editNickname = ref('');
 const editName = ref('');
 const editPassword = ref('');
+
+
+const isChangeEmailModalVisible = ref(false);
+const successMessage = ref('');
+
+const emailFormRef = ref(null);
+
+const emailRules = ref({
+    newEmail: [
+        {required: true, message: '请输入新的邮箱地址', trigger: 'blur'},
+        {type: 'email', message: '请输入正确的邮箱格式', trigger: ['blur', 'change']}
+    ],
+    verificationCode: [
+        {required: true, message: '请输入验证码', trigger: 'blur'},
+        {len: 6, message: '验证码长度应为6位', trigger: 'blur'}
+    ]
+});
+
+
 
 // 获取 Vuex 状态
 const store = useStore();
@@ -309,7 +356,7 @@ const confirmBindEmail = async () => {
 
     if (response.status === 200) {
       email.value = bindEmailForm.value.email; // 更新邮箱
-      
+
       ElMessage({ message: '绑定邮箱成功', type: 'success' });
       showBindEmailDialog.value = false; // 关闭对话框
     } else {
@@ -372,6 +419,80 @@ const toggleEdit = (field) => {
     editName.value = !editName.value;
   }
 };
+
+
+
+const showChangeEmailModal = () => {
+    isChangeEmailModalVisible.value = true;
+};
+
+const hideChangeEmailModal = () => {
+    isChangeEmailModalVisible.value = false;
+    bindEmailForm.value.newEmail = '';
+    bindEmailForm.value.verificationCode = '';
+    errorMessage.value = '';
+    successMessage.value = '';
+};
+const sendVerificationCodeForChangeEmail = async () => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bindEmailForm.value.newEmail)) {
+        ElMessage({ message: '请输入有效的邮箱地址', type: 'error' });
+        return;
+    }
+console.log(bindEmailForm.value.newEmail)
+    try {
+        const response = await axios.get(`/api/school-admin/send-email-code`, {
+            params: {
+                email: bindEmailForm.value.newEmail
+            },
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.status === 200) {
+            successMessage.value = '验证码已发送，请查收您的邮箱';
+            ElMessage({ message: '验证码已发送，请查收邮件', type: 'success' });
+        } else {
+            errorMessage.value = '验证码发送失败';
+        }
+    } catch (error) {
+        errorMessage.value = '验证码发送失败，请稍后再试';
+        console.error('验证码发送失败:', error.response ? error.response.data : error.message);
+    }
+};
+const handleChangeEmail = async () => {
+    const formRef = emailFormRef.value; // 使用 emailFormRef 来访问 form 实例
+    formRef.validate(async (valid) => { // 使用正确的 refs 调用 validate
+        if (valid) {
+            try {
+                const response = await axios.get(`/api/school-admin/change-email`, {
+                    params: {
+                        newEmail: bindEmailForm.value.newEmail
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.status === 200) {
+                    successMessage.value = '邮箱更换成功';
+                    email.value = bindEmailForm.value.newEmail;
+                    hideChangeEmailModal();
+                    ElMessage({ message: '邮箱已成功更换', type: 'success' });
+                } else {
+                    errorMessage.value = '邮箱更换失败';
+                }
+            } catch (error) {
+                errorMessage.value = '邮箱更换失败，请稍后再试';
+                console.error('邮箱更换失败:', error.response ? error.response.data : error.message);
+            }
+        } else {
+            console.log('表单验证失败');
+            return false;
+        }
+    });
+};
+
 </script>
 
 <style scoped>
@@ -406,6 +527,7 @@ const toggleEdit = (field) => {
   background-color: #fff;
   overflow-y: auto;
   margin-right: 50px;
+    margin-left: 300px;
 }
 .edit-input {
   width: 200px; /* 限制输入框的宽度，避免太长 */
@@ -417,5 +539,29 @@ const toggleEdit = (field) => {
 }
 .text-danger {
   color: red;
+}
+
+.error-message,
+.success-message,
+.result-message {
+    font-size: 14px;
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.error-message {
+    color: #f56c6c;
+    background-color: #fef0f0;
+}
+
+.success-message {
+    color: #67c23a;
+    background-color: #f0f9eb;
+}
+.result-message {
+    color: #909399;
+    background-color: #f4f4f5;
 }
 </style>
