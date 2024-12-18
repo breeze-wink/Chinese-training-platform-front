@@ -436,14 +436,14 @@ const nextSubmission = async () => {
         });
       } else {
         ElMessage.info('所有作业已批阅完毕');
-        router.push('/teacher/homework-manage');
+        await router.push('/teacher/homework-manage');
       }
     } else {
       ElMessage.error('获取提交列表失败');
     }
   } catch (error) {
     console.error(error);
-    ElMessage.error('获取提交列表失败，请稍后再试');
+    //ElMessage.error('获取提交列表失败，请稍后再试');
   }
 };
 
