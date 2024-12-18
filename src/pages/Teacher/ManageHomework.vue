@@ -53,7 +53,7 @@
     </div>
 
     <!-- 查看完成情况弹窗 -->
-    <el-dialog title="查看完成情况" v-model="dialogVisible" width="700px" center>
+    <el-dialog title="查看完成情况" v-model="dialogVisible" width="800px" center>
       <div class="filter-group">
         <el-select v-model="filterSubmitted" placeholder="选择提交状态" style="width: 200px" @change="filterSubmissions">
           <el-option label="全部" value=""></el-option>

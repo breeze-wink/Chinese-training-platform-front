@@ -191,6 +191,7 @@ const fetchSubmissionDetails = async () => {
       const submissionData = response.data;
       console.log('获取作答详情成功', submissionData);
       const unmarkedSubmissions = computed(() => store.getters.getUnmarkedSubmissions);
+      console.log('未批阅的成员数组:', unmarkedSubmissions.value);
       const student = unmarkedSubmissions.value.find(s => s.studentId === Number(studentIdValue));
       studentName.value = student ? student.studentName : '未知学生';
       console.log('学生姓名:', studentName.value); // 调试日志
@@ -355,7 +356,7 @@ const markCompleted = async () => {
   const markData = [];
 
   processedQuestions.value.forEach(question => {
-    if (question.type === 'big') {
+    if (question.type === null ) {
       question.subQuestions.forEach(sub => {
         markData.push({
           submissionAnswerId: sub.submissionAnswerId,
@@ -370,16 +371,16 @@ const markCompleted = async () => {
     }
   });
 
-  try {
-    const response = await axios.post('/api/teacher/mark-submission', {
-      data: markData
-    }, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+    const payload = {
+        feedback: feedback.value,
+        data: markData,
+    };
+    console.log('payload',payload);
 
-    if (response.status === 200 && response.data.message === 'success') {
+  try {
+    const response = await axios.post('/api/teacher/mark-submission', payload);
+
+    if (response.status === 200 ) {
       ElMessage.success('批阅完成');
 
       // 更新提交状态为已批阅
@@ -406,7 +407,7 @@ const updateSubmissionStatus = async () => {
     });
   } catch (error) {
     console.error('更新提交状态失败', error);
-    ElMessage.error('更新提交状态失败');
+    //ElMessage.error('更新提交状态失败');
   }
 };
 
@@ -435,14 +436,14 @@ const nextSubmission = async () => {
         });
       } else {
         ElMessage.info('所有作业已批阅完毕');
-        router.push('/teacher/homework-manage');
+        await router.push('/teacher/homework-manage');
       }
     } else {
       ElMessage.error('获取提交列表失败');
     }
   } catch (error) {
     console.error(error);
-    ElMessage.error('获取提交列表失败，请稍后再试');
+    //ElMessage.error('获取提交列表失败，请稍后再试');
   }
 };
 

@@ -164,7 +164,8 @@ export default createStore({
             localStorage.setItem('recentRole', user.role);
         },
         // 注销操作
-        async logout({ commit, state }) {
+
+        async logout({ commit,state }) {
             commit('clearUser', state.user.role); // 传递 userRole
             commit('clearBasket');
             commit('setUnmarkedSubmissions', []);
