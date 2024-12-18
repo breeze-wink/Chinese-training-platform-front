@@ -166,18 +166,32 @@ export default {
             }
         },
         async generateAutoQuestions() {
+            this.isProcessing = true; // 显示加载提示
             try {
                 const url = `/api/student/${this.studentId}/practice/generate-auto`;
-                const response = await axios.post(url);
-                const practiceId = response.data.practiceId;
+                const response = await axios.post(url, null, {
+                    params: { practiceName: this.practiceName },
+                });
+
+                const practiceId  = response.data.practiceId;
+                const questions = response.data.data;
                 if (practiceId !== undefined) {
                     this.$router.push({
                         name: 'AnswerPractice',
-                        query: { practiceId, mode: 'auto', practiceName: '自动练习' },
+                        query: {
+                            practiceId: practiceId,
+                            questions: encodeURIComponent(JSON.stringify(questions)),
+                            mode: 'auto',
+                            practiceName: this.practiceName,
+                        },
                     });
+                } else {
+                    console.error('练习生成失败，后端未返回 practiceId');
                 }
             } catch (error) {
-                console.error('题目发送失败', error);
+                console.error('生成练习失败:', error.response ? error.response.data : error.message);
+            } finally {
+                this.isProcessing = false; // 隐藏加载提示
             }
         },
         toggleQuestionInput(knowledgePointId) {
