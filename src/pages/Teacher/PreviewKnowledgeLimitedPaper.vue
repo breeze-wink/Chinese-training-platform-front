@@ -45,11 +45,11 @@
                         </div>
 
                         <!-- 小题渲染 -->
-                        <div v-else-if="question.type !== 'essay'">
+                        <div v-else-if="question.type !== 'ESSAY'">
                             <strong>
                                 题目 {{ index + 1 }} ({{question.score}}分):
                                 <!-- 如果有题干，紧跟在序号后面显示题干 -->
-                                <span v-if="question.content" v-html="question.content"></span>
+                                <span v-if="question.body" v-html="question.body"></span> <!-- 修改此处，从 content 改为 body -->
                             </strong>
 
                             <div>
@@ -80,7 +80,7 @@
                         </div>
 
                         <!-- 论文题目渲染 -->
-                        <div v-else-if="question.type === 'essay'">
+                        <div v-else-if="question.type === 'ESSAY'">
                             <strong>论文题目 {{ index + 1 }} ({{ question.score }}分): <span v-html="question.content"></span></strong>
 
                             <div v-if="showExplanations" class="explanation">
@@ -123,6 +123,7 @@
                 <p>难度系数：{{ difficultyCoefficient }}</p>
 
                 <button @click="generatePaper" class="generate-button">生成试卷</button>
+                <button @click="returnToPaperList" class="return-button">返回选择出卷界面</button>
             </div>
         </div>
 
@@ -149,7 +150,7 @@
                             v-model.number="selectedNumbers[category]"
                             type="number"
                             min="1"
-                            placeholder="设置分数"
+                            placeholder="设置题目数量"
                             style="margin-left: 20px;"
                     />
                 </div>
@@ -171,7 +172,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { ElNotification, ElMessage } from "element-plus";
 import axios from "axios";
 import { onBeforeUnmount } from "vue-demi";
-import imageCache from "quill";
+const imageCache = [];
 
 // 获取 Vuex Store 和 Router 实例
 const store = useStore();
@@ -230,9 +231,12 @@ const difficultyCoefficient = computed(() => {
 const initializeScores = () => {
     basket.value.forEach(question => {
         if (question.type === 'big') {
+            let totalSubScore = 0;
             question.subQuestions.forEach(sub => {
                 if (sub.score === undefined) sub.score = 0;
+                totalSubScore += Number(sub.score) || 0;
             });
+            question.score = totalSubScore; // 更新大题的分数
         } else {
             if (question.score === undefined) question.score = 0;
         }
@@ -244,6 +248,23 @@ initializeScores();
 watch(basket, () => {
     initializeScores();
 });
+// 新增：监听 basket 的变化，动态更新大题的分数
+watch(
+        basket,
+        () => {
+            basket.value.forEach(question => {
+                if (question.type === 'big') {
+                    let totalSubScore = 0;
+                    question.subQuestions.forEach(sub => {
+                        totalSubScore += Number(sub.score) || 0;
+                    });
+                    question.score = totalSubScore; // 动态更新大题的分数
+                }
+            });
+        },
+        { deep: true } // 深度监听，以便监听嵌套的 subQuestions
+);
+
 
 // 计算题目数量（大题算1题）
 const questionCount = computed(() => {
@@ -310,23 +331,24 @@ const confirmKnowledgePoints = async () => {
         number: selectedNumbers.value[category] || 1
     }));
 
-    savedKnowledgePoints.value = { types };
-    console.log(savedKnowledgePoints.value);
+    console.log(types);
 
     try {
-        const response = await axios.post('/api/teacher/generate-paper-with-types',  savedKnowledgePoints.value );
+        const response = await axios.post('/api/teacher/generate-paper-with-types',  {types} );
 
         if (response.status === 200 && response.data.questions) {
             const data = response.data;
+            console.log('后端返回',data);
 
             // 处理 questions
             const processedQuestions = await Promise.all(
                     (data.questions || []).map(async (question) => ({
                         ...question,
                         showExplanation: false, // 默认不显示解析
-                        content: await replaceImageSrc(question.content),
+                        body: await replaceImageSrc(question.body), // 修改此处，使用 body 处理图片
                         options: question.options || [],
                         score: 0,
+                        subQuestions: question.subQuestions || [],
                         difficulty: question.difficulty || 0,
                         knowledgePoint: question.knowledgePoint || ''
                     }))
@@ -350,18 +372,24 @@ const confirmKnowledgePoints = async () => {
             // 构建试题篮数据
             const basketQuestions = [
                 ...processedQuestions.map(q => ({
-                    id: `small-${q.id}`, // 确保唯一性，可以根据实际数据调整
-                    type: q.type || 'small',
-                    content: q.content,
+                    id: q.id, // 确保唯一性，使用 'big-' 前缀
+                    type: q.type || 'big', // 确保大题类型
+                    body: q.body, // 使用 body 属性
                     answer: q.answer,
                     explanation: q.explanation,
                     options: q.options,
                     score: q.score, // 已初始化为0
                     difficulty: q.difficulty,
-                    knowledgePoint: q.knowledgePoint
+                    knowledgePoint: q.knowledgePoint,
+                    subQuestions: q.subQuestions.map(sub => ({
+                        ...sub,
+                        score: 0, // 初始化分数
+                        difficulty: q.difficulty,
+                        knowledgePoint: sub.knowledgePoint
+                    }))
                 })),
                 ...processedEssays.map(e => ({
-                    id: `essay-${e.id}`,
+                    id: e.id,
                     type: e.type,
                     content: e.content,
                     answer: e.answer,
@@ -377,6 +405,8 @@ const confirmKnowledgePoints = async () => {
             basketQuestions.forEach(question => {
                 store.dispatch('addQuestionToBasket', question);
             });
+            const ba = store.getters.getBasket;
+            console.log('ba',ba);
 
             ElNotification.success({
                 title: '生成成功',
@@ -427,7 +457,7 @@ const regeneratePaper = async () => {
     try {
         const response = await axios.post('/api/teacher/generate-paper-with-types', savedKnowledgePoints.value, {
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json', // 确保请求头正确
                 'Authorization': `Bearer ${token}`
             }
         });
@@ -440,9 +470,10 @@ const regeneratePaper = async () => {
                     (data.questions || []).map(async (question) => ({
                         ...question,
                         showExplanation: false, // 默认不显示解析
-                        content: await replaceImageSrc(question.content),
+                        body: await replaceImageSrc(question.body), // 修改此处，使用 body 处理图片
                         options: question.options || [],
                         score: 0,
+                        subQuestions: question.subQuestions || [], // 确保 subQuestions 存在
                         difficulty: question.difficulty || 0,
                         knowledgePoint: question.knowledgePoint || ''
                     }))
@@ -466,15 +497,21 @@ const regeneratePaper = async () => {
             // 构建试题篮数据
             const basketQuestions = [
                 ...processedQuestions.map(q => ({
-                    id: `small-${q.id}`, // 确保唯一性，可以根据实际数据调整
-                    type: q.type || 'small',
-                    content: q.content,
+                    id: `big-${q.id}`, // 确保唯一性，使用 'big-' 前缀
+                    type: q.type || 'big', // 确保大题类型
+                    body: q.body, // 使用 body 属性
                     answer: q.answer,
                     explanation: q.explanation,
                     options: q.options,
                     score: q.score, // 已初始化为0
                     difficulty: q.difficulty,
-                    knowledgePoint: q.knowledgePoint
+                    knowledgePoint: q.knowledgePoint,
+                    subQuestions: q.subQuestions.map(sub => ({
+                        ...sub,
+                        score: 0, // 初始化分数
+                        difficulty: q.difficulty,
+                        knowledgePoint: sub.knowledgePoint
+                    }))
                 })),
                 ...processedEssays.map(e => ({
                     id: `essay-${e.id}`,
@@ -592,6 +629,92 @@ onBeforeUnmount(() => {
         URL.revokeObjectURL(blobUrl);
     });
 });
+
+const returnToPaperList = () => {
+    router.push('/teacher/test-generation-strategy'); // 根据实际路由调整
+};
+// 新增：generatePaper 函数
+const generatePaper = async () => {
+    if (!paperName.value.trim()) {
+        ElMessage.warning('请填写试卷名称。');
+        return;
+    }
+
+    // 构建请求数据
+    const payload = {
+        name: paperName.value,
+        creatorId: store.state.user.id, // 假设用户ID在 Vuex 中
+        totalScore: totalScore.value,
+        difficulty: difficultyCoefficient.value,
+        questions: []
+    };
+
+    // 构建 questions 数组
+    let sequence = 1;
+    basket.value.forEach(question => {
+        if (question.type === 'big') {
+            // 添加大题
+            payload.questions.push({
+                id: question.id,
+                type: 'big',
+                sequence: sequence++,
+                score: question.score,
+                subScores: question.subQuestions.map(sub => sub.score) // 添加 subScores 数组
+            });
+
+
+        } else if (question.type === 'essay') {
+            // 添加作文题
+            payload.questions.push({
+                id: question.id,
+                type: 'small',
+                sequence: sequence++,
+                score: question.score
+            });
+        } else {
+            // 添加小题
+            payload.questions.push({
+                id: question.id,
+                type: 'small', // 所有非 big 类型题目设置为 'small'
+                sequence: sequence++,
+                score: question.score
+            });
+        }
+    });
+    console.log(payload);
+
+    try {
+        const response = await axios.post('/api/teacher/generate-paper', payload, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.status === 200 && response.data.message === 'success') {
+            ElNotification.success({
+                title: '生成成功',
+                message: '试卷已成功生成。',
+                duration: 2000,
+            });
+            // 你可以在这里执行其他操作，比如跳转到试卷列表页面
+        } else {
+            ElNotification.error({
+                title: '生成失败',
+                message: response.data.message || '试卷生成失败。',
+                duration: 2000,
+            });
+        }
+    } catch (error) {
+        ElNotification.error({
+            title: '请求失败',
+            message: '无法连接服务器，请稍后再试。',
+            duration: 2000,
+        });
+        console.error(error);
+    }
+};
+
 </script>
 
 <style scoped>
@@ -770,6 +893,16 @@ onBeforeUnmount(() => {
 
 .generate-button:hover {
     background-color: #85d587;
+}
+
+.return-button {
+    background-color: #f89e44;
+    color: white;
+    margin-top: 10px;
+}
+
+.return-button:hover {
+    background-color: #ecaa69;
 }
 
 .right-content.bottom p {

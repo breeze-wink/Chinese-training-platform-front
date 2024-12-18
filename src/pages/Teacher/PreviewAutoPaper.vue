@@ -78,7 +78,7 @@
             </div>
 
             <div v-else-if="question.type === 'essay'">
-              <strong>论文题目 {{ index + 1 }} ({{ question.score }}分): <span v-html="question.content"></span></strong>
+              <strong>作文题目 {{ index + 1 }} ({{ question.score }}分): <span v-html="question.content"></span></strong>
 
               <div v-if="showExplanations" class="explanation">
                 <p><strong>答案：</strong>{{ question.answer }}</p>
@@ -117,6 +117,7 @@
         <p>难度系数：{{ difficultyCoefficient }}</p>
 
         <button @click="generatePaper" class="generate-button">生成试卷</button>
+          <button @click="returnToPaperList" class="return-button">返回选择出卷界面</button>
       </div>
     </div>
   </div>
@@ -130,12 +131,13 @@ import { useRouter, useRoute } from 'vue-router';
 import { ElNotification, ElMessage } from "element-plus";
 import axios from "axios";
 import {onBeforeUnmount} from "vue-demi";
-import imageCache from "quill";
+
 
 // 获取 Vuex Store 和 Router 实例
 const store = useStore();
 const router = useRouter();
 const route = useRoute();
+const imageCache = [];
 
 // 获取认证 Token
 const token = store.getters.getToken;
@@ -192,6 +194,9 @@ const initializeScores = () => {
 };
 initializeScores();
 
+const returnToPaperList = () => {
+    router.push('/teacher/test-generation-strategy'); // 根据实际路由调整
+};
 // 监视试卷篮变化，重新初始化分数
 watch(basket, () => {
   initializeScores();
@@ -206,10 +211,24 @@ const questionCount = computed(() => {
 const toggleExplanations = () => {
   showExplanations.value = !showExplanations.value;
 };
-
+watch(
+        basket,
+        () => {
+            basket.value.forEach(question => {
+                if (question.type === 'big') {
+                    let totalSubScore = 0;
+                    question.subQuestions.forEach(sub => {
+                        totalSubScore += Number(sub.score) || 0;
+                    });
+                    question.score = totalSubScore; // 动态更新大题的分数
+                }
+            });
+        },
+        { deep: true } // 深度监听，以监听嵌套的 subQuestions
+);
 // 生成试卷的逻辑
 const generatePaper = async () => {
-  // 验证试卷名称
+  //验证试卷名称
   if (!paperName.value.trim()) {
     ElNotification.error({
       title: '生成失败',
@@ -244,6 +263,8 @@ const generatePaper = async () => {
     }
   }
 
+
+
   // 构建请求数据
   const paperData = {
     name: paperName.value,
@@ -252,7 +273,7 @@ const generatePaper = async () => {
     difficulty: difficultyCoefficient.value,
     questions: basket.value.map((question, index) => ({
       id: question.id,
-      type: question.type,
+      type: (question.type === 'big') ? 'big' : 'small',
       sequence: index + 1,
       score: question.type === 'big'
           ? question.subQuestions.reduce((sum, sub) => sum + (sub.score || 0), 0)  // 小题的分数加起来作为大题分数
@@ -263,7 +284,7 @@ const generatePaper = async () => {
     })),
   };
 
-  console.log(paperData);
+  console.log('paperDATA',paperData);
 
   try {
     // 发送 POST 请求
@@ -276,9 +297,7 @@ const generatePaper = async () => {
         message: '试卷已成功生成。',
         duration: 2000,
       });
-      // 跳转或清空试卷篮等操作
-      await store.dispatch('clearBasket');
-      await router.push('/teacher/paper-management');  // 根据实际路由调整
+
     } else {
       ElNotification.error({
         title: '生成失败',
@@ -304,9 +323,11 @@ const regeneratePaper = async () => {
         'Authorization': `Bearer ${token}`
       }
     });
+    console.log('后端返回',response.data);
 
     if (response.status === 200 && response.data) {
       const data = response.data;
+      console.log('后端返回',data);
 
       // 处理 bigQuestions
       const processedBigQuestions = await Promise.all(
@@ -352,7 +373,7 @@ const regeneratePaper = async () => {
       // 构建试题篮数据
       const basketQuestions = [
         ...processedQuestions.map(q => ({
-          id: `small-${q.content}`, // 确保唯一性，可以根据实际数据调整
+          id: q.id, // 确保唯一性，可以根据实际数据调整
           type: q.type || 'small',
           content: q.content,
           answer: q.answer,
@@ -363,11 +384,11 @@ const regeneratePaper = async () => {
           knowledgePoint: q.knowledgePoint || ''
         })),
         ...processedBigQuestions.map(bq => ({
-          id: `big-${bq.body}`, // 确保唯一性，可以根据实际数据调整
+          id: bq.id, // 确保唯一性，可以根据实际数据调整
           type: 'big',
           body: bq.body,
           subQuestions: bq.subQuestions.map(sub => ({
-            id: `sub-${sub.content}`, // 确保唯一性
+            id: sub.id, // 确保唯一性
             content: sub.content,
             answer: sub.answer,
             explanation: sub.explanation,
@@ -384,7 +405,7 @@ const regeneratePaper = async () => {
       // 添加 essay 题目到试题篮
       if (processedEssay) {
         basketQuestions.push({
-          id: `essay-${processedEssay.id}`, // 确保唯一性
+          id: processedEssay.id, // 确保唯一性
           type: 'essay',
           content: processedEssay.content,
           answer: processedEssay.answer,
@@ -613,6 +634,15 @@ onBeforeUnmount(() => {
 .regenerate-button {
   background-color: #67c23a; /* 重新生成按钮的颜色 */
   color: white;
+}
+.return-button {
+    background-color: #f89e44;
+    color: white;
+    margin-top: 10px;
+}
+
+.return-button:hover {
+    background-color: #ecaa69;
 }
 
 .toggle-explanation-button {

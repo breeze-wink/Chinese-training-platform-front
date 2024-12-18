@@ -183,7 +183,7 @@ const autoGeneratePaper = async () => {
       // 构建试题篮数据
       const basketQuestions = [
         ...processedQuestions.map(q => ({
-          id: `small-${q.content}`, // 确保唯一性，可以根据实际数据调整
+          id: q.id, // 确保唯一性，可以根据实际数据调整
           type: q.type || 'small',
           content: q.content,
           answer: q.answer,
@@ -194,7 +194,7 @@ const autoGeneratePaper = async () => {
           knowledgePoint: q.knowledgePoint || ''
         })),
         ...processedBigQuestions.map(bq => ({
-          id: `big-${bq.body}`, // 确保唯一性，可以根据实际数据调整
+          id: bq.id, // 确保唯一性，可以根据实际数据调整
           type: 'big',
           body: bq.body,
           subQuestions: bq.subQuestions.map(sub => ({
@@ -225,7 +225,7 @@ const autoGeneratePaper = async () => {
       });
 
       // 跳转到预览页面
-      router.push('/teacher/preview-paper/auto');
+      await router.push('/teacher/preview-paper/auto');
     } else {
       ElNotification.error({
         title: '生成失败',
