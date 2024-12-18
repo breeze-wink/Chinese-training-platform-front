@@ -25,13 +25,9 @@
                                     <span>{{ option.label }}. {{ option.text }}</span>
                                 </label>
                             </div>
-                            <div v-else-if="question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER'" class="quill-editor-container">
-                                <!-- 创建独立的 Quill 编辑器容器 -->
-                                <div
-                                    :id="`quill-editor-${question.practiceQuestionId}`"
-                                    ref="quillEditors"
-                                    class="quill-editor"
-                                ></div>
+                            <div v-else-if="question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER'" class="answer-box">
+                                <!-- 普通文本框替代富文本框 -->
+                                <textarea v-model="studentAnswers[question.practiceQuestionId]" class="answer-box-text" placeholder="请输入答案..."></textarea>
                             </div>
                         </div>
 
@@ -67,6 +63,7 @@ import Header from '@/components/Header.vue';
 import axios from 'axios';
 import { nextTick } from 'vue';
 import Quill from 'quill';
+import {mapGetters} from "vuex";
 
 export default {
     components: {
@@ -83,6 +80,15 @@ export default {
         };
     },
     created() {
+        const studentId = this.getUserId;
+
+        if (!studentId) {
+            console.error('studentId 未定义');
+            this.$message.error('学生ID未定义，请重试。');
+            this.isLoading = false;
+            return;
+        }
+
         this.initialize();
         console.log('Received parameters:', {
             practiceId: this.practiceId,
@@ -228,6 +234,14 @@ export default {
 
             console.log('开始提交答案');
 
+            const studentId = this.getUserId;
+            if (!studentId) {
+                console.error('studentId 未定义');
+                this.$message.error('学生ID未定义，请重试。');
+                this.isProcessing = false;
+                return;
+            }
+
             if (!this.practiceId) {
                 console.error('practiceId 未定义');
                 this.$message.error('练习ID未定义，请重试。');
@@ -260,7 +274,7 @@ export default {
             console.log('即将发送的答案数据:', answers);
 
             try {
-                const response = await axios.post(`/api/student/${this.practiceId}/practice/complete`, {
+                const response = await axios.post(`/api/student/${studentId}/practice/complete`, {
                     data: answers
                 });
 
@@ -294,6 +308,15 @@ export default {
         async saveAnswers() {
             this.toggleLoading(true);
             console.log('开始保存答案');
+
+            const studentId = this.getUserId;
+            if (!studentId) {
+                console.error('studentId 未定义');
+                this.$message.error('学生ID未定义，请重试。');
+                this.isProcessing = false;
+                return;
+            }
+
             const answers = this.parsedQuestions.map((question) => ({
                 practiceQuestionId: question.practiceQuestionId,
                 answerContent: this.studentAnswers[question.practiceQuestionId]
@@ -320,7 +343,7 @@ export default {
             console.log('即将发送的答案数据:', answers);
 
             try {
-                const response = await axios.post(`/api/student/${this.practiceId}/practice/save`, {
+                const response = await axios.post(`/api/student/${studentId}/practice/save`, {
                     data: answers
                 });
 
@@ -410,41 +433,6 @@ export default {
             const parts = sequence.split('.');
             return parts[0];
         },
-        initQuillEditors() {
-            this.parsedQuestions.forEach((question) => {
-                if (question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER') {
-                    const editorId = `quill-editor-${question.practiceQuestionId}`;
-                    const editorContainer = document.getElementById(editorId);
-
-                    if (!editorContainer) {
-                        console.error(`未找到 Quill 容器: ${editorId}`);
-                        return;
-                    }
-
-                    if (!this.quillEditors[question.practiceQuestionId]) {  // 只有当编辑器尚未初始化时才初始化它
-                        const quill = new Quill(editorContainer, {
-                            theme: 'snow',
-                            modules: {
-                                toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }]],
-                            },
-                        });
-
-                        // 恢复已保存的答案
-                        if (this.studentAnswers[question.practiceQuestionId]) {
-                            quill.root.innerHTML = this.studentAnswers[question.practiceQuestionId];
-                        }
-
-                        // 存储 Quill 实例
-                        this.quillEditors[question.practiceQuestionId] = quill;
-
-                        // 同步答案数据
-                        quill.on('text-change', () => {
-                            this.studentAnswers[question.practiceQuestionId] = quill.root.innerHTML;
-                        });
-                    }
-                }
-            });
-        },
         getSimpleText(html) {
             var re1 = new RegExp("<.+?>", "g"); // 匹配HTML标签的正则表达式
             var msg = html.replace(re1, ''); // 执行替换成空字符
@@ -452,6 +440,8 @@ export default {
         }
     },
     computed: {
+        ...mapGetters(['getUserId']),
+
         displayedQuestions() {
             return this.parsedQuestions.map(question => ({
                 ...question,
@@ -583,6 +573,33 @@ export default {
     height: 12px;
     background: #007BFF;
     border-radius: 50%;
+}
+
+.answer-box {
+    margin: 20px 0;
+    position: relative;
+}
+
+.textarea-container {
+    margin-bottom: 20px;
+}
+
+.answer-box-text {
+    width: 100%;
+    height: 100px;
+    border: 1px solid #000;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: 16px;
+    line-height: 1.6;
+    resize: vertical;
+    font-family: 'kaiti', 'Times New Roman', sans-serif; /* 中文宋体，英文新罗马 */
+    transition: border 0.3s ease-in-out;
+}
+
+.answer-box-text:focus {
+    border-color: #007BFF;
+    outline: none;
 }
 
 .input-field {

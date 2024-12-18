@@ -183,6 +183,8 @@ const menuItems = computed(() => {
     width: 180px;
     margin-left: 100px; /* 左侧留空隙 */
     margin-right: 100px;
+    position: fixed;
+
 }
 
 .el-menu-vertical-demo:not(.el-menu--collapse) {

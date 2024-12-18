@@ -122,32 +122,30 @@ const handleFileUpload = async (event) => {
 
 // 查看文件
 const viewFile = async (item) => {
-  if(pdfUrl.value==='') {
+
     try {
-      const response = await axios.get(`/api/system-admin/query-course-standard/${item.id}`, {
-        // 确保与后端服务的端口一致
-        responseType: 'blob'
-      });
-      if (response.status === 200) {
-        const file = new Blob([response.data], {type: 'application/pdf'});
-        pdfUrl.value = URL.createObjectURL(file);
-      } else {
-        throw new Error('查看请求失败');
-      }
+        const response = await axios.get(`/api/system-admin/query-course-standard/${item.id}`, {
+            responseType: 'blob',
+        });
+        if (response.status === 200) {
+            const file = new Blob([response.data], { type: 'application/pdf' });
+            const fileUrl = URL.createObjectURL(file);
+            window.open(fileUrl, '_blank'); // 在新标签页中打开 PDF
+        } else {
+            throw new Error('查看请求失败');
+        }
     } catch (error) {
-      if (error.response && error.response.status === 404) {
-        ElMessage({message: '文件未找到，请检查ID是否正确', type: 'error'});
-      } else if (error.message.includes('ERR_CONNECTION_REFUSED')) {
-        ElMessage({message: '无法连接到服务器，请检查服务器是否启动并确保端口配置正确', type: 'error'});
-      } else if (error.message.includes('CORS')) {
-        ElMessage({message: '跨域请求被阻止，请确保服务器配置允许跨域访问', type: 'error'});
-      } else {
-        ElMessage({message: '文件查看失败: ' + error.message, type: 'error'});
-      }
+        if (error.response && error.response.status === 404) {
+            ElMessage({ message: '文件未找到，请检查ID是否正确', type: 'error' });
+        } else if (error.message.includes('ERR_CONNECTION_REFUSED')) {
+            ElMessage({ message: '无法连接到服务器，请检查服务器是否启动并确保端口配置正确', type: 'error' });
+        } else if (error.message.includes('CORS')) {
+            ElMessage({ message: '跨域请求被阻止，请确保服务器配置允许跨域访问', type: 'error' });
+        } else {
+            ElMessage({ message: '文件查看失败: ' + error.message, type: 'error' });
+        }
     }
-  }else {
-    pdfUrl.value='';
-  }
+
 };
 
 // 删除课标
@@ -190,7 +188,7 @@ onMounted(() => {
   background-color: #fff;
   overflow-y: auto;
   margin-right: 50px;
-  margin-bottom: 50px;
+  margin-left: 300px;
 }
 
 .input-button-group {

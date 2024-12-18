@@ -351,6 +351,7 @@ const reviewAssignment = (submission) => {
   background-color: #fff;
   overflow-y: auto;
   margin-right: 50px;
+    margin-left: 300px;
 }
 
 .input-button-group {

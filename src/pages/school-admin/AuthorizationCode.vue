@@ -527,6 +527,7 @@ const handleChangeEmail = async () => {
   background-color: #fff;
   overflow-y: auto;
   margin-right: 50px;
+    margin-left: 300px;
 }
 .edit-input {
   width: 200px; /* 限制输入框的宽度，避免太长 */

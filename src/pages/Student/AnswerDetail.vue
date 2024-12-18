@@ -12,10 +12,10 @@
                         <h2>{{ practiceName }} 练习答案</h2>
                         <p class="score-text"><strong>客观题得分: {{ score }}</strong></p>
                         <div v-for="(answer, index) in answers" :key="index" :id="'question-' + answer.sequence" class="answer">
-                            <p v-if="answer.showQuestionContent" class="question-body">
+                            <div v-if="answer.showQuestionContent" class="question-body">
                                 <span class="question-prefix">{{ getMainQuestionNumber(answer.sequence) }}</span>
-                                {{ answer.questionBody }}
-                            </p>
+                                <div v-html="answer.questionBody" class="question-content"></div>
+                            </div>
                             <div class="question-sequence-content">
                                 <span class="sequence">{{ answer.sequence }}. </span>
                                 <span v-html="answer.questionContent" class="question-content"></span>
@@ -307,6 +307,7 @@ body {
     padding: 30px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
     background: linear-gradient(135deg, #ffffff, #f5f5f5); /* 内容区域的渐变背景 */
+    margin-left: 300px;
 }
 
 .sidebar-nav {
