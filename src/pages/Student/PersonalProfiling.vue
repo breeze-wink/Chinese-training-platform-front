@@ -50,7 +50,7 @@
                         <div class="bar-chart">
                             <div v-for="(weakness, index) in weaknessScores" :key="index" class="bar-item">
                                 <div class="bar-labels">
-                                    <span>{{ weakness.weaknessName }}</span>
+                                    <span>{{ weakness.type }} - {{ weakness.weaknessName }}</span>
                                 </div>
                                 <div class="bar-container">
                                     <div class="bar"
@@ -75,7 +75,21 @@
                     <div class="score-trend">
                         <div class="line-chart">
                             <svg :width="chartWidth" :height="chartHeight">
-                                <polyline :points="linePoints" style="fill:none;stroke:#66c2ff;stroke-width:2"/>
+                                <!-- X轴 -->
+                                <line x1="0" y1="chartHeight - 20" x2="chartWidth" y2="chartHeight - 20" stroke="black" />
+                                <!-- Y轴 -->
+                                <line x1="0" y1="0" x2="0" y2="chartHeight" stroke="black" />
+
+                                <!-- 折线图 -->
+                                <polyline :points="linePoints" style="fill:none;stroke:#66c2ff;stroke-width:2" />
+
+                                <!-- 数据点标记 -->
+                                <circle v-for="(point, index) in linePoints.split(' ')" :key="index" :cx="point.split(',')[0]" :cy="point.split(',')[1]" r="2" fill="#66c2ff" />
+
+                                <!-- X轴标签 -->
+                                <text x="chartWidth - 40" y="chartHeight - 5" font-size="12" text-anchor="end">时间</text>
+                                <!-- Y轴标签 -->
+                                <text x="5" y="20" font-size="12" text-anchor="start">分数</text>
                             </svg>
                         </div>
                     </div>
@@ -231,6 +245,14 @@ export default {
                 const response = await axios.get(`/api/student/${this.getUserId}/score-fluctuations`);
                 if (response.status === 200) {
                     this.scoreFluctuations = response.data.data;
+                    this.linePoints = this.scoreFluctuations.map((item, index) => {
+                        // 假设时间是item.time，分数是item.score
+                        // 这里需要根据您的实际情况来转换时间到x坐标
+                        const x = item.time;
+                        // 假设y坐标就是分数
+                        const y = item.score;
+                        return `${x},${y}`;
+                    }).join(' ');
                     console.log(response.data);
                 }
             } catch (error) {
@@ -238,7 +260,7 @@ export default {
             } finally {
                 this.loadingScoreFluctuations = false;
             }
-        }
+        },
     }
 };
 </script>
