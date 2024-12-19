@@ -33,13 +33,14 @@
                             <div v-else>
                                 <!-- 富文本编辑器 -->
                                 <QuillEditor
-                                    v-model:content="question.content"
+                                    v-model="question.content"
                                     contentType="html"
                                     @ready="onEditorReady"
                                     @change="onEditorChange"
                                     :options="editorOptions"
                                     @input="adjustTextareaHeight"
                                 />
+
                                 <!-- 保存按钮 -->
                                 <div class="buttons-container d-flex justify-content-end">
                                     <button @click="toggleEdit('content')" class="edit-btn">保存</button>
@@ -251,6 +252,7 @@
 </template>
 
 <script setup>
+
 import { ref, onMounted, nextTick } from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import axios from 'axios';
@@ -260,16 +262,17 @@ import { QuillEditor } from '@vueup/vue-quill';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import Sidebar from "@/components/Sidebar.vue";
 import Header from "@/components/Header.vue";
-import Quill from 'quill';
-import {ImageDrop} from 'quill-image-drop-module'; // 导入 imageDrop
-// import ImageResize from 'quill-image-resize-module'; // 导入 imageResize
+import Quill from 'vue-quill-editor';
+import { ImageExtend, QuillWatch } from 'quill-image-extend-module'
+import ImageResize from 'quill-image-resize-module'
+import 'quill/dist/quill.core.css'
+import 'quill/dist/quill.snow.css'
+import 'quill/dist/quill.bubble.css'
 
-Quill.register('modules/imageDrop', ImageDrop); // 注册 imageDrop 模块
-// Quill.register('modules/imageResize', ImageResize); // 注册 imageResize 模块
-const quill = new Quill('#editor', {
-    theme: 'snow',
-    // modules: editorOptions.modules, // 使用你的模块配置
-});
+// 注册模块
+Quill.register('modules/imageResize', ImageResize);
+Quill.register('modules/ImageExtend', ImageExtend)
+
 const route = useRoute();
 const store = useStore();
 const router = useRouter();
@@ -300,6 +303,38 @@ const editMode = ref({
     type: false,
 });
 
+// 从富文本内容中提取图片
+const extractBase64ImagesFromContent = (content) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+    const images = [];
+
+    // 查找所有 img 标签
+    const imgTags = doc.querySelectorAll('img');
+    imgTags.forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && src.startsWith('data:image/')) {  // 判断是否为Base64图像
+            images.push(src);
+        }
+    });
+
+    return images;
+};
+
+// 将Base64数据转换为Blob对象
+const base64ToBlob = (base64, mimeType) => {
+    const byteCharacters = atob(base64.split(',')[1]); // 解码Base64数据
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset++) {
+        const byte = byteCharacters.charCodeAt(offset);
+        byteArrays.push(byte);
+    }
+
+    const byteArray = new Uint8Array(byteArrays);
+    return new Blob([byteArray], { type: mimeType });
+};
+
 // 富文本框上传图片时的处理
 const editorOptions = {
     theme: "snow",
@@ -312,8 +347,23 @@ const editorOptions = {
             [{ align: [] }],
             ["link", "image"],
         ],
-        imageDrop: true, // 启用图片拖放功能
-        imageResize: true, // 启用图片调整大小
+        ImageExtend: {
+            loading: true,
+            name: 'file',
+            action: 'url',
+            response: (res) => {
+                return res.url
+            }
+        },
+        imageResize: {
+            // 可以在这里配置imageResize模块的具体选项，如
+            displayStyles: {
+                backgroundColor: 'black',
+                border: 'none',
+                color: 'white'
+            },
+            modules: ['Resize', 'DisplaySize', 'Toolbar']
+        },
         imageHandler: async function(image) {  // 自定义图片上传处理
             const imageUrl = await uploadImage(image);
             if (imageUrl) {
@@ -327,6 +377,7 @@ const editorOptions = {
 
 // 初始化编辑状态
 onMounted(() => {
+    Quill.register('modules/imageResize', ImageResize);
     if (question.value.subQuestions?.length) {
         editMode.value.subQuestions = question.value.subQuestions.map(() => ({
             content: false,
@@ -337,6 +388,12 @@ onMounted(() => {
         }));
     }
 });
+
+function onEditorReady(editor) {
+    if (question.value.content) {
+        editor.root.innerHTML = question.value.content;
+    }
+}
 
 // 富文本编辑器内容变化时调整高度
 function onEditorChange() {
@@ -457,30 +514,6 @@ async function deleteImage(type, imageName) {
     } catch (error) {
         console.error(`Error deleting image: ${imageName}`, error);
     }
-}
-
-// 在保存内容时，比较初始图片列表与当前图片列表，并删除多余的图片
-async function saveEditedContent() {
-    const currentImages = extractImageList(question.value.content);
-    const deletedImages = initialImages.value.filter(src => !currentImages.includes(src));
-
-    console.log('当前图片列表:', currentImages);
-    console.log('已删除图片列表:', deletedImages);
-
-    // 删除已删除的图片
-    for (const imageSrc of deletedImages) {
-        if (imageSrc.startsWith('/uploads/content/')) {
-            // const imageName = imageSrc.split('/').pop(); // 获取图片名称
-            const imageName = imageSrc.match(/\/([^\/?#]+)(?:[?#]|$)/i)?.[1];
-            await deleteImage('content', imageName);
-        }
-    }
-
-    // 更新初始图片列表
-    initialImages.value = currentImages;
-
-    // 保存编辑后的内容
-    toggleEdit('content'); // 停止编辑模式
 }
 
 // 富文本编辑器上传图片
@@ -629,9 +662,6 @@ function adjustAllTextareasHeight() {
 // 编辑状态切换
 function toggleEdit(section, index = null, field = null, optionIndex = null) {
     if (section === 'content') {
-        if (editMode.value.content) {
-            saveEditedContent();
-        }
         editMode.value.content = !editMode.value.content;
         question.value.content = question.value.content || ''; // 确保内容更新
     } else if (section === 'body') {
@@ -666,83 +696,185 @@ function toggleEdit(section, index = null, field = null, optionIndex = null) {
     });
 }
 
+const replaceImagePlaceholder = (content, oldSrc, newSrc) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+
+    // 查找所有 img 标签
+    const imgs = doc.querySelectorAll('img');
+
+    imgs.forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && src === oldSrc) {
+            img.setAttribute('src', newSrc); // 替换 src
+        }
+    });
+    // 返回修改后的 HTML 字符串
+    return doc.body.innerHTML;
+}
+
 // 提交表单
 function approval() {
-    console.log("question.value:", question.value);
-    console.log("subQuestions:", question.value.subQuestions);
+    if (source === "edit") {
+        // 调用 Modify Question 接口
+        const payload = {
+            id: route.query.id,
+            body: question.value.body,
+            questions: [],
+        };
 
-    // 检查是否有题目ID
-    if (!route.query.questionId) {
-        ElNotification.error({ title: '错误', message: '缺少题目ID' });
-        return;
-    }
+        payload.questions = []; // 清空问题数组
 
-    // 构造请求体
-    const requestPayload = {
-        id: route.query.id,  // 确保此 ID 与后端匹配
-        body: question.value.body || "",  // 大题的描述
-        questions: []  // 存储小题内容
-    };
+        if (route.query.type === 'small') {
+            if (question.value.content && question.value.answer) {
+                const content = question.value.content ? question.value.content.getHTML() || question.value.content.container.firstChild.innerHTML : '';
+                let processedContent = content;
 
-    requestPayload.questions = []; // 清空问题数组
+                const base64Images = extractBase64ImagesFromContent(content);
+                for (const base64Image of base64Images) {
+                    const mimeType = base64Image.split(';')[0].split(':')[1];
+                    const blob = base64ToBlob(base64Image, mimeType);
+                    const file = new File([blob], 'image.png', { type: mimeType });
+                    const newImageUrl = uploadImage(file);
+                    if (newImageUrl) {
+                        processedContent = replaceImagePlaceholder(processedContent, base64Image, newImageUrl);
+                    }
+                }
 
-    if (route.query.type === 'small') {
-        if (question.value.content && question.value.answer) {
-            console.log("Checking content:", question.value.content, "answer:", question.value.answer);
-            // 只有一个问题
-            requestPayload.questions.push({
-                problem: question.value.content,
-                choices: question.value.options.length ? question.value.options : [], // 如果是选择题，提供选项
-                answer: question.value.answer,
-                analysis: question.value.explanation
-            });
-        } else {
-            ElNotification.error({ title: '错误', message: '题目内容或答案不能为空' });
-            return;
-        }
-    } else {
-        // 大题，可能有多个子题
-        if (question.value.body) {
-            requestPayload.body = question.value.body; // 大题的描述
-        }
-        for (let i = 0; i < question.value.subQuestions.length; i++) {
-            const subQuestion = question.value.subQuestions[i];
-            if (subQuestion.content && subQuestion.answer) {
-                requestPayload.questions.push({
-                    problem: subQuestion.content,
-                    choices: subQuestion.options.length ? subQuestion.options : [], // 如果是选择题，提供选项
-                    answer: subQuestion.answer,
-                    analysis: subQuestion.explanation
+                question.value.content = processedContent;
+
+                console.log("Checking content:", question.value.content, "answer:", question.value.answer);
+                // 只有一个问题
+                payload.questions.push({
+                    problem: question.value.content,
+                    choices: question.value.options.length ? question.value.options : [], // 如果是选择题，提供选项
+                    answer: question.value.answer,
+                    analysis: question.value.explanation
                 });
             } else {
-                ElNotification.error({ title: '错误', message: '子题内容或答案不能为空' });
+                ElNotification.error({ title: '错误', message: '题目内容或答案不能为空' });
                 return;
             }
+        } else {
+            // 大题，可能有多个子题
+            if (question.value.body) {
+                payload.body = question.value.body; // 大题的描述
+            }
+            for (let i = 0; i < question.value.subQuestions.length; i++) {
+                const subQuestion = question.value.subQuestions[i];
+                if (subQuestion.content && subQuestion.answer) {
+                    payload.questions.push({
+                        problem: subQuestion.content,
+                        choices: subQuestion.options.length ? subQuestion.options : [], // 如果是选择题，提供选项
+                        answer: subQuestion.answer,
+                        analysis: subQuestion.explanation
+                    });
+                } else {
+                    ElNotification.error({ title: '错误', message: '子题内容或答案不能为空' });
+                    return;
+                }
+            }
         }
+
+        console.log("Submitting question with id:", payload);
+
+        axios.put('/api/teacher/modify-question', payload)
+            .then(response => {
+                if (response.status === 200) {
+                    ElNotification.success({ title: '成功', message: '题目修改成功' });
+                    router.push({ name: 'QuestionList' });
+                } else {
+                    throw new Error('请求失败');
+                }
+            })
+            .catch(error => {
+                let errorMessage = '';
+                if (error.response) {
+                    console.error('Error details:', error.response);
+                    errorMessage = error.response.data?.message || '请求失败';
+                } else {
+                    errorMessage = '无法连接到服务器，请稍后再试';
+                }
+                ElNotification.error({ title: '错误', message: errorMessage });
+            });
+
+    } else {
+        console.log("question.value:", question.value);
+        console.log("subQuestions:", question.value.subQuestions);
+
+        // 检查是否有题目ID
+        if (!route.query.questionId) {
+            ElNotification.error({ title: '错误', message: '缺少题目ID' });
+            return;
+        }
+
+        // 构造请求体
+        const requestPayload = {
+            id: route.query.id,  // 确保此 ID 与后端匹配
+            body: question.value.body || "",  // 大题的描述
+            questions: []  // 存储小题内容
+        };
+
+        requestPayload.questions = []; // 清空问题数组
+
+        if (route.query.type === 'small') {
+            if (question.value.content && question.value.answer) {
+                console.log("Checking content:", question.value.content, "answer:", question.value.answer);
+                // 只有一个问题
+                requestPayload.questions.push({
+                    problem: question.value.content,
+                    choices: question.value.options.length ? question.value.options : [], // 如果是选择题，提供选项
+                    answer: question.value.answer,
+                    analysis: question.value.explanation
+                });
+            } else {
+                ElNotification.error({ title: '错误', message: '题目内容或答案不能为空' });
+                return;
+            }
+        } else {
+            // 大题，可能有多个子题
+            if (question.value.body) {
+                requestPayload.body = question.value.body; // 大题的描述
+            }
+            for (let i = 0; i < question.value.subQuestions.length; i++) {
+                const subQuestion = question.value.subQuestions[i];
+                if (subQuestion.content && subQuestion.answer) {
+                    requestPayload.questions.push({
+                        problem: subQuestion.content,
+                        choices: subQuestion.options.length ? subQuestion.options : [], // 如果是选择题，提供选项
+                        answer: subQuestion.answer,
+                        analysis: subQuestion.explanation
+                    });
+                } else {
+                    ElNotification.error({ title: '错误', message: '子题内容或答案不能为空' });
+                    return;
+                }
+            }
+        }
+
+        console.log("Submitting question with id:", requestPayload);
+
+        // 发送PUT请求
+        axios.put('/api/teacher/approve-question', requestPayload)
+            .then(response => {
+                if (response.status === 200) {
+                    ElNotification.success({ title: '成功', message: '题目审核已批准' });
+                    router.push({ name: 'QuestionList' });
+                } else {
+                    throw new Error('请求失败');
+                }
+            })
+            .catch(error => {
+                let errorMessage = '';
+                if (error.response) {
+                    console.error('Error details:', error.response);
+                    errorMessage = error.response.data?.message || '请求失败';
+                } else {
+                    errorMessage = '无法连接到服务器，请稍后再试';
+                }
+                ElNotification.error({ title: '错误', message: errorMessage });
+            });
     }
-
-    console.log("Submitting question with id:", requestPayload);
-
-    // 发送PUT请求
-    axios.put('/api/teacher/approve-question', requestPayload)
-        .then(response => {
-            if (response.status === 200) {
-                ElNotification.success({ title: '成功', message: '题目审核已批准' });
-                router.push({ name: 'QuestionList' });
-            } else {
-                throw new Error('请求失败');
-            }
-        })
-        .catch(error => {
-            let errorMessage = '';
-            if (error.response) {
-                console.error('Error details:', error.response);
-                errorMessage = error.response.data?.message || '请求失败';
-            } else {
-                errorMessage = '无法连接到服务器，请稍后再试';
-            }
-            ElNotification.error({ title: '错误', message: errorMessage });
-        });
 }
 
 // 驳回题目
