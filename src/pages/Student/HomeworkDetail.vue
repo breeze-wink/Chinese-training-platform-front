@@ -10,7 +10,7 @@
                     </div>
                     <div v-else-if="answers.length > 0" class="answers-container">
                         <h2>{{ assignmentName }} 作业答案</h2>
-                        <p class="score-text"><strong>分数: {{ score }}</strong></p>
+                        <p class="score-text"><strong>分数: {{ totalScore }}</strong></p>
 <!--                        <p class="score-text"><strong>老师评语: {{ answer.feedback }}</strong></p>-->
                         <div v-for="(answer, index) in answers" :key="index" :id="'question-' + answer.sequence" class="answer">
                             <div v-if="answer.showQuestionContent" class="question-body">
@@ -26,6 +26,7 @@
                                     {{ option.text }}
                                 </li>
                             </ul>
+                            <p class="highlight"><strong>分数: {{ answer.score }}</strong></p>
                             <p><strong class="highlight">你的答案:</strong>
                                 <span class="answer-text" v-if="answer.questionType === 'CHOICE'">
                                     {{ answer.studentAnswer }}
@@ -74,7 +75,7 @@ export default {
         return {
             answers: [],
             isLoading: true,
-            score: null,
+            totalScore: null,
             assignmentId: null,
             assignmentName: '',
             displayedQuestions: new Set() // 用于存储已经显示过的题目编号
@@ -129,10 +130,11 @@ export default {
                 console.log('响应数据:', response.data); // 增加日志以查看响应内容
 
                 if (response.status === 200 && response.data.message === 'success') {
-                    this.score = response.data.totalScore;  // 更新为 totalScore
                     this.answers = response.data.data || [];
+                    this.totalScore = response.data.totalScore;
 
                     console.log(this.answers)
+
                     // 处理 studentAnswer，只保留字母
                     this.answers.forEach(answer => {
                         if (answer.questionType === 'CHOICE' && answer.studentAnswer) {
