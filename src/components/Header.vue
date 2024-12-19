@@ -8,9 +8,6 @@
         <!-- 图标部分，靠右 -->
         <div class="icons">
             <!-- 消息图标 -->
-            <el-icon>
-                <Message />
-            </el-icon>
 
             <!-- 用户图标 -->
             <el-dropdown @command="handleCommand">

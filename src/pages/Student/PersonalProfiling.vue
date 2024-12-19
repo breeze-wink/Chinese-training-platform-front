@@ -20,29 +20,89 @@
                     </div>
                 </div>
                 <!-- 数据分析面板 -->
-                <div class="data-analysis" v-if="!loadingMultidimensionalScores && multidimensionalScores.length">
-                    <h2>数据分析面板</h2>
-                    <hr class="divider">
-                    <div class="radar-chart">
-                        <svg :width="chartWidth" :height="chartHeight">
-                            <g :transform="`translate(${chartWidth / 2}, ${chartHeight / 2})`">
-                                <circle v-for="(level, index) in levels" :key="index"
-                                        :r="level * radiusStep" fill="none" stroke="#ccc" stroke-width="1"/>
-                                <polygon :points="radarPoints" style="fill:none;stroke:#66c2ff;stroke-width:2;opacity:0.7"/>
-                                <line v-for="(label, index) in labels" :key="'line-' + index"
-                                      :x1="0" :y1="0"
-                                      :x2="Math.cos(index * angleStep) * maxRadius"
-                                      :y2="Math.sin(index * angleStep) * maxRadius"
-                                      stroke="#ccc" stroke-width="1"/>
-                                <text v-for="(label, index) in labels" :key="'text-' + index"
-                                      :x="Math.cos(index * angleStep) * (maxRadius + 20)"
-                                      :y="Math.sin(index * angleStep) * (maxRadius + 20)"
-                                      text-anchor="middle" font-size="10">{{ label }}</text>
-                            </g>
-                        </svg>
-                    </div>
+              <div class="data-analysis" v-if="!loadingMultidimensionalScores && multidimensionalScores.length">
+                <h2>数据分析面板</h2>
+                <hr class="divider">
+                <div class="radar-chart">
+                  <svg :width="chartWidth" :height="chartHeight">
+                    <g :transform="`translate(${chartWidth / 2}, ${chartHeight / 2})`">
+                      <!-- 雷达图的级别圆圈 -->
+                      <circle v-for="(level, index) in levels" :key="index"
+                              :r="level * radiusStep" fill="none" stroke="#e0e0e0" stroke-width="1"/>
+
+<!--                      <polygon :points="radarPoints" style="fill: none; stroke: #66c2ff; stroke-width: 2; opacity: 0.7"/>-->
+
+<!--                       雷达图的多边形，去除填充颜色-->
+<!--                      <polygon :points="radarPoints" style="fill: none; stroke: #66c2ff; stroke-width: 2; opacity: 0.7"/>-->
+
+                      <!-- 数据点 -->
+                      <circle v-for="(item, index) in radarDataPoints" :key="'radar-point-' + index"
+                              :cx="item.x" :cy="item.y" r="5" fill="#66c2ff" stroke="#fff" stroke-width="2"
+                              @mouseover="showTooltip(item, 'radar')"
+                              @mouseout="hideTooltip"/>
+
+                      <!-- 边界线 -->
+                      <line v-for="(label, index) in labels" :key="'line-' + index"
+                            :x1="0" :y1="0"
+                            :x2="Math.cos(index * angleStep - Math.PI / 2) * maxRadius"
+                            :y2="Math.sin(index * angleStep - Math.PI / 2) * maxRadius"
+                            stroke="#e0e0e0" stroke-width="1"/>
+
+                      <polygon :points="radarPoints" style="fill: none; stroke: #ffff00; stroke-width: 2; opacity: 0.7"/>
+                      <!-- 标签文本 -->
+                      <text v-for="(label, index) in labels" :key="'text-' + index"
+                            :x="Math.cos(index * angleStep - Math.PI / 2) * (maxRadius + 20)"
+                            :y="Math.sin(index * angleStep - Math.PI / 2) * (maxRadius + 20)"
+                            text-anchor="middle" font-size="12" fill="#444">
+                        {{ label }}
+                      </text>
+
+                      <line v-for="(item, index) in radarDataPoints" :key="'line-' + index"
+                            :x1="0" :y1="0"
+                            :x2="Math.cos(index * angleStep - Math.PI / 2) * maxRadius"
+                            :y2="Math.sin(index * angleStep - Math.PI / 2) * maxRadius"
+                            stroke="#e0e0e0" stroke-width="1"/>
+
+                      <!-- 雷达图的工具提示 -->
+                      <g v-if="tooltip.visible && tooltip.context === 'radar'">
+                        <!-- 背景矩形 -->
+                        <rect
+                            :x="tooltip.x - 60"
+                            :y="tooltip.y - 30"
+                            width="120"
+                            height="40"
+                            stroke="#66c2ff"
+                            stroke-width="1"
+                            fill="#333"
+                            rx="4"
+                            ry="4"
+                        />
+                        <!-- 工具提示文本：名称 -->
+                        <text
+                            :x="tooltip.x"
+                            :y="tooltip.y - 10"
+                            text-anchor="middle"
+                            font-size="12"
+                            fill="#fff"
+                        >
+                          {{ tooltip.name }}
+                        </text>
+                        <!-- 工具提示文本：分数 -->
+                        <text
+                            :x="tooltip.x"
+                            :y="tooltip.y + 10"
+                            text-anchor="middle"
+                            font-size="12"
+                            fill="#fff"
+                        >
+                          分数: {{ tooltip.score }}
+                        </text>
+                      </g>
+                    </g>
+                  </svg>
                 </div>
-                <!-- 短板 -->
+              </div>
+              <!-- 短板 -->
                 <div class="shortboard-section" v-if="!loadingWeaknessScores && weaknessScores.length">
                     <h2>短板</h2>
                     <hr class="divider">
@@ -50,12 +110,12 @@
                         <div class="bar-chart">
                             <div v-for="(weakness, index) in weaknessScores" :key="index" class="bar-item">
                                 <div class="bar-labels">
-                                    <span>{{ weakness.type }} - {{ weakness.weaknessName }}</span>
+                                    <span>{{ weakness.weaknessName }}</span>
                                 </div>
                                 <div class="bar-container">
                                     <div class="bar"
                                          :style="{
-                                             width: Math.max(weakness.weaknessScore) + '%',
+                                             width: Math.max(weakness.weaknessScore * 100) + '%',
                                              backgroundColor: colors[index % colors.length],
                                              minWidth: '5px'
                                          }"
@@ -63,37 +123,85 @@
                                     ></div>
                                 </div>
                                 <!-- 具体参数信息 -->
-                                <p style="font-size: 10px; color: red;">{{ weakness.weaknessName }} - 正确率: {{ weakness.weaknessScore }}%</p>
+                                <p style="font-size: 10px; color: red;">{{ weakness.weaknessName }} - 正确率: {{ Math.max(weakness.weaknessScore * 100) }}%</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 <!-- 历史分数波动 -->
-                <div class="score-trend-section" v-if="!loadingScoreFluctuations && scoreFluctuations.length">
-                    <h2>历史分数波动</h2>
-                    <hr class="divider">
-                    <div class="score-trend">
-                        <div class="line-chart">
-                            <svg :width="chartWidth" :height="chartHeight">
-                                <!-- X轴 -->
-                                <line x1="0" y1="chartHeight - 20" x2="chartWidth" y2="chartHeight - 20" stroke="black" />
-                                <!-- Y轴 -->
-                                <line x1="0" y1="0" x2="0" y2="chartHeight" stroke="black" />
+              <div class="score-trend-section" v-if="!loadingScoreFluctuations && scoreFluctuations.length">
+                <h2>历史分数波动</h2>
+                <hr class="divider">
+                <div class="score-trend">
+                  <div class="line-chart">
+                    <svg :width="chartWidth" :height="chartHeight">
+                      <!-- 渐变定义 -->
+                      <defs>
+                        <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" style="stop-color: #66c2ff; stop-opacity: 1" />
+                          <stop offset="100%" style="stop-color: #ff6666; stop-opacity: 1" />
+                        </linearGradient>
+                      </defs>
 
-                                <!-- 折线图 -->
-                                <polyline :points="linePoints" style="fill:none;stroke:#66c2ff;stroke-width:2" />
+                      <!-- 折线图 -->
+                      <polyline :points="linePoints" style="fill:none;stroke:url(#lineGradient);stroke-width:3"/>
 
-                                <!-- 数据点标记 -->
-                                <circle v-for="(point, index) in linePoints.split(' ')" :key="index" :cx="point.split(',')[0]" :cy="point.split(',')[1]" r="2" fill="#66c2ff" />
+                      <!-- 数据点 -->
+                      <circle v-for="(point, index) in dataPoints" :key="'point-' + index"
+                              :cx="point.x" :cy="point.y" r="4" fill="#ff6666" stroke="#fff" stroke-width="2"
+                              @mouseover="showTooltip(point)"
+                              @mouseout="hideTooltip"
+                      />
 
-                                <!-- X轴标签 -->
-                                <text x="chartWidth - 40" y="chartHeight - 5" font-size="12" text-anchor="end">时间</text>
-                                <!-- Y轴标签 -->
-                                <text x="5" y="20" font-size="12" text-anchor="start">分数</text>
-                            </svg>
-                        </div>
-                    </div>
+                      <!-- 横轴 -->
+<!--                      <line :x1="margin.left" :y1="chartHeight - margin.bottom" :x2="chartWidth - margin.right" :y2="chartHeight - margin.bottom" stroke="#ccc" stroke-width="1"/>-->
+
+                      <!-- 横轴日期文本 -->
+                      <text v-for="(item, index) in scoreFluctuations" :key="'date-' + index"
+                            v-if="dataPoints[index]"
+                            :x="dataPoints[index].x"
+                            :y="chartHeight - margin.bottom + 20"
+                            text-anchor="middle" font-size="12" fill="#444">
+                        {{ item.date }}
+                      </text>
+
+                      <g v-if="tooltip.visible">
+                        <!-- 背景矩形 -->
+                        <rect
+                            :x="tooltip.x - 25"
+                            :y="tooltip.y + 15"
+                            width="150"
+                            height="40"
+                            stroke="#66c2ff"
+                            stroke-width="1"
+                            fill="#66c2ff"
+                            rx="4"
+                            ry="4"
+                        />
+                        <!-- Tooltip 文本 -->
+                        <text
+                            :x="tooltip.x + 50"
+                        :y="tooltip.y + 30"
+                        text-anchor="middle"
+                        font-size="12"
+                        fill="white"
+                        >
+                        {{ tooltip.date }}
+                        </text>
+                        <text
+                            :x="tooltip.x + 50"
+                            :y="tooltip.y + 50"
+                            text-anchor="middle"
+                            font-size="12"
+                            fill="white"
+                        >
+                          分数: {{ tooltip.score }}
+                        </text>
+                      </g>
+                    </svg>
+                  </div>
                 </div>
+              </div>
             </div>
             <div class="learning-stats" v-else>
                 <p>Loading...</p>
@@ -129,7 +237,15 @@ export default {
             chartWidth: 600,
             chartHeight: 600,
             maxLevels: 5,
-            radiusStep: 40
+            radiusStep: 40,
+            tooltip: {
+                visible: false,
+                x: 0,
+                y: 0,
+                date: '',
+                score: 0
+            },
+            margin: { top: 20, right: 20, bottom: 40, left: 40 }
         };
     },
     computed: {
@@ -147,7 +263,7 @@ export default {
             const angleStep = (Math.PI * 2) / this.labels.length;
 
             this.multidimensionalScores.forEach((item, index) => {
-                const angle = angleStep * index;
+                const angle = angleStep * index - Math.PI / 2;
                 const radius = item.score * this.maxRadius;
                 const x = radius * Math.cos(angle);
                 const y = radius * Math.sin(angle);
@@ -156,23 +272,56 @@ export default {
 
             return points.join(' ');
         },
-        linePoints() {
-            if (this.scoreFluctuations.length === 0) return '';
+      radarDataPoints() {
+        if (this.multidimensionalScores.length === 0) return [];
 
-            const points = [];
-            const xStep = this.chartWidth / (this.scoreFluctuations.length - 1);
-            const yMax = Math.max(...this.scoreFluctuations.map(item => item.score));
-            const yMin = Math.min(...this.scoreFluctuations.map(item => item.score));
+        const dataPoints = [];
+        const angleStep = (Math.PI * 2) / this.labels.length;
 
-            this.scoreFluctuations.forEach((item, index) => {
-                const x = xStep * index;
-                const y = (1 - (item.score - yMin) / (yMax - yMin)) * (this.chartHeight - 20) + 20; // 20 is the margin
-                points.push(`${x},${y}`);
-            });
+        this.multidimensionalScores.forEach((item, index) => {
+          const angle = angleStep * index - Math.PI / 2; // 起始角度调整到顶部
+          const radius = item.score * this.maxRadius;
+          const x = radius * Math.cos(angle);
+          const y = radius * Math.sin(angle);
+          dataPoints.push({
+            x,
+            y,
+            name: item.name,
+            score: (item.score * 100).toFixed(2) // 转换为百分比并保留两位小数
+          });
+        });
 
-            return points.join(' ');
-        },
-        labels() {
+        return dataPoints;
+      },
+      dataPoints() {
+        if (this.scoreFluctuations.length === 0) return [];
+
+        const xStep = (this.chartWidth - this.margin.left - this.margin.right) / (this.scoreFluctuations.length - 1);
+        const yMax = Math.max(...this.scoreFluctuations.map(item => item.score));
+        const yMin = Math.min(...this.scoreFluctuations.map(item => item.score));
+
+        let points;
+        // 如果所有分数相同，避免返回空数组
+        if (yMax === yMin) {
+          points = this.scoreFluctuations.map((item, index) => {
+            const x = this.margin.left + xStep * index;
+            const y = this.margin.top + (this.chartHeight - this.margin.top - this.margin.bottom) / 2;
+            return { x, y, date: item.date, score: item.score };
+          });
+        } else {
+          points = this.scoreFluctuations.map((item, index) => {
+            const x = this.margin.left + xStep * index;
+            const y = this.margin.top + (1 - (item.score - yMin) / (yMax - yMin)) * (this.chartHeight - this.margin.top - this.margin.bottom);
+            return { x, y, date: item.date, score: item.score };
+          });
+        }
+        console.log('Generated dataPoints:', points);
+        return points;
+      },
+      linePoints() {
+        return this.dataPoints.map(p => `${p.x},${p.y}`).join(' ');
+      },
+      labels() {
             return this.multidimensionalScores.map(score => score.name);
         },
         maxRadius() {
@@ -227,7 +376,7 @@ export default {
                         type: item.type,
                         weaknessName: item.weaknessName,
                         // 将weaknessScore转换为小数
-                        weaknessScore: parseFloat((item.weaknessScore).toFixed(2)), // 转换并保留两位小数
+                        weaknessScore: parseFloat((item.weaknessScore / 100).toFixed(2)), // 转换并保留两位小数
                     }));
                     console.log('Fetched weakness scores:', this.weaknessScores); // 添加日志输出
                 }
@@ -245,14 +394,6 @@ export default {
                 const response = await axios.get(`/api/student/${this.getUserId}/score-fluctuations`);
                 if (response.status === 200) {
                     this.scoreFluctuations = response.data.data;
-                    this.linePoints = this.scoreFluctuations.map((item, index) => {
-                        // 假设时间是item.time，分数是item.score
-                        // 这里需要根据您的实际情况来转换时间到x坐标
-                        const x = item.time;
-                        // 假设y坐标就是分数
-                        const y = item.score;
-                        return `${x},${y}`;
-                    }).join(' ');
                     console.log(response.data);
                 }
             } catch (error) {
@@ -261,6 +402,21 @@ export default {
                 this.loadingScoreFluctuations = false;
             }
         },
+      // Tooltip 方法
+      showTooltip(point) {
+        // 添加偏移量，使 Tooltip 位于数据点的右上方
+        const offsetX = 10; // 向右偏移10px
+        const offsetY = -30; // 向上偏移30px
+
+        this.tooltip.visible = true;
+        this.tooltip.x = point.x + offsetX;
+        this.tooltip.y = point.y + offsetY;
+        this.tooltip.date = point.date;
+        this.tooltip.score = point.score;
+      },
+      hideTooltip() {
+        this.tooltip.visible = false;
+      }
     }
 };
 </script>
@@ -380,11 +536,19 @@ h3 {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-radius: 15px;
     border: none;
+    width: 600px;
+    height: 600px;
 }
 
 .score-trend svg {
     width: 100%;
-    height: 250px;
+    height: 600px; /* 与 data 中的 chartHeight 一致 */
+}
+
+
+.score-trend {
+  min-width: 400px;  /* 设置最小宽度 */
+  min-height: 300px; /* 设置最小高度 */
 }
 
 .bar-item p {
@@ -459,6 +623,7 @@ line {
 
 .line-chart circle:hover {
     transform: scale(1.5);
+    fill: #ffcc66;
 }
 
 @media (max-width: 768px) {
@@ -478,6 +643,12 @@ line {
     .bar-container {
         width: 100%;
     }
+
+  .line-chart svg,
+  .score-trend svg {
+    width: 100%;
+    height: auto;
+  }
 }
 
 /* 强调平均分和排名 */
@@ -492,6 +663,69 @@ line {
     font-weight: bold;
     font-size: 2rem;
     color: #ff6666; /* 用红色突出显示排名 */
+}
+
+/* 在 <g> 组中添加过渡效果 */
+g {
+  transition: opacity 0.3s ease;
+}
+
+
+/* 改进文本样式 */
+text {
+  font-size: 14px;
+  fill: #444;
+  font-weight: bold;
+  transition: fill 0.3s ease;
+}
+
+circle {
+  stroke: #ccc;
+  fill: none;
+  transition: stroke 0.3s ease; /* 加入过渡效果 */
+}
+
+/* 鼠标悬浮时改变颜色 */
+circle:hover {
+  stroke: #66c2ff;
+}
+
+line {
+  stroke: #ccc;
+  stroke-width: 1;
+  transition: stroke 0.3s ease;
+}
+
+line:hover {
+  stroke: #66c2ff; /* 在鼠标悬浮时高亮显示 */
+}
+
+/* 优化折线图的路径 */
+.line-chart path {
+  fill: none;
+  stroke: #66c2ff;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  transition: stroke 0.3s ease;
+}
+
+/* 鼠标悬浮时改变颜色 */
+.line-chart path:hover {
+  stroke: #ff6666; /* 鼠标悬浮时使用更醒目的红色 */
+}
+
+.line-chart circle {
+  fill: #ff6666;
+  stroke: #fff;
+  stroke-width: 2;
+  transition: transform 0.3s ease, fill 0.3s ease;
+}
+
+/* 鼠标悬浮时放大 */
+.line-chart circle:hover {
+  transform: scale(1.5);
+  fill: #ffcc66; /* 鼠标悬浮时改变颜色为黄色 */
 }
 
 </style>
