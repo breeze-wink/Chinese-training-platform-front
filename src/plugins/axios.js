@@ -3,7 +3,7 @@ import axios from 'axios';
 import store  from '@/store/user'; // 确保正确导入 store 实例
 
 const apiClient = axios.create({
-    baseURL: 'http://localhost:8081',
+    baseURL: 'http://124.70.47.40:8081',
     withCredentials: false,
     headers: {
         Accept: 'application/json',
