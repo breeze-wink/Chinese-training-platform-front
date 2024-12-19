@@ -124,13 +124,14 @@
                 <el-dialog
                         title="小组成员"
                         v-model="groupMembersDialogVisible"
-                        width="500px"
+                        width="400px"
                         align-center
                 >
                     <el-table
                             :data="groupMembers"
                             border
-                            style="width: 100%; max-height: 400px; overflow: auto"
+                            style="width:350px; max-height: 400px; overflow: auto"
+
                     >
                         <!-- 仅显示学生姓名和操作 -->
                         <el-table-column prop="studentName" label="学生姓名" width="150"></el-table-column>
@@ -146,7 +147,7 @@
                                 <el-button
                                         type="primary"
                                         size="small"
-                                        @click="viewGroupMemberDetails(scope.row)"
+                                        @click="viewStudentDetails(scope.row)"
                                 >
                                     查看详情
                                 </el-button>
@@ -364,7 +365,7 @@ import {ref, onMounted, watch, nextTick} from 'vue';
 import axios from 'axios';
 import { useStore } from 'vuex';
 import { computed } from 'vue';
-import {CirclePlus, CirclePlusFilled, Plus} from "@element-plus/icons-vue";
+import {CirclePlusFilled} from "@element-plus/icons-vue";
 import {ElMessage} from "element-plus";
 import * as echarts from 'echarts';
 import {onBeforeUnmount} from "vue-demi";
@@ -418,7 +419,7 @@ const newGroupForm = ref({
 // 班级成员列表
 const classMembers = ref([]);
 const groupMembers = ref([]);
-const removeClassId =ref();
+
 // 获取班级信息列表的函数
 const fetchClassList = async () => {
     try {
@@ -562,16 +563,18 @@ const viewMembers = async (classInfo) => {
         console.error('获取班级成员信息失败:', error.message);
     }
 };
+const selectedGroupId=ref('');
 const viewGroupMembers = async (groupInfo) => {
     try {
         const response = await axios.get(`/api/teacher/${teacherId.value}/groups-members`, {
             params: { groupId: groupInfo.groupId}
-
         });
         console.log(groupInfo.groupId);
         if (response.status === 200 ) {
             groupMembers.value = response.data.students;
             console.log(groupMembers.value);
+            selectedGroupId.value=groupInfo.groupId;
+            console.log(selectedGroupId.value);
 
             groupMembersDialogVisible.value = true;
         } else {
@@ -613,7 +616,7 @@ const updateClass = async () => {
 // 移除成员的函数
 const removeMember = async (member) => {
     try {
-        const response = await axios.delete(`/api/teacher/${teacherId.value}/remove-student`, {
+        const response = await axios.delete(`/api/teacher/${teacherId.value}/classes/remove-student`, {
             params: {
                 studentId: member.studentId,
             },
@@ -633,14 +636,30 @@ const removeMember = async (member) => {
         ElMessage.error("移除成员时发生错误");
     }
 };
+//删除小组成成员
+const removeGroupMember = async (member) => {
+    try {
+        const response = await axios.delete(`/api/teacher/${teacherId.value}/group/remove-student`, {
+            params: {
+                groupId:selectedGroupId.value,
+                studentId: member.studentId,
+            },
+        });
 
-// 查看成员详情的函数
-const viewMemberDetails = (member) => {
-    console.log("查看成员详情:", member);
-    ElMessage.info(`学生姓名：${member.studentName}, 学生ID：${member.studentId}`);
+        if (response.status === 200 ) {
+            // 从班级成员列表中移除
+            groupMembers.value = groupMembers.value.filter(
+                    (m) => m.studentId !== member.studentId
+            );
+            ElMessage.success("成员已成功移除");
+        } else {
+            ElMessage.error(response.data.message || "移除成员失败");
+        }
+    } catch (error) {
+        console.error("移除成员失败:", error.message);
+        ElMessage.error("移除成员时发生错误");
+    }
 };
-
-
 
 // 解散班级的函数
 const disbandClass = async (classItem) => {
