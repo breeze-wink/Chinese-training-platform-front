@@ -227,13 +227,12 @@ export default {
         },
 
         viewQuestionDetail(questionId, type) {
-            const formattedType = type === '单题' ? 'small' : 'big';
-            console.log(questionId, formattedType); // 验证转换是否正确
+            console.log(questionId, type); // 验证转换是否正确
             this.$router.push({
                 name: 'SeeQuestion',
                 query: {
                     questionId: questionId,
-                    type: formattedType
+                    type: type
                 }
             });
         },
