@@ -18,7 +18,7 @@
                         <el-table-column prop="questionId" label="ID" width="180"></el-table-column>
                         <el-table-column prop="type" label="类型" width="180">
                             <template #default="scope">
-                                <span>{{ scope.row.type === 'small' ? '单题' : '组合题' }}</span>
+                                <span>{{ scope.row.type }}</span>
                             </template>
                         </el-table-column>
                         <el-table-column prop="uploadTime" label="上传时间"></el-table-column>
@@ -31,6 +31,17 @@
                         <el-table-column label="备注" width="200">
                             <template #default="scope">
                                 <span>{{ scope.row.comment || '无' }}</span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="200">
+                            <template #default="scope">
+                                <el-button
+                                    size="small"
+                                    type="primary"
+                                    @click="viewQuestionDetail(scope.row.questionId, scope.row.type)"
+                                >
+                                    查看
+                                </el-button>
                             </template>
                         </el-table-column>
                     </el-table>
@@ -86,6 +97,7 @@ export default {
                 if (response.data.message === 'success') {
                     this.questions = response.data.uploadedQuestions;
                     this.totalQuestions = this.questions.length; // 更新总题目数
+                    console.log(this.questions)
                 } else {
                     this.error = '获取题目失败';
                 }
@@ -100,6 +112,18 @@ export default {
         // 处理分页变化
         handlePageChange(page) {
             this.currentPage = page;  // 分页切换时更新当前页
+        },
+
+        viewQuestionDetail(questionId, type) {
+            const formattedType = type === '单题' ? 'small' : 'big';
+            console.log(questionId, formattedType); // 验证转换是否正确
+            this.$router.push({
+                name: 'ViewQuestionDetail',
+                query: {
+                    questionId: questionId,
+                    type: formattedType
+                }
+            });
         },
 
         // 根据题目状态给不同的状态添加样式

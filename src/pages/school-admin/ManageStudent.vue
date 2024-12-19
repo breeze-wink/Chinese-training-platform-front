@@ -31,14 +31,15 @@
         </el-table>
 
         <!-- 分页 -->
-        <el-pagination
-            style="margin-top: 20px;"
-            @current-change="handlePageChange"
-            :current-page="currentPage"
-            :page-size="pageSize"
-            layout="prev, pager, next"
-            :total="filteredData.length"
-        />
+          <el-pagination
+                  style="margin-top: 20px;"
+                  @current-change="handlePageChange"
+                  :current-page="currentPage"
+                  :page-size="pageSize"
+                  layout="prev, pager, next"
+                  :total="totalItems"
+          ></el-pagination>
+
       </div>
     </div>
   </div>
@@ -88,18 +89,24 @@ onMounted(() => {
   getStudents(); // 加载学生数据
 });
 
-// 按照查询条件过滤学生
 const searchStudent = () => {
-  filteredData.value = students.value.filter(student =>
-    student.name && student.name.includes(search.value)
-  );
-  ElMessage({ message: '查询成功', type: 'success' });
+    filteredData.value = students.value.filter(student =>
+        student.name && student.name.includes(search.value)
+    );
+    totalItems.value = filteredData.value.length; // 更新总条目数
+    currentPage.value = 1; // 重置为第一页
+    ElMessage({ message: '查询成功', type: 'success' });
 };
 
-// 重置搜索
 const resetSearch = () => {
-  search.value = '';  // 清空搜索框
-  filteredData.value = students.value;  // 重置为所有学生
+    search.value = ''; // 清空搜索框
+    filteredData.value = students.value; // 重置为所有学生
+    totalItems.value = filteredData.value.length; // 更新总条目数
+    currentPage.value = 1; // 重置为第一页
+};
+
+const handlePageChange = (page) => {
+    currentPage.value = page;
 };
 
 // 获取分页数据

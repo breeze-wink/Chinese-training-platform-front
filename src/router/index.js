@@ -21,7 +21,7 @@ import ViewQuestion from "@/pages/Teacher/ViewQuestion.vue";
 import AuditTeacherPersonalInfo from "@/pages/audit-teacher/PersonalInfo.vue"
 import AuditStrategy from "@/pages/audit-teacher/AuditTest.vue"
 import QuestionList from "@/pages/audit-teacher/QuestionList.vue";
-
+import SeeQuestion from "@/pages/audit-teacher/SeeQuestion.vue"
 
 //知识点
 import KnowledgePoint from '@/pages/system-admin/KnowledgePoint.vue';
@@ -52,6 +52,7 @@ import store from '@/store/user';
 import PreviewAutoPaper from "@/pages/Teacher/PreviewAutoPaper.vue";
 import CorrectingPaper from "@/pages/Teacher/CorrectingPaper.vue";
 import PreviewKnowledgeLimitedPaper from "@/pages/Teacher/PreviewKnowledgeLimitedPaper.vue";
+import ViewQuestionDetail from "@/pages/Teacher/ViewQuestionDetail.vue";
 
 
 
@@ -117,6 +118,12 @@ const routes = [
         path: '/teacher/view-question',
         name: 'ViewQuestion',
         component: ViewQuestion,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/teacher/question-detail',
+        name: 'ViewQuestionDetail',
+        component: ViewQuestionDetail,
         meta: { requiresAuth: true }
     },
     //选择组卷方式
@@ -207,6 +214,12 @@ const routes = [
         path: '/audit-teacher/audit-strategy',
         name: 'AuditStrategy',
         component: AuditStrategy,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/audit-teacher/see-question',
+        name: 'SeeQuestion',
+        component: SeeQuestion,
         meta: { requiresAuth: true }
     },
 
