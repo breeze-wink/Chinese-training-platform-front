@@ -39,7 +39,7 @@
                             <p v-if="answer.analysis" class="analysis">
                                 <strong class="highlight">解析:</strong> <span class="answer-text"> {{ answer.analysis }}</span>
                             </p>
-                            <p v-if="answer.feedback"><strong class="highlight">教师反馈:</strong> <span class="answer-text">{{ answer.feedback }}</span></p>
+<!--                            <p v-if="answer.feedback"><strong class="highlight">教师反馈:</strong> <span class="answer-text">{{ answer.feedback }}</span></p>-->
                         </div>
                     </div>
                     <div v-else-if="!isLoading && answers.length === 0">

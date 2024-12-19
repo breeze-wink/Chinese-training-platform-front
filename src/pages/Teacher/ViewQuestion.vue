@@ -15,15 +15,15 @@
 
                     <!-- 显示题目列表 -->
                     <el-table :data="paginatedQuestions" style="width: 100%">
-                        <el-table-column prop="questionId" label="ID" width="180"></el-table-column>
-                        <el-table-column prop="type" label="类型" width="180">
+                        <el-table-column prop="questionId" label="ID" width="90"></el-table-column>
+                        <el-table-column prop="type" label="类型" width="130">
                             <template #default="scope">
                                 <span>{{ scope.row.type }}</span>
                             </template>
                         </el-table-column>
-                        <el-table-column prop="uploadTime" label="上传时间"></el-table-column>
+                        <el-table-column prop="uploadTime" label="上传时间" width="200" ></el-table-column>
                         <el-table-column prop="executeTeacher" label="审核教师"></el-table-column>
-                        <el-table-column label="状态" width="150">
+                        <el-table-column label="状态" width="180">
                             <template #default="scope">
                                 <span :class="statusClass(scope.row.status)">{{ scope.row.status }}</span>
                             </template>
@@ -33,7 +33,7 @@
                                 <span>{{ scope.row.comment || '无' }}</span>
                             </template>
                         </el-table-column>
-                        <el-table-column label="操作" width="200">
+                        <el-table-column label="操作" width="80">
                             <template #default="scope">
                                 <el-button
                                     size="small"
