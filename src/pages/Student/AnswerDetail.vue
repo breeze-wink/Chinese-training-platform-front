@@ -308,6 +308,7 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
     background: linear-gradient(135deg, #ffffff, #f5f5f5); /* 内容区域的渐变背景 */
     margin-left: 300px;
+    margin-right: 350px;
 }
 
 .sidebar-nav {
@@ -315,9 +316,11 @@ body {
     background-color: #f9f9f9;
     border-radius: 16px;
     padding: 20px;
-    margin-left: 20px;
+    /*margin-left: 20px;*/
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
     background: linear-gradient(135deg, #f9f9f9, #eaeaea); /* 侧边栏的渐变背景 */
+    position: fixed;
+    margin-left: 1300px;
 }
 
 .sidebar-nav h3 {
@@ -367,12 +370,16 @@ body {
 }
 
 .question-content, .question-sequence-content {
-    font-size: 1.1em;
+    font-size: 1.2em;
 }
 
 h2, h3, h4, .option-label, .option, .highlight, .answer-text, .question-body, .analysis {
     font-family: 'Arial', sans-serif; /* 统一字体 */
-    line-height: 1.6; /* 提高可读性 */
+    line-height: 1.2; /* 提高可读性 */
+}
+
+.question-body {
+    font-size: 1.2em;
 }
 
 h2 {
@@ -389,8 +396,14 @@ h3 {
     font-weight: 500;
 }
 
-h4, .question-body, .analysis {
+h4 {
     font-size: 1.4em;
+    color: #444;
+    margin-bottom: 10px;
+}
+
+.analysis {
+    font-size: 1.1em;
     color: #444;
     margin-bottom: 10px;
 }

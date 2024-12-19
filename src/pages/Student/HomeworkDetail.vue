@@ -11,6 +11,7 @@
                     <div v-else-if="answers.length > 0" class="answers-container">
                         <h2>{{ assignmentName }} 作业答案</h2>
                         <p class="score-text"><strong>分数: {{ score }}</strong></p>
+<!--                        <p class="score-text"><strong>老师评语: {{ answer.feedback }}</strong></p>-->
                         <div v-for="(answer, index) in answers" :key="index" :id="'question-' + answer.sequence" class="answer">
                             <div v-if="answer.showQuestionContent" class="question-body">
                                 <span class="question-prefix">{{ getMainQuestionNumber(answer.sequence) }}</span>
@@ -131,6 +132,7 @@ export default {
                     this.score = response.data.totalScore;  // 更新为 totalScore
                     this.answers = response.data.data || [];
 
+                    console.log(this.answers)
                     // 处理 studentAnswer，只保留字母
                     this.answers.forEach(answer => {
                         if (answer.questionType === 'CHOICE' && answer.studentAnswer) {
@@ -327,6 +329,7 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
     background: linear-gradient(135deg, #ffffff, #f5f5f5); /* 内容区域的渐变背景 */
     margin-left: 300px;
+    margin-right: 350px;
 }
 
 .sidebar-nav {
@@ -334,9 +337,11 @@ body {
     background-color: #f9f9f9;
     border-radius: 16px;
     padding: 20px;
-    margin-left: 20px;
+    /*margin-left: 20px;*/
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
     background: linear-gradient(135deg, #f9f9f9, #eaeaea); /* 侧边栏的渐变背景 */
+    position: fixed;
+    margin-left: 1300px;
 }
 
 .sidebar-nav h3 {
@@ -391,7 +396,11 @@ h2, h3, h4, .option-label, .option, .highlight, .answer-text, .question-body, .a
 }
 
 .question-content, .question-sequence-content, .sequence {
-    font-size: 1.1em;
+    font-size: 1.2em;
+}
+
+.question-body {
+    font-size: 1.2em;
 }
 
 h2 {
@@ -456,6 +465,7 @@ h3 {
     .content, .sidebar-nav {
         width: 100%;
         margin-left: 0;
+        position: fixed;
     }
 
     .sidebar-nav {

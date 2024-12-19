@@ -114,14 +114,11 @@ const menuItems = computed(() => {
                         { index: '/teacher/homework-manage', label: '查看作业', path: '/teacher/homework-manage'  }
                     ],
                 },
-                
-                { index: '/teacher/settings', label: '设置', icon: Setting, path: '/teacher/settings' },
             ];
             } else if (permission === 1) {
                 return [
                     { index: '/audit-teacher/personal-info', label: '个人信息', icon: User, path: '/audit-teacher/personal-info' },
                     { index: '/audit-teacher/question-list', label: '审核题目', icon: Edit, path: '/audit-teacher/question-list' },
-                    { index: '/audit-teacher/settings', label: '设置', icon: Setting, path: '/audit-teacher/settings' },
                 ];
             }
             break;
@@ -139,7 +136,6 @@ const menuItems = computed(() => {
                     ],
                 },
                 { index: '/student/personal-profiling', label: '个人分析', icon: Opportunity, path: '/student/personal-profiling' },
-                { index: '/student/settings', label: '设置', icon: Setting, path: '/student/settings' },
             ];
         case 'sys-adm':
             return [

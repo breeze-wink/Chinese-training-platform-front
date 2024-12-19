@@ -24,7 +24,7 @@
                         </el-table-column>
                         <el-table-column prop="uploadTime" label="上传时间"></el-table-column>
                         <el-table-column prop="uploadTeacher" label="上传教师"></el-table-column>
-                        <el-table-column label="操作" width="200">
+                        <el-table-column label="操作" width="300">
                             <template #default="scope">
                                 <!-- 对于未审核题目，显示审核按钮 -->
                                 <el-button
@@ -39,6 +39,13 @@
                                 <el-button
                                     v-if="questionType === 'access'"
                                     size="mini"
+                                    type="primary"
+                                    @click="viewQuestionDetail(scope.row.questionId, scope.row.type)">
+                                    查看
+                                </el-button>
+                                <el-button
+                                    v-if="questionType === 'access'"
+                                    size="mini"
                                     type="danger"
                                     @click="handleDelete(scope.row)">
                                     删除
@@ -50,6 +57,7 @@
                                     @click="handleEdit(scope.row)">
                                     修改
                                 </el-button>
+
                             </template>
                         </el-table-column>
                     </el-table>
@@ -207,6 +215,18 @@ export default {
                     }
                 }
             }).catch(() => {});  // 用户点击取消时不做任何事
+        },
+
+        viewQuestionDetail(questionId, type) {
+            const formattedType = type === '单题' ? 'small' : 'big';
+            console.log(questionId, formattedType); // 验证转换是否正确
+            this.$router.push({
+                name: 'SeeQuestion',
+                query: {
+                    questionId: questionId,
+                    type: formattedType
+                }
+            });
         },
 
         // 审核操作
