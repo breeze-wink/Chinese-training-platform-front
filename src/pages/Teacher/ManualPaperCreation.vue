@@ -253,6 +253,17 @@
 
 
         </div>
+
+        <!-- 加载提示 -->
+        <div v-if="isLoading" class="loading-modal">
+            <div class="modal-content">
+                <p v-if="isLoading">正在加载题目，请稍候...</p>
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- 遮罩层 -->
+        <div v-if="isLoading" class="overlay"></div>
     </div>
 
 </template>
@@ -270,7 +281,7 @@ import {useStore} from "vuex";
 import { ElNotification } from 'element-plus';
 
 import {SortDown, SortUp} from "@element-plus/icons-vue";
-
+const isLoading = ref(false);
 const selectedDifficulty = ref(''); // 默认选中全部
 const selectedType = ref(''); // 默认选中全部
 //从全局中ID信息
@@ -670,8 +681,18 @@ const handlePageChange = (page) => {
 // ***************************************************************************
 // 组件挂载时获取数据
 onMounted(() => {
-    fetchKnowledgePoints();
-    fetchQuestions();
+    isLoading.value=true;
+
+    Promise.all([fetchKnowledgePoints(), fetchQuestions()])
+            .then(() => {
+                // 当两个请求都完成后，设置 isLoading 为 false
+                isLoading.value = false;
+            })
+            .catch((error) => {
+                console.error("Error during fetching:", error);
+                // 发生错误时，仍然关闭 loading
+                isLoading.value = false;
+            });
 });
 
 
@@ -1076,5 +1097,65 @@ onMounted(() => {
 .explanation p {
     font-style: italic; /* 设置斜体 */
     margin: 5px 0; /* 每个段落的上下间距 */
+}
+
+
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 300px;
+    width: 100%;
+}
+
+.modal-content p {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* 确保模态窗在遮罩层之上 */
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+    z-index: 999; /* 确保遮罩层在最上层 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.2em;
 }
 </style>
