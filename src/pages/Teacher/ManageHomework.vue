@@ -35,7 +35,7 @@
           <el-table-column label="操作" width="200">
             <template #default="{ row }">
               <el-button size="small" type="primary" @click="viewCompletion(row)">查看完成情况</el-button>
-              <el-button size="small" type="success" @click="reviewAssignment(row)">批阅</el-button>
+
             </template>
           </el-table-column>
         </el-table>
@@ -115,11 +115,21 @@
         <el-button @click="dialogVisible = false">关闭</el-button>
       </span>
     </el-dialog>
+
+      <!-- 加载提示 -->
+      <div v-if="isLoadSubmit " class="loading-modal">
+          <div class="modal-content">
+              <p v-if="isLoadSubmit">正在加载作业完成情况，请稍候...</p>
+              <div class="spinner"></div>
+          </div>
+      </div>
+      <!-- 遮罩层 -->
+      <div v-if="isLoadSubmit" class="overlay"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import {ref, computed, onMounted, nextTick} from 'vue';
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import { ElButton, ElSelect, ElTable, ElTableColumn, ElTag, ElMessage, ElPagination, ElDialog } from 'element-plus';
@@ -129,6 +139,9 @@ import { useRouter } from 'vue-router';
 
 // 获取 Vuex 状态
 const store = useStore();
+
+//加载
+const isLoadSubmit = ref(false);
 
 // 获取教师 ID
 const teacherId = computed(() => store.state.user.id);
@@ -240,17 +253,34 @@ const handlePageChange = (page) => {
 
 // 查看完成情况
 const viewCompletion = (assignment) => {
+
   selectedAssignmentId.value = assignment.assignmentId;
   dialogVisible.value = true;
-  fetchSubmissions(assignment.assignmentId);
+
+    nextTick(() => {
+        // 延迟显示加载动画，确保弹窗已经渲染
+        setTimeout(() => {
+            isLoadSubmit.value = true;
+            // 请求提交数据
+            fetchSubmissions(assignment.assignmentId);
+        }, 200); // 可以调整 50ms，确保弹窗已经渲染
+    });
+
+
+
+
 };
 
 // 获取提交数据
 const fetchSubmissions = async (assignmentId) => {
+
   try {
     const response = await axios.get(`/api/teacher/${teacherId.value}/get-submission-list`, {
       params: { assignmentId: assignmentId }
     });
+
+
+
     if (response.status === 200) {
       submissions.value = response.data.data;
       filteredSubmissions.value = submissions.value;
@@ -259,6 +289,9 @@ const fetchSubmissions = async (assignmentId) => {
     }
   } catch (error) {
     ElMessage.error('获取提交列表失败，请稍后再试');
+  }finally {
+      // 数据加载完成后关闭加载动画
+      isLoadSubmit.value = false;
   }
 };
 
@@ -378,5 +411,68 @@ const reviewAssignment = (submission) => {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
+}
+
+
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 300px;
+    width: 100%;
+}
+
+.modal-content p {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+.loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* 高的 z-index 确保它位于最上层 */
+}
+
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+    z-index: 9998; /* 确保它比内容区域低于加载动画 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.2em;
+
 }
 </style>

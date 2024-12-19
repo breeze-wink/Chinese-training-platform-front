@@ -121,7 +121,7 @@ export default createStore({
             state.currentSubmissionIndex = index;
             localStorage.setItem('currentSubmissionIndex', index);
         },
-        removeSubmission(state, studentId) {
+        removeUnmarkedSubmission(state, studentId) {
             state.unmarkedSubmissions = state.unmarkedSubmissions.filter(s => s.studentId !== studentId);
             localStorage.setItem('unmarkedSubmissions', JSON.stringify(state.unmarkedSubmissions));
         },
@@ -197,8 +197,8 @@ export default createStore({
         setCurrentSubmissionIndex({ commit }, index) {
             commit('setCurrentSubmissionIndex', index);
         },
-        removeSubmission({ commit }, studentId) {
-            commit('removeSubmission', studentId);
+        removeUnmarkedSubmission({ commit }, studentId) {
+            commit('removeUnmarkedSubmission', studentId);
         },
         setCurrentStudent({ commit }, student) {
             commit('setCurrentStudent', student);

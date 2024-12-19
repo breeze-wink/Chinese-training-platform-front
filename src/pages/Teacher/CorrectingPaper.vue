@@ -24,7 +24,7 @@
                     :key="sub.submissionAnswerId"
                     class="sub-question"
                 >
-                  <p>{{ subIndex + 1 }}. {{ sub.question }} ({{sub.score}}分)</p>
+                  <p>{{ subIndex + 1 }}. {{ sub.question }} ({{sub.subScore}}分)</p>
 
                   <div v-if="sub.options && sub.options.length > 0" class="options">
                     <p><strong>选项：</strong></p>
@@ -46,7 +46,7 @@
                     <el-input-number
                         v-model="sub.markScore"
                         :min="0"
-                        :max="sub.score"
+                        :max="sub.subScore"
                         label="得分"
                         @change="handleMarkScoreChange(sub)"
 
@@ -113,6 +113,8 @@
       <div class="right-content bottom">
         <p>学生姓名：{{ studentName }}</p>
         <p>当前得分：{{ currentTotalScore }}</p>
+          <p>试卷总分：{{ totalScore }}</p>
+
 
         <!-- 评语部分 -->
         <div class="comment-section">
@@ -133,6 +135,19 @@
         </div>
       </div>
     </div>
+      <!-- 加载提示 -->
+      <div v-if="isSubmitAndGetNext" class="loading-modal">
+          <div class="modal-content">
+              <p v-if="isSubmitAndGetNext">正在提交并获取下一份，请稍候...</p>
+              <div class="spinner"></div>
+          </div>
+      </div>
+
+      <!-- 遮罩层 -->
+      <div v-if="isSubmitAndGetNext" class="overlay"></div>
+
+
+
   </div>
 </template>
 
@@ -162,6 +177,11 @@ const studentName = ref('');
 const processedQuestions = ref([]);
 const currentTotalScore = computed(() => calculateTotalScore(processedQuestions.value));
 const feedback = ref('');
+const totalScore = ref(0);
+
+// 添加当前索引状态
+const currentIndex = ref(0);
+const isSubmitAndGetNext = ref(false);
 
 // 获取当前 submission details
 const fetchSubmissionDetails = async () => {
@@ -172,10 +192,9 @@ const fetchSubmissionDetails = async () => {
   const assignmentIdValue = assignmentId.value;
   const studentIdValue = studentId.value;
 
-
   if (!assignmentIdValue || !studentIdValue) {
     ElMessage.error('缺少必要的参数');
-    router.push('/teacher/homework-manage');
+    await router.push('/teacher/homework-manage');
     return;
   }
 
@@ -187,12 +206,26 @@ const fetchSubmissionDetails = async () => {
       }
     });
 
+
     if (response.status === 200 && response.data.message === 'success') {
       const submissionData = response.data;
       console.log('获取作答详情成功', submissionData);
+      totalScore.value= submissionData.totalScore;
+
+
+
       const unmarkedSubmissions = computed(() => store.getters.getUnmarkedSubmissions);
       console.log('未批阅的成员数组:', unmarkedSubmissions.value);
-      const student = unmarkedSubmissions.value.find(s => s.studentId === Number(studentIdValue));
+
+
+        const student = unmarkedSubmissions.value.find((s, idx) => {
+            if (s.studentId === Number(studentId.value)) {
+                currentIndex.value = idx;
+                return true;
+            }
+            return false;
+        });
+
       studentName.value = student ? student.studentName : '未知学生';
       console.log('学生姓名:', studentName.value); // 调试日志
 
@@ -207,8 +240,9 @@ const fetchSubmissionDetails = async () => {
         if (question.type === null && question.subQuestions) {
           question.subQuestions.forEach(sub => {
             if (sub.type === 'CHOICE') {
+
               if (sub.answer === sub.studentAnswer) {
-                sub.markScore = sub.score;
+                sub.markScore = sub.subScore;
               } else {
                 sub.markScore = 0;
               }
@@ -221,7 +255,7 @@ const fetchSubmissionDetails = async () => {
         // 对于独立题（小题）
         if (question.type === 'CHOICE') {
           if (question.answer === question.studentAnswer) {
-            question.markScore = question.score;
+            question.markScore = question.subScore;
           } else {
             question.markScore = 0;
           }
@@ -353,6 +387,7 @@ const handleMarkScoreChange = (question) => {
 
 // 批阅完成
 const markCompleted = async () => {
+    isSubmitAndGetNext.value = true;
   const markData = [];
 
   processedQuestions.value.forEach(question => {
@@ -383,8 +418,12 @@ const markCompleted = async () => {
     if (response.status === 200 ) {
       ElMessage.success('批阅完成');
 
-      // 更新提交状态为已批阅
-      await updateSubmissionStatus();
+
+
+        // 从 unmarkedSubmissions 中移除已批阅的学生
+        await store.dispatch('removeUnmarkedSubmission', Number(studentId.value));
+        const t = computed(() => store.getters.getUnmarkedSubmissions);
+        console.log('批改后',t.value);
 
       // 导航到下一份批阅
       await nextSubmission();
@@ -398,53 +437,33 @@ const markCompleted = async () => {
 };
 
 // 更新提交状态为已批阅
-const updateSubmissionStatus = async () => {
-  try {
-    await axios.post(`/api/teacher/${store.state.user.id}/update-submission-status`, {
-      assignmentId: Number(assignmentId.value),
-      studentId: Number(studentId.value),
-      status: '已批阅'
-    });
-  } catch (error) {
-    console.error('更新提交状态失败', error);
-    //ElMessage.error('更新提交状态失败');
-  }
-};
+
 
 // 下一份
 const nextSubmission = async () => {
   // 获取所有提交列表
-  try {
-    const response = await axios.get(`/api/teacher/${store.state.user.id}/get-submission-list`, {
-      params: { assignmentId: assignmentId.value }
-    });
+    const unmarkedSubmissions = computed(() => store.getters.getUnmarkedSubmissions);
+    console.log('unmarkedSubmissions',unmarkedSubmissions.value);
+    isSubmitAndGetNext.value = false;
 
-    if (response.status === 200) {
-      const allSubmissions = response.data.data;
-      // 过滤未批阅的提交
-      const unmarked = allSubmissions.filter(s => s.isMarked === 0);
-
-      if (unmarked.length > 0) {
-        const nextSubmission = unmarked[0];
-        // 导航到批阅下一份
-        router.push({
-          path: '/teacher/correcting-paper',
-          query: {
-            assignmentId: assignmentId.value,
-            studentId: nextSubmission.studentId
-          }
-        });
-      } else {
+    if (!unmarkedSubmissions || unmarkedSubmissions.value.length === 0) {
         ElMessage.info('所有作业已批阅完毕');
         await router.push('/teacher/homework-manage');
-      }
-    } else {
-      ElMessage.error('获取提交列表失败');
+        return;
     }
-  } catch (error) {
-    console.error(error);
-    //ElMessage.error('获取提交列表失败，请稍后再试');
-  }
+
+    const nextSubmission = unmarkedSubmissions.value[0];
+
+        await router.push({
+            path: '/teacher/correcting-paper',
+            query: {
+                assignmentId: assignmentId.value,
+                studentId: nextSubmission.studentId
+            }
+        });
+
+    await fetchSubmissionDetails();
+
 };
 
 // 页面加载时获取批阅的题目
@@ -600,4 +619,60 @@ onMounted(async () => {
   resize: none; /* 禁止用户手动调整文本框大小 */
 }
 
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 300px;
+    width: 100%;
+}
+
+.modal-content p {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* 确保模态窗在遮罩层之上 */
+}
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+    z-index: 999; /* 确保遮罩层在最上层 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.2em;
+}
 </style>
