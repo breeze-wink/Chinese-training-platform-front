@@ -551,6 +551,8 @@ const fetchStudents = async (classId) => {
     background-color: #fff;
     overflow-y: auto;
     margin-right: 50px;
+    margin-bottom: 30px;
+
     margin-left: 300px;
 }
 

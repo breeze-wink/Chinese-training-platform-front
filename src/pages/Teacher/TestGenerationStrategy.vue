@@ -39,12 +39,12 @@
                                 </button>
                             </div>
                             <div class="card-image">
-                                <img src="../../static/dingzhi.jpeg" alt="定制">
+                                <img src="../../static/knowledge.png" alt="定制">
                             </div>
                         </div>
                         <div class="card">
                             <div class="card-image">
-                                <img src="../../static/typing.png" alt="手动">
+                                <img src="../../static/customized.png" alt="手动">
                             </div>
                             <div class="card-content">
                                 <h3>【匠心独运】手动选题艺术家</h3>
@@ -267,6 +267,8 @@ const autoGeneratePaper = async () => {
     background-color: #fff;
     overflow-y: auto;
     margin-right: 50px; /* 如果需要右侧留空隙，可以保留这行，或者可以根据实际情况调整 */
+    margin-bottom: 30px;
+
     margin-left: 300px;
 }
 

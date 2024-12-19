@@ -138,7 +138,7 @@
 
 <script setup>
 import Header from "@/components/Header.vue";
-import Sidebar from "@/components/Sidebar.vue";
+
 import { computed, ref, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter, useRoute } from 'vue-router';
@@ -478,6 +478,7 @@ onMounted(async () => {
   width: 75%;
   padding: 10px;
   margin-right: 20px;
+    margin-bottom: 30px;
 }
 
 .question-list {
