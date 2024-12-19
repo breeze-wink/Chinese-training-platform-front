@@ -114,8 +114,7 @@ const menuItems = computed(() => {
                         { index: '/teacher/homework-manage', label: '查看作业', path: '/teacher/homework-manage'  }
                     ],
                 },
-                
-                { index: '/teacher/settings', label: '设置', icon: Setting, path: '/teacher/settings' },
+
             ];
             } else if (permission === 1) {
                 return [
@@ -189,7 +188,7 @@ const menuItems = computed(() => {
 
 .el-menu-vertical-demo:not(.el-menu--collapse) {
     width: 180px;
-    min-height: 400px;
+    min-height: 680px;
 }
 
 .main-menu-item {
