@@ -16,7 +16,7 @@
                             自定义
                         </label>
                     </div>
-                    <div class="practice-name-input" v-if="selectedOption === 'custom'">
+                    <div class="practice-name-input" >
                         <label for="practiceName">练习名称:</label>
                         <input type="text" id="practiceName" v-model="practiceName" placeholder="Custom Practice" />
                     </div>

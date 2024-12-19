@@ -101,7 +101,7 @@ const menuItems = computed(() => {
                     icon: Edit,
                     children: [
                         { index: '/teacher/upload-question', label: '上传习题', icon: Upload, path: '/teacher/upload-question' },
-                        { index: '/teacher/view-question', label: '上传记录', path: '/teacher/view-question' }
+                        { index: '/teacher/view-question', label: '查看习题', path: '/teacher/view-question' }
                     ],
                 },
                 {

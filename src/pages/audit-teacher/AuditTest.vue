@@ -32,7 +32,7 @@
                             <!-- 编辑模式 -->
                             <div v-else>
                                 <!-- 富文本编辑器 -->
-                                <quill-editor
+                                <QuillEditor
                                     v-model:content="question.content"
                                     contentType="html"
                                     @ready="onEditorReady"
@@ -241,8 +241,8 @@
                             </div>
                         </div>
 
-                        <button v-if="isAudit" @click="approval" type="submit" class="submit-btn">批准</button>
-                        <button v-else @click="rejectQuestion" type="submit" class="submit-btn">驳回</button>
+                        <button v-if="source === 'audit'" @click="rejectQuestion" type="submit" class="submit-btn">驳回</button>
+                        <button @click="approval" type="submit" class="submit-btn">{{ source === 'edit' ? '确认' : '批准' }}</button>
                     </form>
                 </div>
             </div>
@@ -260,12 +260,20 @@ import { QuillEditor } from '@vueup/vue-quill';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import Sidebar from "@/components/Sidebar.vue";
 import Header from "@/components/Header.vue";
+import Quill from 'quill';
+import {ImageDrop} from 'quill-image-drop-module'; // 导入 imageDrop
+// import ImageResize from 'quill-image-resize-module'; // 导入 imageResize
 
+Quill.register('modules/imageDrop', ImageDrop); // 注册 imageDrop 模块
+// Quill.register('modules/imageResize', ImageResize); // 注册 imageResize 模块
+const quill = new Quill('#editor', {
+    theme: 'snow',
+    // modules: editorOptions.modules, // 使用你的模块配置
+});
 const route = useRoute();
 const store = useStore();
 const router = useRouter();
 const source = route.query.source; // 获取 source 参数
-const isAudit = source === 'audit';
 const loading = ref(true);
 const error = ref(null);
 const id = ref(null);
@@ -304,11 +312,9 @@ const editorOptions = {
             [{ align: [] }],
             ["link", "image"],
         ],
-        // 上传图片时，调用 uploadImage 方法
-        imageDrop: true,
-        imageResize: true,
-        imageHandler: async function (image) {
-            // 上传图片并获得图片 URL
+        imageDrop: true, // 启用图片拖放功能
+        imageResize: true, // 启用图片调整大小
+        imageHandler: async function(image) {  // 自定义图片上传处理
             const imageUrl = await uploadImage(image);
             if (imageUrl) {
                 const editor = this.quill;
@@ -318,6 +324,7 @@ const editorOptions = {
         }
     },
 };
+
 // 初始化编辑状态
 onMounted(() => {
     if (question.value.subQuestions?.length) {
@@ -348,6 +355,7 @@ function extractImageList(htmlContent) {
 onMounted(async () => {
     await fetchQuestion();
     initialImages.value = extractImageList(question.value.content);
+    await loadImagesForQuestions();
     await nextTick(() => {
         adjustAllTextareasHeight();
         if (question.value.subQuestions?.length) {
@@ -662,14 +670,21 @@ function toggleEdit(section, index = null, field = null, optionIndex = null) {
 function approval() {
     console.log("question.value:", question.value);
     console.log("subQuestions:", question.value.subQuestions);
+
+    // 检查是否有题目ID
+    if (!route.query.questionId) {
+        ElNotification.error({ title: '错误', message: '缺少题目ID' });
+        return;
+    }
+
     // 构造请求体
     const requestPayload = {
-        id: route.query.questionId,
-        body: question.value.body || "",
-        questions: []
+        id: route.query.id,  // 确保此 ID 与后端匹配
+        body: question.value.body || "",  // 大题的描述
+        questions: []  // 存储小题内容
     };
 
-    requestPayload.questions = []; // Resets the questions array
+    requestPayload.questions = []; // 清空问题数组
 
     if (route.query.type === 'small') {
         if (question.value.content && question.value.answer) {
@@ -677,7 +692,7 @@ function approval() {
             // 只有一个问题
             requestPayload.questions.push({
                 problem: question.value.content,
-                choices: question.value.options.length ? question.value.options : [],
+                choices: question.value.options.length ? question.value.options : [], // 如果是选择题，提供选项
                 answer: question.value.answer,
                 analysis: question.value.explanation
             });
@@ -688,14 +703,14 @@ function approval() {
     } else {
         // 大题，可能有多个子题
         if (question.value.body) {
-            requestPayload.body = question.value.body;
+            requestPayload.body = question.value.body; // 大题的描述
         }
         for (let i = 0; i < question.value.subQuestions.length; i++) {
             const subQuestion = question.value.subQuestions[i];
             if (subQuestion.content && subQuestion.answer) {
                 requestPayload.questions.push({
                     problem: subQuestion.content,
-                    choices: subQuestion.options.length ? subQuestion.options : [],
+                    choices: subQuestion.options.length ? subQuestion.options : [], // 如果是选择题，提供选项
                     answer: subQuestion.answer,
                     analysis: subQuestion.explanation
                 });
@@ -709,7 +724,7 @@ function approval() {
     console.log("Submitting question with id:", requestPayload);
 
     // 发送PUT请求
-    axios.put('/api/teacher/modify-question', requestPayload)
+    axios.put('/api/teacher/approve-question', requestPayload)
         .then(response => {
             if (response.status === 200) {
                 ElNotification.success({ title: '成功', message: '题目审核已批准' });
@@ -721,6 +736,7 @@ function approval() {
         .catch(error => {
             let errorMessage = '';
             if (error.response) {
+                console.error('Error details:', error.response);
                 errorMessage = error.response.data?.message || '请求失败';
             } else {
                 errorMessage = '无法连接到服务器，请稍后再试';
@@ -739,47 +755,13 @@ function rejectQuestion() {
     }).then(({ value }) => {
         // 用户输入的备注
         const requestPayload = {
-            id: route.query.id,
-            body: question.value.body || "",
-            comment: value,
-            questions: []
+            id: route.query.id, // 获取题目ID
+            comment: value // 驳回理由
         };
 
-        if (route.query.type === 'small') {
-            if (question.value.content && question.value.answer) {
-                requestPayload.questions.push({
-                    problem: question.value.content,
-                    choices: question.value.options.length ? question.value.options : [],
-                    answer: question.value.answer,
-                    analysis: question.value.explanation
-                });
-            } else {
-                ElNotification.error({ title: '错误', message: '题目内容或答案不能为空' });
-                return;
-            }
-        } else {
-            if (question.value.body) {
-                requestPayload.body = question.value.body;
-            }
-            for (let i = 0; i < question.value.subQuestions.length; i++) {
-                const subQuestion = question.value.subQuestions[i];
-                if (subQuestion.content && subQuestion.answer) {
-                    requestPayload.questions.push({
-                        problem: subQuestion.content,
-                        choices: subQuestion.options.length ? subQuestion.options : [],
-                        answer: subQuestion.answer,
-                        analysis: subQuestion.explanation
-                    });
-                } else {
-                    ElNotification.error({ title: '错误', message: '子题内容或答案不能为空' });
-                    return;
-                }
-            }
-        }
+        console.log("Submitting rejection with id:", requestPayload);
 
-        console.log("Submitting question with id:", requestPayload);
-
-        axios.put('/api/teacher/approve-question', requestPayload)
+        axios.put('/api/teacher/deny-upload-question', requestPayload)
             .then(response => {
                 if (response.status === 200) {
                     ElNotification.success({ title: '成功', message: '题目审核已驳回' });
@@ -802,6 +784,7 @@ function rejectQuestion() {
         ElNotification.info({ title: '提示', message: '驳回操作已取消' });
     });
 }
+
 
 </script>
 
