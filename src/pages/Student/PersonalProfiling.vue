@@ -55,7 +55,7 @@
                                 <div class="bar-container">
                                     <div class="bar"
                                          :style="{
-                                             width: Math.max(weakness.weaknessScore * 100) + '%',
+                                             width: Math.max(weakness.weaknessScore) + '%',
                                              backgroundColor: colors[index % colors.length],
                                              minWidth: '5px'
                                          }"
@@ -63,7 +63,7 @@
                                     ></div>
                                 </div>
                                 <!-- 具体参数信息 -->
-                                <p style="font-size: 10px; color: red;">{{ weakness.weaknessName }} - 正确率: {{ Math.max(weakness.weaknessScore * 100) }}%</p>
+                                <p style="font-size: 10px; color: red;">{{ weakness.weaknessName }} - 正确率: {{ weakness.weaknessScore }}%</p>
                             </div>
                         </div>
                     </div>
@@ -227,7 +227,7 @@ export default {
                         type: item.type,
                         weaknessName: item.weaknessName,
                         // 将weaknessScore转换为小数
-                        weaknessScore: parseFloat((item.weaknessScore / 100).toFixed(2)), // 转换并保留两位小数
+                        weaknessScore: parseFloat((item.weaknessScore).toFixed(2)), // 转换并保留两位小数
                     }));
                     console.log('Fetched weakness scores:', this.weaknessScores); // 添加日志输出
                 }
