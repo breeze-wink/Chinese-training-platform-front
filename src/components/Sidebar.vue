@@ -120,7 +120,6 @@ const menuItems = computed(() => {
                 return [
                     { index: '/audit-teacher/personal-info', label: '个人信息', icon: User, path: '/audit-teacher/personal-info' },
                     { index: '/audit-teacher/question-list', label: '审核题目', icon: Edit, path: '/audit-teacher/question-list' },
-                    { index: '/audit-teacher/settings', label: '设置', icon: Setting, path: '/audit-teacher/settings' },
                 ];
             }
             break;

@@ -16,7 +16,7 @@
                     </el-radio-group>
 
                     <el-table :data="paginatedQuestions" style="width: 100%">
-                        <el-table-column prop="id" label="ID" width="180"></el-table-column>
+                        <el-table-column prop="questionId" label="ID" width="180"></el-table-column>
                         <el-table-column prop="type" label="类型" width="180">
                             <template #default="scope">
                                 <span>{{ scope.row.type === 'small' ? '单题' : '组合题' }}</span>
@@ -171,7 +171,6 @@ export default {
             this.updatePaginatedQuestions();
         },
 
-        // 拒绝上传
         async handleDelete(row) {
             const token = this.$store.getters.getToken;
             console.log("Current token:", token); // 打印 token
@@ -180,41 +179,51 @@ export default {
                 return;
             }
 
-            ElMessageBox.prompt('请输入拒绝上传的备注', '拒绝上传', {
+            console.log(row.questionId, row.type)
+
+            // 提示用户是否确认删除
+            ElMessageBox.confirm('确定要删除这道题目吗?', '删除题目', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
-                inputPattern: /.*/,
-                inputErrorMessage: '备注不能为空'
-            }).then(async ({ value }) => {
+                type: 'warning'
+            }).then(async () => {
                 try {
-                    const response = await axios.put(`/api/teacher/deny-upload-question`,{
-                            id: row.id,
-                            comment: value || '上传被拒绝'
-                    },{
+                    console.log(row.questionId, row.type)
+                    // 发送 DELETE 请求，传递查询参数
+                    const response = await axios.delete(`/api/teacher/delete-question`, {
+                        params: {
+                            questionId: row.questionId,  // Question ID
+                            type: row.type // Question type
+                        },
                         headers: {
-                            Authorization: `Bearer ${token}`
+                            Authorization: `Bearer ${token}` // 传递 Authorization header
                         }
                     });
 
                     if (response.status === 200) {
-                        ElMessage.success('题目上传已被拒绝');
+                        ElMessage.success('题目已删除');
                         this.questions = []; // 清空当前的题目列表
                         this.paginatedQuestions = []; // 清空当前的分页列表
                         this.fetchQuestions(); // 重新加载题目列表
                     } else {
-                        throw new Error('拒绝上传失败');
+                        throw new Error('删除失败');
                     }
                 } catch (err) {
                     // 打印错误的详细信息，查看返回的具体错误信息
                     console.error('Request error:', err.response ? err.response.data : err.message);
                     const errorMessage = err.response?.data?.message || err.message || '未知错误';
                     if (err.response && err.response.status === 403) {
-                        ElMessage.error('您没有权限拒绝该上传');
+                        ElMessage.error('您没有权限删除');
+                    } else if (err.response && err.response.data.message === '该题目没有使用记录，无法删除') {
+                        ElMessage.error('该题目没有使用记录，无法删除');
                     } else {
-                        ElMessage.error('拒绝上传失败: ' + errorMessage);
+                        ElMessage.error('删除失败: ' + errorMessage);
                     }
                 }
-            }).catch(() => {});  // 用户点击取消时不做任何事
+            }).catch(() => {
+                // 用户点击取消时不做任何事
+                console.log("User canceled the deletion");
+            });
         },
 
         viewQuestionDetail(questionId, type) {
