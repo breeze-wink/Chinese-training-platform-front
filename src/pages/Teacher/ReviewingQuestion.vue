@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
     <!-- 引入头部通用组件 -->
-    <Header />
+    <Header/>
 
     <div class="main-container">
       <!-- 引入侧边栏通用组件 -->
@@ -75,9 +75,10 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import Sidebar from "@/components/Sidebar.vue";
+import Header from "@/components/Header.vue";
 
 export default {
-    components: {Sidebar},
+    components: {Header, Sidebar},
   data() {
     return {
       search: '',
@@ -164,6 +165,9 @@ export default {
   padding: 20px;
 }
 
+.content {
+    margin-left: 300px;
+}
 .input-button-group {
   display: flex;
   margin-bottom: 20px;

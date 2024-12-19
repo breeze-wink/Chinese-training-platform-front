@@ -95,7 +95,15 @@ const menuItems = computed(() => {
                     ],
                 },
                 { index: '/teacher/manage-class', label: '组织管理', icon: Management, path: '/teacher/manage-class' },
-                { index: '/teacher/upload-question', label: '上传习题', icon: Upload, path: '/teacher/upload-question' },
+                {
+                    index: '/teacher/question-manage',
+                    label: '习题管理',
+                    icon: Edit,
+                    children: [
+                        { index: '/teacher/upload-question', label: '上传习题', icon: Upload, path: '/teacher/upload-question' },
+                        { index: '/teacher/view-question', label: '查看习题', path: '/teacher/view-question' }
+                    ],
+                },
                 {
                     index: '/teacher/paper-manage',
                     label: '管理试卷',
@@ -174,6 +182,8 @@ const menuItems = computed(() => {
     width: 180px;
     margin-left: 100px; /* 左侧留空隙 */
     margin-right: 100px;
+    position: fixed;
+
 }
 
 .el-menu-vertical-demo:not(.el-menu--collapse) {

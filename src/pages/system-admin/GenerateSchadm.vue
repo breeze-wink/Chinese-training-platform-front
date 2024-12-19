@@ -173,6 +173,7 @@ const generateAdmin = async () => {
   background-color: #fff;
   overflow-y: auto;
   margin-right: 50px;
+    margin-left: 300px;
 }
 
 .page-container /deep/ .el-table .el-table__header-wrapper th{

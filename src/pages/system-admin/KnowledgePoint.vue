@@ -229,6 +229,8 @@ onMounted(async () => {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
     margin-bottom:30px;
+
+    margin-left: 300px;
 }
 
 h2 {

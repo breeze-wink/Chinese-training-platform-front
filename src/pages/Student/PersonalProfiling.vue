@@ -81,7 +81,7 @@
                     </div>
                 </div>
             </div>
-            <div v-else>
+            <div class="learning-stats" v-else>
                 <p>Loading...</p>
             </div>
         </div>
@@ -267,6 +267,7 @@ export default {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 增加阴影 */
     border-radius: 15px;
     transition: transform 0.3s;
+    margin-left: 300px;
 }
 
 .learning-stats:hover {

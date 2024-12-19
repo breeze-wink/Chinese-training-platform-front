@@ -91,6 +91,8 @@ onMounted(() => {
     overflow-y: auto;
     margin-right: 50px; /* 右侧留空隙 */
     margin-bottom: 30px;
+
+    margin-left: 300px;
 }
 
 /* 整体知识点列表容器，向右移动 */

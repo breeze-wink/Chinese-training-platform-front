@@ -1,5 +1,3 @@
-
-
 <template>
     <div class="page-container">
         <!-- 引入头部通用组件 -->
@@ -270,6 +268,8 @@ const autoGeneratePaper = async () => {
     overflow-y: auto;
     margin-right: 50px; /* 如果需要右侧留空隙，可以保留这行，或者可以根据实际情况调整 */
     margin-bottom: 30px;
+
+    margin-left: 300px;
 }
 
 .card-container {

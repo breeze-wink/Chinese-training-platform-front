@@ -187,6 +187,7 @@ export default {
     border-radius: 5px;
     flex: 1;
     padding: 20px;
+    margin-left: 300px;
 }
 
 /* 古诗词网格布局 */

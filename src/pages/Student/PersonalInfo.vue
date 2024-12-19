@@ -624,6 +624,7 @@ export default {
     border-radius: 16px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     margin-right: 50px;
+    margin-left: 300px;
 }
 
 .info-card {
