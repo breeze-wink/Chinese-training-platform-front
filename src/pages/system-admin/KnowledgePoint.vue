@@ -217,6 +217,7 @@ onMounted(async () => {
   display: flex;
   flex: 1;
   padding: 20px;
+    background-color: #f0f0f0;
 }
 
 .content {
@@ -227,6 +228,7 @@ onMounted(async () => {
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
+    margin-bottom:30px;
 }
 
 h2 {
