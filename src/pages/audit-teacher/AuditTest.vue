@@ -817,6 +817,7 @@ function rejectQuestion() {
     display: flex;
     background-color: #f0f0f0; /* 背景改为浅灰色 */
     flex: 1;
+    background-color: #f0f0f0;
 }
 
 .content {
@@ -829,6 +830,7 @@ function rejectQuestion() {
     margin-bottom: 30px;
 
     margin-left: 300px;
+    margin-bottom: 30px;
 }
 
 .title {
