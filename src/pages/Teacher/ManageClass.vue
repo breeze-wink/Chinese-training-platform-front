@@ -124,13 +124,14 @@
                 <el-dialog
                         title="小组成员"
                         v-model="groupMembersDialogVisible"
-                        width="500px"
+                        width="400px"
                         align-center
                 >
                     <el-table
                             :data="groupMembers"
                             border
-                            style="width: 100%; max-height: 400px; overflow: auto"
+                            style="width:350px; max-height: 400px; overflow: auto"
+
                     >
                         <!-- 仅显示学生姓名和操作 -->
                         <el-table-column prop="studentName" label="学生姓名" width="150"></el-table-column>
@@ -146,7 +147,7 @@
                                 <el-button
                                         type="primary"
                                         size="small"
-                                        @click="viewGroupMemberDetails(scope.row)"
+                                        @click="viewStudentDetails(scope.row)"
                                 >
                                     查看详情
                                 </el-button>
@@ -209,7 +210,7 @@
                             ></el-input>
                         </el-form-item>
                         <el-form-item label="选择成员" class="form-item-spacing">
-                            <template v-if="classMembers.length > 0">
+                            <template v-if="classMembers !== null && classMembers.length > 0">
                                 <el-checkbox-group v-model="newGroupForm.selectedStudents">
                                     <el-row>
                                         <el-col :span="12" v-for="member in classMembers" :key="member.studentId">
@@ -250,7 +251,7 @@
                         <p>暂无知识点掌握情况数据。</p>
                     </div>
 
-                    <div v-if="historicalScores.length > 0" style="margin-top: 30px;">
+                    <div v-if="historicalScores!==null && historicalScores.length > 0" style="margin-top: 30px;">
                         <h3>历史成绩</h3>
                         <div style="overflow-x: auto;">
                             <div id="historicalScoresChart" style="width: 100%; max-width: 700px; height: 300px;"></div>
@@ -272,7 +273,7 @@
                         width="800px"
                         :before-close="handleGroupStatsDialogClose"
                 >
-                    <div v-if="groupHistoricalScores.length > 0">
+                    <div v-if="groupHistoricalScores !== null && groupHistoricalScores.length > 0">
                         <h3>历史得分率</h3>
                         <div style="overflow-x: auto;">
                             <div id="groupHistoricalScoresChart" style="width: 100%; max-width: 700px; height: 300px;"></div>
@@ -320,7 +321,7 @@
                     </div>
 
                     <!-- 短板得分率 -->
-                    <div v-if="studentWeaknessScores.length > 0" style="margin-top: 30px;">
+                    <div v-if="studentWeaknessScores !== null && studentWeaknessScores.length > 0" style="margin-top: 30px;">
                         <h3>短板得分率</h3>
                         <el-table :data="studentWeaknessScores" border style="width: 100%">
                             <el-table-column prop="type" label="题型" width="150"></el-table-column>
@@ -333,7 +334,7 @@
                     </div>
 
                     <!-- 历史作业得分率 -->
-                    <div v-if="studentHistoricalHomeworkScores.length > 0" style="margin-top: 30px;">
+                    <div v-if="studentHistoricalHomeworkScores !== null && studentHistoricalHomeworkScores.length > 0" style="margin-top: 30px;">
                         <h3>历史作业得分率</h3>
                         <div style="overflow-x: auto;">
                             <div id="studentHistoricalHomeworkScoresChart" style="width: 100%; max-width: 700px; height: 300px;"></div>
@@ -364,7 +365,7 @@ import {ref, onMounted, watch, nextTick} from 'vue';
 import axios from 'axios';
 import { useStore } from 'vuex';
 import { computed } from 'vue';
-import {CirclePlus, CirclePlusFilled, Plus} from "@element-plus/icons-vue";
+import {CirclePlusFilled} from "@element-plus/icons-vue";
 import {ElMessage} from "element-plus";
 import * as echarts from 'echarts';
 import {onBeforeUnmount} from "vue-demi";
@@ -418,13 +419,13 @@ const newGroupForm = ref({
 // 班级成员列表
 const classMembers = ref([]);
 const groupMembers = ref([]);
-const removeClassId =ref();
+
 // 获取班级信息列表的函数
 const fetchClassList = async () => {
     try {
         const response = await axios.get(`/api/teacher/${teacherId.value}/get-classes`);
 
-        if (response.status === 200 && response.data.message === '班级信息获取成功') {
+        if (response.status === 200 ) {
             classList.value = response.data.data;
             console.log('获取班级列表成功:', response.data);
         } else {
@@ -446,7 +447,7 @@ watch(
                         params: { classId: newClassId },
                     });
 
-                    if (response.status === 200 && response.data.message === "班级成员信息获取成功") {
+                    if (response.status === 200 ) {
                         classMembers.value = response.data.data;
                     } else {
                         classMembers.value = [];
@@ -469,7 +470,7 @@ const fetchGroupList = async () => {
         console.log(teacherId);
         const response = await axios.get(`/api/teacher/${teacherId.value}/get-groups`);
 
-        if (response.status === 200 && response.data.message === '小组信息获取成功') {
+        if (response.status === 200 ) {
             groupList.value = response.data.data;
             console.log('获取小组列表成功:', response.data);
         } else {
@@ -489,7 +490,7 @@ const createClass = async () => {
             classDescription: newClassForm.value.classDescription
         });
 
-        if (response.status === 200 && response.data.message === '班级创建成功') {
+        if (response.status === 200 ) {
             console.log(response.data);
             // 创建成功后，获取新的班级码并添加到班级列表中
             const newClassId = response.data.classId; // 假设返回数据中包含新创建的班级详细信息
@@ -550,7 +551,7 @@ const viewMembers = async (classInfo) => {
             params: { classId: classInfo.classId }
         });
 
-        if (response.status === 200 && response.data.message === '班级成员信息获取成功') {
+        if (response.status === 200 ) {
             classMembers.value = response.data.data;
             console.log(classMembers.value);
 
@@ -562,16 +563,18 @@ const viewMembers = async (classInfo) => {
         console.error('获取班级成员信息失败:', error.message);
     }
 };
+const selectedGroupId=ref('');
 const viewGroupMembers = async (groupInfo) => {
     try {
         const response = await axios.get(`/api/teacher/${teacherId.value}/groups-members`, {
             params: { groupId: groupInfo.groupId}
-
         });
         console.log(groupInfo.groupId);
         if (response.status === 200 ) {
             groupMembers.value = response.data.students;
             console.log(groupMembers.value);
+            selectedGroupId.value=groupInfo.groupId;
+            console.log(selectedGroupId.value);
 
             groupMembersDialogVisible.value = true;
         } else {
@@ -590,7 +593,7 @@ const updateClass = async () => {
             classDescription: editClassForm.value.classDescription,
         });
 
-        if (response.status === 200 && response.data.message === "更新成功") {
+        if (response.status === 200 ) {
             ElMessage.success(response.data.message);
 
             // 更新 classList
@@ -613,7 +616,7 @@ const updateClass = async () => {
 // 移除成员的函数
 const removeMember = async (member) => {
     try {
-        const response = await axios.delete(`/api/teacher/${teacherId.value}/remove-student`, {
+        const response = await axios.delete(`/api/teacher/${teacherId.value}/classes/remove-student`, {
             params: {
                 studentId: member.studentId,
             },
@@ -633,14 +636,30 @@ const removeMember = async (member) => {
         ElMessage.error("移除成员时发生错误");
     }
 };
+//删除小组成成员
+const removeGroupMember = async (member) => {
+    try {
+        const response = await axios.delete(`/api/teacher/${teacherId.value}/group/remove-student`, {
+            params: {
+                groupId:selectedGroupId.value,
+                studentId: member.studentId,
+            },
+        });
 
-// 查看成员详情的函数
-const viewMemberDetails = (member) => {
-    console.log("查看成员详情:", member);
-    ElMessage.info(`学生姓名：${member.studentName}, 学生ID：${member.studentId}`);
+        if (response.status === 200 ) {
+            // 从班级成员列表中移除
+            groupMembers.value = groupMembers.value.filter(
+                    (m) => m.studentId !== member.studentId
+            );
+            ElMessage.success("成员已成功移除");
+        } else {
+            ElMessage.error(response.data.message || "移除成员失败");
+        }
+    } catch (error) {
+        console.error("移除成员失败:", error.message);
+        ElMessage.error("移除成员时发生错误");
+    }
 };
-
-
 
 // 解散班级的函数
 const disbandClass = async (classItem) => {
@@ -841,7 +860,7 @@ const viewStats = async (classInfo) => {
 
         // 等待 DOM 更新后绘制图表
         await nextTick(() => {
-            if (historicalScores.value.length > 0) {
+            if (historicalScores.value !==null && historicalScores.value.length > 0 ) {
                 drawHistoricalScoresChart();
             }
         });
@@ -952,7 +971,7 @@ const viewGroupStats = async (groupInfo) => {
 
         // 等待 DOM 更新后绘制图表
         await nextTick();
-        if (groupHistoricalScores.value.length > 0) {
+        if (groupHistoricalScores.value !== null && groupHistoricalScores.value.length > 0) {
             drawGroupHistoricalScoresChart();
         }
     } catch (error) {
@@ -1211,6 +1230,8 @@ onBeforeUnmount(() => {
     background-color: #fff;
     overflow-y: auto;
     margin-right: 50px; /* 如果需要右侧留空隙，可以保留这行，或者可以根据实际情况调整 */
+    margin-bottom: 30px;
+
     margin-left: 300px;
 }
 

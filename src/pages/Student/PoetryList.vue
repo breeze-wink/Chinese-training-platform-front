@@ -177,6 +177,7 @@ export default {
 
 .main-container {
     display: flex;
+    background-color: #f0f0f0; /* 背景改为浅灰色 */
     flex: 1;
 }
 
