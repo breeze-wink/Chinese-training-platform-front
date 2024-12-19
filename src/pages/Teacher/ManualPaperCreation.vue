@@ -698,6 +698,7 @@ onMounted(() => {
     max-width: 1040px; /* 最大宽度为 1000px */
     padding: 0px;
     width: 100%; /* 宽度在正常情况下可以随着窗口大小缩放 */
+    margin-bottom: 30px;
 }
 .up-content {
 

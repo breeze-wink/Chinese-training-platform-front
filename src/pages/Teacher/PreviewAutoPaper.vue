@@ -531,6 +531,7 @@ onBeforeUnmount(() => {
     width: 75%;
     padding: 10px;
     margin-right: 20px;
+    margin-bottom: 30px;
 }
 
 .question-list {

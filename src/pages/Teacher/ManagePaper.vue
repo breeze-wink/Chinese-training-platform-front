@@ -551,6 +551,7 @@ const fetchStudents = async (classId) => {
     background-color: #fff;
     overflow-y: auto;
     margin-right: 50px;
+    margin-bottom: 30px;
 }
 
 .input-button-group {
