@@ -15,39 +15,58 @@
                         <el-radio label="waiting">未审核</el-radio>
                     </el-radio-group>
 
-                    <el-table :data="paginatedQuestions" style="width: 100%">
-                        <el-table-column prop="questionId" label="ID" width="180"></el-table-column>
-                        <el-table-column prop="type" label="类型" width="180">
+                    <!-- 表格 -->
+                    <el-table :data="paginatedQuestions" style="width: 100%; max-width: 1000px; margin: 0 auto;">
+                        <!-- 设置每一列的最小宽度和内边距来增大横向间距 -->
+                        <el-table-column prop="questionId" label="ID" min-width="200" :show-overflow-tooltip="true">
                             <template #default="scope">
-                                <span>{{ scope.row.type === 'small' ? '单题' : '组合题' }}</span>
+                                <div style="padding: 12px;">{{ scope.row.questionId }}</div>
                             </template>
                         </el-table-column>
-                        <el-table-column prop="uploadTime" label="上传时间"></el-table-column>
-                        <el-table-column prop="uploadTeacher" label="上传教师"></el-table-column>
-                        <el-table-column label="操作" width="300">
+                        <el-table-column prop="type" label="类型" min-width="200" :show-overflow-tooltip="true">
+                            <template #default="scope">
+                                <div style="padding: 12px;">
+                                    <span>{{ scope.row.type === 'small' ? '单题' : '组合题' }}</span>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="uploadTime" label="上传时间" min-width="200" :show-overflow-tooltip="true">
+                            <template #default="scope">
+                                <div style="padding: 12px;">{{ scope.row.uploadTime }}</div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="uploadTeacher" label="上传教师" min-width="200" :show-overflow-tooltip="true">
+                            <template #default="scope">
+                                <div style="padding: 12px;">{{ scope.row.uploadTeacher }}</div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" min-width="400">
                             <template #default="scope">
                                 <!-- 对于未审核题目，显示审核按钮 -->
                                 <el-button
                                     v-if="questionType === 'waiting'"
                                     size="mini"
                                     type="primary"
-                                    @click="handleAudit(scope.row)">
+                                    @click="handleAudit(scope.row)"
+                                    style="margin-right: 8px;">
                                     审核
                                 </el-button>
 
-                                <!-- 对于已审核题目，显示拒绝上传按钮 -->
+                                <!-- 对于已审核题目，显示查看、删除和修改按钮 -->
                                 <el-button
                                     v-if="questionType === 'access'"
                                     size="mini"
                                     type="primary"
-                                    @click="viewQuestionDetail(scope.row.questionId, scope.row.type)">
+                                    @click="viewQuestionDetail(scope.row.questionId, scope.row.type)"
+                                    style="margin-right: 8px;">
                                     查看
                                 </el-button>
                                 <el-button
                                     v-if="questionType === 'access'"
                                     size="mini"
                                     type="danger"
-                                    @click="handleDelete(scope.row)">
+                                    @click="handleDelete(scope.row)"
+                                    style="margin-right: 8px;">
                                     删除
                                 </el-button>
                                 <el-button
@@ -57,7 +76,6 @@
                                     @click="handleEdit(scope.row)">
                                     修改
                                 </el-button>
-
                             </template>
                         </el-table-column>
                     </el-table>

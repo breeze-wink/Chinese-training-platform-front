@@ -242,8 +242,10 @@
                             </div>
                         </div>
 
-                        <button v-if="source === 'audit'" @click="rejectQuestion" type="submit" class="submit-btn">驳回</button>
-                        <button @click="approval" type="submit" class="submit-btn">{{ source === 'edit' ? '确认' : '批准' }}</button>
+                        <div class="button-style">
+                            <button v-if="source === 'audit'" @click="rejectQuestion" type="submit" class="submit-btn reject-btn">驳回</button>
+                            <button @click="approval" type="submit" class="submit-btn approve-btn">{{ source === 'edit' ? '确认' : '批准' }}</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -1096,6 +1098,13 @@ textarea:focus {
     background-color: #2980b9;
 }
 
+.button-style {
+    display: flex;
+    justify-content: space-between; /* 水平分布子元素 */
+    align-items: center;            /* 垂直居中对齐 */
+    margin-top: 20px;
+}
+
 .submit-btn {
     padding: 15px 40px;
     font-size: 20px; /* Increased font size */
@@ -1113,6 +1122,45 @@ textarea:focus {
 
 .submit-btn:hover {
     transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(67, 206, 162, 0.5);
+}
+
+/*.submit-btn {*/
+/*    padding: 15px 40px;*/
+/*    font-size: 20px;*/
+/*    color: white;*/
+/*    border: none;*/
+/*    border-radius: 25px;*/
+/*    cursor: pointer;*/
+/*    transition: transform 0.2s, box-shadow 0.3s;*/
+/*    text-align: center;*/
+/*    width: 220px; !* Adjusted width *!*/
+/*}*/
+
+/* 驳回按钮样式 */
+.reject-btn {
+    background: linear-gradient(90deg, #ff7e7e, #d63031); /* 红色渐变 */
+    margin-left: 200px;
+}
+
+/* 批准/确认按钮样式 */
+.approve-btn {
+    background: linear-gradient(90deg, #43cea2, #185a9d); /* 蓝绿色渐变 */
+    margin-right: 200px;
+}
+
+/* 鼠标悬停效果 */
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* 特定悬停效果 */
+.reject-btn:hover {
+    box-shadow: 0 8px 24px rgba(255, 126, 126, 0.5);
+}
+
+.approve-btn:hover {
     box-shadow: 0 8px 24px rgba(67, 206, 162, 0.5);
 }
 
@@ -1163,6 +1211,7 @@ textarea:focus {
     justify-content: flex-end;
     width: 100%;
     margin-top: 10px; /* Reduced margin */
+
 }
 
 @media (max-width: 768px) {

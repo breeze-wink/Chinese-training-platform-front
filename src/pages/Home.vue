@@ -278,6 +278,7 @@ import { ref, watch, onMounted, reactive, getCurrentInstance, computed } from 'v
 import {ElMessage} from "element-plus";
 import {useRouter} from 'vue-router'; //引入路由
 import { poems_seven_upper, poems_seven_lower, poems_eight_upper, poems_eight_lower, poems_nine_upper, poems_nine_lower } from '@/store/poems';
+import {onBeforeUnmount} from "vue-demi";
 
 
 const store = useStore(); // 获取 Vuex Store 实例
@@ -466,6 +467,33 @@ function handleRegisterKeydown(event) {
     }
 }
 
+const emit = defineEmits(['login', 'register']);
+const handleEnter = (event) => {
+    if (event.key === "Enter") {
+        if (activeTab.value === "student") {
+            submitForm("registerFormStudent", "student");
+        } else if (activeTab.value === "teacher") {
+            submitForm("registerFormTeacher", "teacher");
+        } else {
+            login();
+        }
+    }
+};
+
+// 监听全局键盘事件
+const handleKeydown = (event) => {
+    if (event.key === "Enter") {
+        handleEnter(event);
+    }
+};
+
+onMounted(() => {
+    window.addEventListener('keydown', handleKeydown);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleKeydown);
+});
 const sendVerification = async () => {
     try {
         const response = await axios.post('/api/student/send-verification', {
