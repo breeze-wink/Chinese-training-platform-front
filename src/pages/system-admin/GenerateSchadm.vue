@@ -176,7 +176,7 @@ const generateAdmin = async () => {
     margin-left: 300px;
 }
 
-.page-container /deep/ .el-table .el-table__header-wrapper th{
+.page-container :deep(.el-table .el-table__header-wrapper th) {
   color: #000 !important; /* 黑色字体 */
   font-weight: bold; /* 加粗 */
 }

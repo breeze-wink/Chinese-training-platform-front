@@ -3,7 +3,7 @@ import axios from 'axios';
 import store  from '@/store/user'; // 确保正确导入 store 实例
 
 const apiClient = axios.create({
-    baseURL: 'http://124.70.47.40:8081',
+    baseURL: '/',
     withCredentials: false,
     headers: {
         Accept: 'application/json',
@@ -17,7 +17,7 @@ apiClient.interceptors.request.use(
         const token = store.getters.getToken; // 直接使用 store 实例访问 getters
         if (token && (!config.url.endsWith('login') &&
             !config.url.endsWith('register') && !config.url.endsWith('send-verification'))) { // 假设登录接口都以 'login' 结尾
-            config.headers.Authorization = `${token}`;
+            config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
     },

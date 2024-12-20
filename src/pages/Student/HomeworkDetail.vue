@@ -332,7 +332,6 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
     background: linear-gradient(135deg, #ffffff, #f5f5f5); /* 内容区域的渐变背景 */
     margin-left: 300px;
-    //margin-right: 350px;
 }
 
 .sidebar-nav {
@@ -344,7 +343,6 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
     background: linear-gradient(135deg, #f9f9f9, #eaeaea); /* 侧边栏的渐变背景 */
     position: sticky;
-    //margin-left: 10px;
     top: 20px;
     height: calc(100vh - 40px);
 }
