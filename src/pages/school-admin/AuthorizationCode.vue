@@ -506,6 +506,8 @@ const handleChangeEmail = async () => {
 .main-container {
   display: flex;
   flex: 1;
+  background-color: #f0f0f0;
+  margin-bottom: 50px;
 }
 .info-card {
     padding: 20px;

@@ -164,6 +164,8 @@ const generateAdmin = async () => {
 .main-container {
   display: flex;
   flex: 1;
+  background-color: #f0f0f0;
+  margin-bottom: 30px;
 }
 
 .content {
