@@ -422,7 +422,14 @@ const confirmKnowledgePoints = async () => {
 
             // 跳转到预览页面（如果需要）
             // router.push('/teacher/preview-paper/auto');
-        } else {
+        }else if(response.status === 200){
+            ElNotification.warning({
+                title: '抱歉',
+                message: '此知识点题库中暂无题目',
+                duration: 2000,
+            });
+        }
+        else {
             ElNotification.error({
                 title: '生成失败',
                 message: response.data.message || '试卷题目生成失败。',
@@ -464,6 +471,7 @@ const regeneratePaper = async () => {
 
         if (response.status === 200 && response.data.questions) {
             const data = response.data;
+            console.log(data);
 
             // 处理 questions
             const processedQuestions = await Promise.all(
@@ -631,6 +639,7 @@ onBeforeUnmount(() => {
 });
 
 const returnToPaperList = () => {
+    store.dispatch('clearBasket');
     router.push('/teacher/test-generation-strategy'); // 根据实际路由调整
 };
 // 新增：generatePaper 函数
@@ -776,10 +785,14 @@ const generatePaper = async () => {
 }
 
 .explanation {
+    font-style: italic; /* 设置斜体 */
+    color: #96a8e7; /* 设置灰色 */
     margin-top: 10px;
     padding: 10px;
     background-color: #f9f9f9;
-    border-left: 3px solid #409EFF;
+    border-left: 3px solid #babcec;
+
+
 }
 
 .action-buttons {
@@ -804,6 +817,7 @@ const generatePaper = async () => {
     flex: 1; /* 让右侧内容区的每个子项占据空间 */
     gap: 20px;
     background-color: #a2bbe7;
+    margin-left: 20px;
 }
 
 .right-content.top {
@@ -813,11 +827,12 @@ const generatePaper = async () => {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    background-color: #ffffff;
+    background-color: #fffbe8;
     padding: 10px;
     width: 300px;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
 }
 
 .right-content.bottom {
@@ -827,11 +842,12 @@ const generatePaper = async () => {
     display: flex;
     flex-direction: column;
     gap: 3px;
-    background-color: #a2bbe7;
+    background-color: #fffbe8;
     padding: 10px;
     width: 300px;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
 }
 
 .right-content.top button,
