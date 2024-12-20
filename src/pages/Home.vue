@@ -275,7 +275,7 @@ import {User} from "@element-plus/icons-vue";
 import {useStore} from 'vuex'; // 引入 useStore 来使用 Vuex
 import { ref, watch, onMounted, reactive, getCurrentInstance, computed } from 'vue';
 
-import {ElMessage} from "element-plus";
+import {ElMessage, ElNotification} from "element-plus";
 import {useRouter} from 'vue-router'; //引入路由
 import { poems_seven_upper, poems_seven_lower, poems_eight_upper, poems_eight_lower, poems_nine_upper, poems_nine_lower } from '@/store/poems';
 import {onBeforeUnmount} from "vue-demi";
@@ -354,12 +354,24 @@ const registerForm = ref({
     }
 });
 
+const validateUsername = (rule, value, callback) => {
+    const usernameRegex = /^[a-zA-Z0-9_]+$/; // 正则表达式：匹配字母、数字和下划线
+    if (!value) {
+        callback(new Error('请输入用户名'));
+    } else if (!usernameRegex.test(value)) {
+        callback(new Error('用户名只能包含字母、数字和下划线'));
+    } else {
+        callback(); // 验证通过
+    }
+};
+
 const rules = ref({
     AuthorizationCode: [
         {required: true, message: '请输入授权码', trigger: 'blur'}
     ],
     username: [
-        {required: true, message: '请输入用户名', trigger: 'blur'}
+        {required: true, message: '请输入用户名', trigger: 'blur'},
+        {validator: validateUsername, trigger: 'blur'} // 添加自定义验证规则
     ],
     password: [
         {required: true, message: '请输入密码', trigger: 'blur'},
@@ -409,6 +421,7 @@ const login = async () => {
         // 检查响应状态码和消息
         if (response.status === 200 ) {
             console.log("登录成功:", response.data.id);
+            ElNotification.success({ title: '成功', message: '登录成功' });
             //使用vuex更新用户信息
             await store.dispatch('login', {
                 id: response.data.id,
@@ -437,15 +450,11 @@ const login = async () => {
             }
         } else if (response.status === 401 ){
             // 处理非200状态码的情况
-            console.error("登录失败:", response.data.message);
-            ElMessage.error(response.data.message);
-
+            ElNotification.error({ title: '失败', message: response.data.message });
         }
     } catch (error){
         // 处理错误
-        console.error('登录请求失败:', error.message);
-        ElMessage.error('用户名密码不正确');
-        // 这里可以添加更多的错误处理逻辑，比如显示错误信息等
+        ElNotification.error({ title: '失败', message: '用户名密码不正确' });
     }
 
 }
@@ -473,15 +482,12 @@ const handleEnter = (event) => {
         console.log(activeTab)
         console.log(loginDialogVisible)
         console.log(registerDialogVisible)
-        if (loginDialogVisible) {
-            if (activeTab.value === "student") {
-                login();
-            } else if (activeTab.value === "teacher") {
-                login();
-            }
-
+        if (loginDialogVisible.value) {
+            login();
         }
-        if (registerDialogVisible) {
+
+        // 注册窗口的 Enter 键逻辑
+        if (registerDialogVisible.value) {
             if (activeTab.value === "student") {
                 submitForm("registerFormStudent", "student");
             } else if (activeTab.value === "teacher") {
@@ -498,9 +504,17 @@ const handleKeydown = (event) => {
     }
 };
 
-onMounted(() => {
-    window.addEventListener('keydown', handleKeydown);
+watch([loginDialogVisible, registerDialogVisible], ([loginVisible, registerVisible]) => {
+    if (loginVisible || registerVisible) {
+        window.addEventListener("keydown", handleEnter); // 添加监听
+    } else {
+        window.removeEventListener("keydown", handleEnter); // 移除监听
+    }
 });
+
+// onMounted(() => {
+//     window.addEventListener('keydown', handleKeydown);
+// });
 
 onBeforeUnmount(() => {
     window.removeEventListener('keydown', handleKeydown);
@@ -517,12 +531,11 @@ const sendVerification = async () => {
             // 这里可以添加更多的登录成功后的操作，比如保存用户信息等
         } else {
             // 处理非200状态码的情况
-            console.error("发送失败:", response.data.message);
+            ElNotification.error({ title: '发送失败', message: response.data.message });
         }
     } catch (error) {
         // 处理错误
-        console.error('登录请求失败:', error.message);
-        // 这里可以添加更多的错误处理逻辑，比如显示错误信息等
+        ElNotification.error({ title: '登录请求失败', message: error.message });
     }
 }
 const verifyIdentity = async () => {
@@ -537,15 +550,13 @@ const verifyIdentity = async () => {
         if (response.status === 200 && response.data.message === "success") {
             console.log("登录成功:", response.data.id);
             loginDialogVisible.value = false; // 登录成功后关闭对话框
-            // 这里可以添加更多的登录成功后的操作，比如保存用户信息等
         } else {
             // 处理非200状态码的情况
-            console.error("登录失败:", response.data.message);
+            ElNotification.error({ title: '登录失败', message: response.data.message });
         }
     } catch (error) {
         // 处理错误
-        console.error('登录请求失败:', error.message);
-        // 这里可以添加更多的错误处理逻辑，比如显示错误信息等
+        ElNotification.error({ title: '登录请求失败', message: error.message });
     }
 }
 
@@ -575,7 +586,7 @@ async function sendVerificationCode(userType) {
     const form = activeTab.value === 'student' ? registerForm.value.student : registerForm.value.teacher
 
     if (!validateEmail(form.email)) {
-        alert('请输入正确的邮箱地址');
+        ElNotification.error({ title: '邮箱错误', message: '请输入正确的邮箱地址' });
         sendingCode.value = false;
         smsLoading.value = false;
         return;
@@ -606,12 +617,10 @@ async function sendVerificationCode(userType) {
             startCountdown();
         } else {
             const errorMessage = response.data.message || '验证码发送失败，请稍后再试';
-            console.error('验证码发送失败:', errorMessage);
-            alert(errorMessage);
+            ElNotification.error({ title: '邮箱错误', message: '请输入正确的邮箱地址' });
         }
     } catch (error) {
-        console.error('网络错误:', error.response ? error.response.data : error.message);
-        alert('网络错误，请稍后再试');
+        ElNotification.error({ title: '网络错误:', message: error.response ? error.response.data : error.message });
     } finally {
         sendingCode.value = false;
         smsLoading.value = false;
@@ -632,10 +641,15 @@ function startCountdown() {
 
 async function submitForm(formName, userType) {
     if (!proxy.$refs[formName]) {
-        console.error(`表单引用 ${formName} 未找到`);
+        // ElNotification.error({ title: '表单未找到', message: '表单引用 ${formName} 未找到' });
         return;
     }
-
+    console.log()
+    console.log(loginDialogVisible)
+    console.log(registerDialogVisible)
+    // if () {
+    //     return;
+    // }
     proxy.$refs[formName].validate(async (valid) => {
         if (valid) {
             const form = activeTab.value === 'student' ? registerForm.value.student : registerForm.value.teacher;
@@ -677,23 +691,19 @@ async function submitForm(formName, userType) {
                 // 检查响应状态码和消息
                 if (response.status === 200) {
                     if (response.data.message === "注册成功") {
-                        alert('注册成功！');
+                        ElNotification.success({ title: '注册成功', message: '注册成功' });
                         registerDialogVisible.value = false;
                     } else {
-                        console.error('后端返回的消息不是 "注册成功"', response.data);
-                        alert('注册失败，请检查信息');
+                        ElNotification.error({ title: '注册失败', message: '注册失败，请检查信息' });
                     }
                 } else if (response.status === 400) {
                     const errorMessage = response.data.message || '注册失败，请检查信息';
-                    console.error('注册失败:', errorMessage);
-                    alert(errorMessage);
+                    ElNotification.error({ title: '注册失败', message: errorMessage });
                 } else {
-                    console.error('未知错误:', response);
-                    alert('未知错误，请稍后再试');
+                    ElNotification.error({ title: '未知错误', message: '未知错误，请稍后再试' });
                 }
             } catch (error) {
-                console.error('注册请求失败:', error.response ? error.response.data : error.message);
-                alert('网络错误，请稍后再试');
+                // ElNotification.error({ title: '注册请求失败', message: error.response ? error.response.data : error.message });
             }
         } else {
             console.log('error submit!!');
