@@ -37,6 +37,7 @@
                                     </div>
 
                                     <div v-if="showExplanations" class="explanation">
+                                        <p><strong>涉及知识点：</strong>{{ question.knowledgePoint }}</p>
                                         <p><strong>答案：</strong>{{ sub.answer }}</p>
                                         <p><strong>解析：</strong>{{ sub.explanation }}</p>
                                     </div>
@@ -78,9 +79,10 @@
                         </div>
 
                         <div v-else-if="question.type === 'essay'">
-                            <strong>作文题目 {{ index + 1 }} ({{ question.score }}分): <span v-html="question.content"></span></strong>
+                            <strong>题目 {{ index + 1 }} ({{ question.score }}分): <span v-html="question.content"></span></strong>
 
                             <div v-if="showExplanations" class="explanation">
+                                <p><strong>涉及知识点：</strong>{{ question.knowledgePoint }}</p>
                                 <p><strong>答案：</strong>{{ question.answer }}</p>
                                 <p><strong>解析：</strong>{{ question.explanation }}</p>
                             </div>
