@@ -30,10 +30,9 @@
                       <circle v-for="(level, index) in levels" :key="index"
                               :r="level * radiusStep" fill="none" stroke="#e0e0e0" stroke-width="1"/>
 
-<!--                      <polygon :points="radarPoints" style="fill: none; stroke: #66c2ff; stroke-width: 2; opacity: 0.7"/>-->
+                        <polygon :points="radarPoints()" style="fill: none; stroke: #66c2ff; stroke-width: 2; opacity: 0.7"/>
 
-<!--                       雷达图的多边形，去除填充颜色-->
-<!--                      <polygon :points="radarPoints" style="fill: none; stroke: #66c2ff; stroke-width: 2; opacity: 0.7"/>-->
+                        <!--                        <polygon :points="generateRadarPath()" style="fill: none; stroke: #66c2ff; stroke-width: 2; opacity: 0.7"/>-->
 
                       <!-- 数据点 -->
                       <circle v-for="(item, index) in radarDataPoints" :key="'radar-point-' + index"
@@ -41,14 +40,21 @@
                               @mouseover="showTooltip(item, 'radar')"
                               @mouseout="hideTooltip"/>
 
-                      <!-- 边界线 -->
-                      <line v-for="(label, index) in labels" :key="'line-' + index"
-                            :x1="0" :y1="0"
-                            :x2="Math.cos(index * angleStep - Math.PI / 2) * maxRadius"
-                            :y2="Math.sin(index * angleStep - Math.PI / 2) * maxRadius"
-                            stroke="#e0e0e0" stroke-width="1"/>
+                        <!-- 边界线 -->
+                        <line
+                                v-for="(label, index) in labels"
+                                :key="'line-' + index"
+                                :x1="0"
+                                :y1="0"
+                                :x2="Math.cos(index * angleStep - Math.PI / 2) * maxRadius"
+                                :y2="Math.sin(index * angleStep - Math.PI / 2) * maxRadius"
+                                stroke="#e0e0e0"
+                                stroke-width="1"
+                                @mouseover="showTooltipForLabel(index, $event)"
+                                @mouseout="hideTooltip"
+                        />
 
-                      <polygon :points="radarPoints" style="fill: none; stroke: #ffff00; stroke-width: 2; opacity: 0.7"/>
+                        <polygon :points="radarPoints" style="fill: none; stroke: #ffff00; stroke-width: 2; opacity: 0.7"/>
                       <!-- 标签文本 -->
                       <text v-for="(label, index) in labels" :key="'text-' + index"
                             :x="Math.cos(index * angleStep - Math.PI / 2) * (maxRadius + 20)"
@@ -63,41 +69,43 @@
                             :y2="Math.sin(index * angleStep - Math.PI / 2) * maxRadius"
                             stroke="#e0e0e0" stroke-width="1"/>
 
-                      <!-- 雷达图的工具提示 -->
-                      <g v-if="tooltip.visible && tooltip.context === 'radar'">
-                        <!-- 背景矩形 -->
-                        <rect
-                            :x="tooltip.x - 60"
-                            :y="tooltip.y - 30"
-                            width="120"
-                            height="40"
-                            stroke="#66c2ff"
-                            stroke-width="1"
-                            fill="#333"
-                            rx="4"
-                            ry="4"
-                        />
-                        <!-- 工具提示文本：名称 -->
-                        <text
-                            :x="tooltip.x"
-                            :y="tooltip.y - 10"
-                            text-anchor="middle"
-                            font-size="12"
-                            fill="#fff"
-                        >
-                          {{ tooltip.name }}
-                        </text>
-                        <!-- 工具提示文本：分数 -->
-                        <text
-                            :x="tooltip.x"
-                            :y="tooltip.y + 10"
-                            text-anchor="middle"
-                            font-size="12"
-                            fill="#fff"
-                        >
-                          分数: {{ tooltip.score }}
-                        </text>
-                      </g>
+                        <!-- Tooltip -->
+                        <g v-if="tooltip.visible">
+                            <!-- 背景矩形 -->
+                            <rect
+                                    :x="tooltip.x - 60"
+                                    :y="tooltip.y - 30"
+                                    width="120"
+                                    height="40"
+                                    stroke="#66c2ff"
+                                    stroke-width="1"
+                                    fill="#333"
+                                    rx="4"
+                                    ry="4"
+                            />
+                            <!-- Tooltip 名称 -->
+                            <text
+                                    :x="tooltip.x"
+                                    :y="tooltip.y - 10"
+                                    text-anchor="middle"
+                                    font-size="12"
+                                    fill="#fff"
+                            >
+                                {{ tooltip.name }}
+                            </text>
+                            <!-- Tooltip 分数 -->
+                            <text
+                                    :x="tooltip.x"
+                                    :y="tooltip.y + 10"
+                                    text-anchor="middle"
+                                    font-size="12"
+                                    fill="#fff"
+                            >
+                                分数: {{ tooltip.score }}
+                            </text>
+                        </g>
+
+
                     </g>
                   </svg>
                 </div>
@@ -202,6 +210,12 @@
                   </div>
                 </div>
               </div>
+
+                <div class="chart-container">
+                    <ECharts :option="option" style="width: 100%;height:400px;"></ECharts>
+                </div>
+
+
             </div>
             <div class="learning-stats" v-else>
                 <p>Loading...</p>
@@ -215,6 +229,26 @@ import Header from "@/components/Header.vue";
 import Sidebar from "@/components/Sidebar.vue";
 import axios from 'axios';
 import { mapGetters } from 'vuex';
+import * as echarts from 'echarts';
+import {
+    RadarChart
+} from 'echarts/charts';
+import {
+    TitleComponent,
+    TooltipComponent,
+    LegendComponent
+} from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
+import {computed} from "vue";
+
+
+echarts.use([
+    TitleComponent,
+    TooltipComponent,
+    LegendComponent,
+    RadarChart,
+    CanvasRenderer
+]);
 
 export default {
     name: 'LearningStats',
@@ -242,7 +276,7 @@ export default {
                 visible: false,
                 x: 0,
                 y: 0,
-                date: '',
+                name: '',
                 score: 0
             },
             margin: { top: 20, right: 20, bottom: 40, left: 40 }
@@ -256,44 +290,21 @@ export default {
                 !this.loadingWeaknessScores &&
                 !this.loadingScoreFluctuations;
         },
-        radarPoints() {
-            if (this.multidimensionalScores.length === 0) return '';
 
-            const points = [];
-            const angleStep = (Math.PI * 2) / this.labels.length;
-
-            this.multidimensionalScores.forEach((item, index) => {
-                const angle = angleStep * index - Math.PI / 2;
-                const radius = item.score * this.maxRadius;
-                const x = radius * Math.cos(angle);
-                const y = radius * Math.sin(angle);
-                points.push(`${x},${y}`);
+        radarDataPoints: computed(() => {
+            return this.scores.map((score, index) => {
+                const angle = index * this.angleStep - Math.PI / 2; // 从顶部开始
+                const radius = score / this.maxScore * this.maxRadius; // 根据分数比例计算半径
+                return {
+                    x: Math.cos(angle) * radius,
+                    y: Math.sin(angle) * radius,
+                    score,
+                    name: this.labels[index]
+                };
             });
+        }),
 
-            return points.join(' ');
-        },
-      radarDataPoints() {
-        if (this.multidimensionalScores.length === 0) return [];
-
-        const dataPoints = [];
-        const angleStep = (Math.PI * 2) / this.labels.length;
-
-        this.multidimensionalScores.forEach((item, index) => {
-          const angle = angleStep * index - Math.PI / 2; // 起始角度调整到顶部
-          const radius = item.score * this.maxRadius;
-          const x = radius * Math.cos(angle);
-          const y = radius * Math.sin(angle);
-          dataPoints.push({
-            x,
-            y,
-            name: item.name,
-            score: (item.score * 100).toFixed(2) // 转换为百分比并保留两位小数
-          });
-        });
-
-        return dataPoints;
-      },
-      dataPoints() {
+        dataPoints() {
         if (this.scoreFluctuations.length === 0) return [];
 
         const xStep = (this.chartWidth - this.margin.left - this.margin.right) / (this.scoreFluctuations.length - 1);
@@ -339,6 +350,12 @@ export default {
         this.fetchMultidimensionalScores();
         this.fetchWeaknessScores();
         this.fetchScoreFluctuations();
+        // const chartDom = this.$refs.chart;
+        // const myChart = echarts.init(chartDom);
+        // const option = {
+        //     // ...你的ECharts配置项
+        // };
+        // myChart.setOption(option);
     },
     methods: {
         async fetchStudentData() {
@@ -359,8 +376,12 @@ export default {
             try {
                 const response = await axios.get(`/api/student/${this.getUserId}/get-multidimensional-scores`);
                 if (response.status === 200) {
-                    this.multidimensionalScores = response.data.data;
-                    console.log(response.data);
+                    const data = response.data.data;
+                    console.log('Fetched data:', data);
+                    this.multidimensionalScores = data.map(item => ({
+                        score: Number(item.score), // 确保 score 是数字类型
+                        name: item.name || ''     // 确保有 name 值
+                    }));
                 }
             } catch (error) {
                 console.error('获取多维得分率失败:', error);
@@ -416,7 +437,53 @@ export default {
       },
       hideTooltip() {
         this.tooltip.visible = false;
-      }
+      },
+
+        radarPoints() {
+            if (!this.multidimensionalScores.length) return '';
+
+            const points = [];
+            const angleStep = (Math.PI * 2) / this.labels.length; // 每个点的角度增量
+            const maxScore = 100; // 假设满分为 100
+
+            this.multidimensionalScores.forEach((item, index) => {
+                const angle = angleStep * index - Math.PI / 2; // 从顶部开始计算角度
+                const radius = (item.score / maxScore) * this.maxRadius; // 归一化半径
+                if (isNaN(radius)) {
+                    console.error('Radius calculation failed:', item);
+                }
+                const x = radius * Math.cos(angle);
+                const y = radius * Math.sin(angle);
+                points.push(`${x},${y}`);
+            });
+
+            // 确保路径闭合
+            if (points.length > 0) {
+                points.push(points[0]); // 第一个点补回到最后
+            }
+
+            return points.join(' ');
+        },
+
+        showTooltipForLabel(index, event) {
+            const offsetX = 10; // 偏移量
+            const offsetY = -30;
+
+            // 找到对应的分数和名称
+            const label = this.labels[index];
+            const score = this.multidimensionalScores[index]?.score || 0;
+
+            // 获取鼠标的位置
+            const x = event.clientX + offsetX;
+            const y = event.clientY + offsetY;
+
+            // 更新 Tooltip 数据
+            this.tooltip.visible = true;
+            this.tooltip.x = x;
+            this.tooltip.y = y;
+            this.tooltip.name = label;
+            this.tooltip.score = score;
+        },
     }
 };
 </script>
