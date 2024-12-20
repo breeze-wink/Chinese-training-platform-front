@@ -382,7 +382,7 @@ export default {
         },
         async sendVerificationCode() {
             try {
-                const response = await axios.post(`/api/student/${this.studentInfo.accountId}/change-email/send-verification`, {
+                const response = await axios.post(`/api/student/${this.studentInfo.accountId}/change-email/send-code`, {
                     email: this.emailForm.newEmail
                 }, {
                     headers: {
@@ -401,7 +401,7 @@ export default {
             this.$refs.emailFormRef.validate(async (valid) => {
                 if (valid) {
                     try {
-                        const response = await axios.post(`/api/student/${this.studentInfo.accountId}/changeEmail`, {
+                        const response = await axios.post(`/api/student/${this.studentInfo.accountId}/change-email`, {
                             email: this.emailForm.newEmail,
                             verificationCode: this.emailForm.verificationCode
                         }, {
