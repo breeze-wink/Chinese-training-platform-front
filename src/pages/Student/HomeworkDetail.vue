@@ -54,6 +54,9 @@
                     <div class="questions-list">
                         <a v-for="(answer, index) in answers" :key="index" :href="'#question-' + answer.sequence" class="question-number">{{ answer.sequence }}</a>
                     </div>
+                    <div v-if="!isLoading" class="return-button-container">
+                        <button @click="goBack" class="styled-button">返回</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -289,6 +292,13 @@ export default {
 
             console.log('图片加载完成');  // 确认加载完成
         },
+        goBack() {
+            // 执行跳转到指定路径
+            this.$router.push({
+                path: '/student/manage-test',
+                name: 'ManageTest',
+            });
+        }
     }
 }
 </script>
@@ -476,5 +486,42 @@ h3 {
     .sidebar-nav {
         margin-top: 20px;
     }
+}
+
+.return-button-container {
+    text-align: center; /* 水平居中按钮 */
+    margin-top: 400px;   /* 根据需要调整上下间距 */
+}
+
+.return-button-container button {
+    display: inline-block;
+}
+
+.styled-button {
+    /* 设置按钮尺寸 */
+    padding: 10px 20px;
+    font-size: 16px;
+
+    /* 背景和边框 */
+    background-color: #3498db;
+    border: none;
+    border-radius: 5px;
+
+    /* 文字颜色和阴影 */
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* 添加一些阴影 */
+
+    /* 鼠标悬停效果 */
+    transition-duration: 0.4s;
+}
+
+.styled-button:hover {
+    background-color: white;
+    color: #2980b9;
+    border: 2px solid #2980b9;
+}
+
+.styled-button:active {
+    transform: translateY(2px);
 }
 </style>
