@@ -587,7 +587,6 @@ async function sendVerificationCode(userType) {
 
         if (response.status === 200) {
 
-            verificationCode.value = response.data.verificationCode; // 存储验证码
             if (userType === 'teacher' && response.data.schoolId) {
                 registerForm.value.teacher.schoolId = response.data.schoolId;
             }
@@ -630,10 +629,7 @@ async function submitForm(formName, userType) {
         if (valid) {
             const form = activeTab.value === 'student' ? registerForm.value.student : registerForm.value.teacher;
 
-            if (form.code !== verificationCode.value) {
-                alert('验证码不正确，请重新输入');
-                return;
-            }
+
 
             try {
                 let url = '/api/student/register';
@@ -641,7 +637,8 @@ async function submitForm(formName, userType) {
                     email: form.email,
                     username: form.username,
                     password: form.password,
-                    confirmPassword: form.checkPass
+                    confirmPassword: form.checkPass,
+                    verificationCode: form.code
                 };
 
                 if (userType === 'teacher') {
@@ -650,7 +647,8 @@ async function submitForm(formName, userType) {
                         email: form.email,
                         password: form.password,
                         confirmPassword: form.checkPass,
-                        schoolId: form.schoolId
+                        schoolId: form.schoolId,
+                        verificationCode: form.code
                     };
                 }
 
