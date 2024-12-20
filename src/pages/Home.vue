@@ -133,52 +133,49 @@
             </el-dialog>
 
             <!--            找回密码-->
-            <el-dialog v-model="forgotPasswordDialogVisible"
-                       title="找回密码"
-                       width="510px"
-                       align-center
-            >
-
-                <el-steps style="max-width: 500px; margin-bottom: 60px" :active="active"
-                          finish-status="success" simple>
+            <el-dialog v-model="forgotPasswordDialogVisible" title="找回密码" width="510px" align-center>
+                <el-steps :active="active" finish-status="success" simple style="max-width: 500px; margin-bottom: 60px">
                     <el-step title="验证邮箱"/>
                     <el-step title="重置密码"/>
                     <el-step title="重置成功"/>
                 </el-steps>
 
-
-                <el-form label-position="right" label-width="120px" class="form-item">
+                <el-form ref="formRef" :model="formData" :rules="rules" label-position="right" label-width="120px" class="form-item">
                     <!-- Step1 -->
                     <div v-if="active === 1">
-                        <el-form-item label="邮箱" class="form-item">
-                            <el-input v-model="email" placeholder="请输入您的邮箱" style="width: 250px"></el-input>
+                        <el-form-item prop="email" label="邮箱" class="form-item">
+                            <el-input v-model="formData.email" placeholder="请输入您的邮箱" style="width: 250px"></el-input>
                         </el-form-item>
 
-                        <el-form-item label="验证码" class="form-item">
-                            <el-input v-model="verifyCode" placeholder="请输入验证码" style="width: 150px"></el-input>
-                            <el-button>发送验证码</el-button>
+                        <el-form-item prop="verifyCode" label="验证码" class="form-item">
+                            <el-input v-model="formData.verifyCode" placeholder="请输入验证码" style="width: 150px"></el-input>
+                            <el-button @click="sendVerificationCodeFor" :disabled="sendingCode">{{ codeButtonText }}</el-button>
                         </el-form-item>
+<!--                        <el-button type="primary" @click="nextStep">下一步</el-button>-->
                     </div>
+
                     <!-- Step2 -->
                     <div v-if="active === 2">
-                        <el-form-item label="新密码" class="form-item">
-                            <el-input v-model="email" placeholder="请输入新密码" style="width: 250px"></el-input>
+                        <el-form-item prop="newPassword" label="新密码" class="form-item">
+                            <el-input v-model="formData.newPassword" placeholder="请输入新密码" style="width: 250px" type="password"></el-input>
                         </el-form-item>
 
-                        <el-form-item label="确认新密码" class="form-item">
-                            <el-input v-model="verifyCode" placeholder="请重复输入密码" style="width: 250px"></el-input>
+                        <el-form-item prop="confirmPassword" label="确认新密码" class="form-item">
+                            <el-input v-model="formData.confirmPassword" placeholder="请重复输入密码" style="width: 250px" type="password"></el-input>
                         </el-form-item>
+
+                        <el-button type="primary" style="display: block; margin: 0 auto;" @click="resetPassword">重置密码</el-button>
                     </div>
+
                     <!-- Step3 -->
                     <div v-if="active === 3" class="center-text">
                         <p>成功重置密码</p>
                     </div>
-                    <!-- 其他表单项 -->
                 </el-form>
 
                 <div slot="footer" class="dialog-footer1">
-                    <el-button v-if="active > 1 && active < 3" @click="front">frontStep</el-button>
-                    <el-button v-if="active < 3" @click="next">nextStep</el-button>
+                    <el-button v-if="active > 1 && active < 3" @click="front">上一步</el-button>
+                    <el-button v-if="active < 3" @click="nextStep">下一步</el-button>
                     <el-button v-if="active === 3" @click="goToOwnPage" type="primary" class="custom-button">进入平台
                     </el-button>
                 </div>
@@ -298,7 +295,13 @@ const verifyCode = ref('')
 const realVerifyCode = ref('')
 const active = ref(1)
 const activeTab = ref('student')
-
+const formRef = ref(null);
+const formData = reactive({
+    email: '',
+    verifyCode: '',
+    newPassword: '',
+    confirmPassword: ''
+});
 const urls = {
     'student': '/api/student/login',
     'teacher': '/api/teacher/login',
@@ -387,6 +390,27 @@ const rules = ref({
     ],
     code: [
         {required: true, message: '请输入验证码', trigger: 'blur'}
+    ],
+    verifyCode: [
+        { required: true, message: '请输入验证码', trigger: 'blur' },
+        { len: 6, message: '验证码应为6位数字', trigger: 'blur' }
+    ],
+    newPassword: [
+        { required: true, message: '请输入新密码', trigger: 'blur' },
+        { min: 6, message: '密码至少6位', trigger: 'blur' }
+    ],
+    confirmPassword: [
+        { required: true, message: '请再次输入密码', trigger: 'blur' },
+        {
+            validator: (rule, value, callback) => {
+                if (value !== formData.newPassword) {
+                    callback(new Error('两次输入的密码不匹配'));
+                } else {
+                    callback();
+                }
+            },
+            trigger: 'blur'
+        }
     ]
 })
 
@@ -561,7 +585,7 @@ const verifyIdentity = async () => {
 }
 
 const goToOwnPage = () => {
-
+    location.reload(); // 刷新当前页面
 }
 
 function validatePassword(rule, value, callback) {
@@ -626,6 +650,72 @@ async function sendVerificationCode(userType) {
         smsLoading.value = false;
     }
 }
+
+// 找回密码发送验证码
+const sendVerificationCodeFor = async () => {
+    if (!formData.email || !/^\S+@\S+\.\S+$/.test(formData.email)) {
+        ElNotification.error({ title: '邮箱错误', message: '请输入正确的邮箱地址' });
+        return;
+    }
+
+    try {
+        sendingCode.value = true;
+        const response = await axios.post(`api/find-password/send-code`, {
+            type: Identity.value, // 根据身份选择类型
+            email: formData.email
+        });
+        if (response.data.message === 'success') {
+            // 验证码发送成功后的逻辑
+            console.log('验证码已发送');
+            ElNotification.success({ title: '验证码已发送', message: '验证码已发送，请注意查收' });
+            startCountdown();
+        }
+    } catch (error) {
+        console.error('Error occurred while sending verification code:', error);
+        ElNotification.error({ title: '验证码发送失败', message: '验证码发送失败，请检查网络连接或稍后再试' });
+    } finally {
+        sendingCode.value = false;
+    }
+};
+const nextStep = () => {
+    if (active.value === 1) {
+        formRef.value.validateField(['email', 'verifyCode'], (valid) => {
+            if (valid) {
+                next(); // 如果验证通过，则执行下一步
+            } else {
+                console.log('验证失败');
+            }
+        });
+    } else {
+        next(); // 对于其他步骤直接调用 next 方法
+    }
+};
+// 重置密码
+const resetPassword = () => {
+    formRef.value.validate(async (valid) => {
+        if (valid) {
+            try {
+                const response = await axios.post(`api/find-password/reset-password`, {
+                    type: Identity.value,
+                    email: formData.email,
+                    code: formData.verifyCode,
+                    password: formData.newPassword
+                });
+                if (response.data.message === 'success') {
+                    active.value = 3; // 切换到最后一步
+                    forgotPasswordDialogVisible.value = false; // 关闭对话框
+                    ElNotification.success({ title: '密码重置成功' });
+                }
+            } catch (error) {
+                console.error('Error occurred while resetting password:', error);
+                ElNotification.error({ title: '密码重置失败', message: '密码重置失败，请检查网络连接或稍后再试' });
+            }
+        } else {
+            console.log('验证失败');
+            return false;
+        }
+    });
+};
 
 function startCountdown() {
     const timer = setInterval(() => {
