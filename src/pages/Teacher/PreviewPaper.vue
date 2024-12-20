@@ -98,7 +98,15 @@
                 <button @click="continueAdding">继续添加</button>
 
                 <button @click="toggleExplanations">{{ showExplanations ? '隐藏解析' : '查看解析' }}</button>
-                <button @click="clearBasket" >清空题目</button>
+
+                <el-popconfirm
+                        title="确定要清空题目吗？"
+                        @confirm="clearBasket"
+                >
+                    <template #reference>
+                <button  >清空题目</button>
+                    </template>
+                </el-popconfirm>
             </div>
             <div class="right-content bottom">
                 <div class="paper-name">
@@ -122,7 +130,7 @@ import Header from "@/components/Header.vue";
 import {computed, ref, watch} from 'vue';
 import {useStore} from 'vuex';
 import {useRouter} from 'vue-router';
-import {ElNotification} from "element-plus";
+import {ElNotification, ElPopconfirm} from "element-plus";
 import axios from "axios";
 
 const store = useStore();

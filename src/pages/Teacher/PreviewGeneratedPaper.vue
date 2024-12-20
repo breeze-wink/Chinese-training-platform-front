@@ -191,10 +191,12 @@ const returnToPaperList = () => {
 }
 
 .explanation {
+    font-style: italic; /* 设置斜体 */
+    color: #96a8e7; /* 设置灰色 */
     margin-top: 10px;
     padding: 10px;
     background-color: #f9f9f9;
-    border-left: 3px solid #409EFF;
+    border-left: 3px solid #babcec;
 }
 
 /* 固定右上和右下内容部分样式 */
