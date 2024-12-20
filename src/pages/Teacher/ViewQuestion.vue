@@ -15,7 +15,7 @@
 
                     <!-- 显示题目列表 -->
                     <el-table :data="paginatedQuestions" style="width: 100%">
-                        <el-table-column prop="questionId" label="ID" width="90"></el-table-column>
+<!--                        <el-table-column prop="questionId" label="ID" width="90"></el-table-column>-->
                         <el-table-column prop="type" label="类型" width="130">
                             <template #default="scope">
                                 <span>{{ scope.row.type }}</span>
