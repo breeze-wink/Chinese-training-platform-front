@@ -91,6 +91,7 @@ const updateFile = (item) => {
 
 // 处理文件上传
 const handleFileUpload = async (event) => {
+
   const file = event.target.files[0];
   if (file) {
     const formData = new FormData();
@@ -98,7 +99,9 @@ const handleFileUpload = async (event) => {
     formData.append('executedDate', new Date().toISOString().split('T')[0]); // 添加执行日期
     if (currentItem.value) {
       try {
-        const response = await axios.put(`/api/system-admin/update-course-standard/${currentItem.value.id}`, formData);
+        const response = await axios.put(`/api/system-admin/update-course-standard/${currentItem.value.id}`, formData,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
         if (response.status === 200) {
           await getAllCourseStandards();
           ElMessage({ message: '文件更新成功', type: 'success' });
@@ -108,7 +111,8 @@ const handleFileUpload = async (event) => {
       }
     } else {
       try {
-        const response = await axios.post('/api/system-admin/create-course-standard', formData);
+        const response = await axios.post('/api/system-admin/create-course-standard', formData,
+                { headers: { 'Content-Type': 'multipart/form-data' } });
         if (response.status === 200) {
           await getAllCourseStandards();
           ElMessage({ message: '文件上传成功', type: 'success' });

@@ -46,7 +46,16 @@
                         <template #default="{ row }">
                             <el-button size="small" type="primary" @click="previewPaper(row)">预览</el-button>
                             <el-button size="small" type="success" @click="showPublishDialog(row)">发布</el-button>
-                            <el-button size="small" type="danger" @click="deletePaper(row)">删除</el-button>
+
+                            <el-popconfirm
+                                    title="确定要清空题目吗？"
+                                    @confirm="deletePaper(row)"
+                            >
+                                <template #reference>
+                            <el-button size="small" type="danger" >删除</el-button>
+                                </template>
+                            </el-popconfirm>
+
                         </template>
                     </el-table-column>
                 </el-table>
@@ -139,7 +148,7 @@
 import { ref, computed, onMounted } from 'vue';
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination } from 'element-plus';
+import {ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination, ElPopconfirm} from 'element-plus';
 import axios from 'axios';
 import { useStore } from 'vuex';
 import {toRaw} from "vue-demi";

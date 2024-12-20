@@ -232,15 +232,26 @@
                 <div class="drawer-content">
                     <p>试题总量：{{ store.getters.getBasketCount }}</p>
                     <div class="button-container">
+
+
+                        <el-popconfirm
+                                title="确定要清空题目吗？"
+                                @confirm="clearQuestions"
+                        >
+                            <template #reference>
                     <button
                             class="clear-button"
                             @mouseover="hoverClearButton = true"
                             @mouseleave="hoverClearButton = false"
-                            @click="clearQuestions"
+
                             :style="{ backgroundColor: hoverClearButton ? '#409EFF' : '' }"
                     >
                         清空试题
                     </button>
+                            </template>
+                        </el-popconfirm>
+
+
                     <button class="preview-button" @click="previewFullPaper">
                         预览全卷
                     </button>
@@ -278,7 +289,7 @@ import {computed, onMounted, ref} from "vue";
 import axios from "axios";
 import {useStore} from "vuex";
 
-import { ElNotification } from 'element-plus';
+import {ElNotification, ElPopconfirm} from 'element-plus';
 
 import {SortDown, SortUp} from "@element-plus/icons-vue";
 const isLoading = ref(false);

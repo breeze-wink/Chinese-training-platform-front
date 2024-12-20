@@ -17,6 +17,11 @@ import ManagePaper from "@/pages/Teacher/ManagePaper.vue";
 import PreviewGeneratedPaper from "@/pages/Teacher/PreviewGeneratedPaper.vue";
 import ManageHomework from "@/pages/Teacher/ManageHomework.vue";
 import ViewQuestion from "@/pages/Teacher/ViewQuestion.vue";
+import PreviewAutoPaper from "@/pages/Teacher/PreviewAutoPaper.vue";
+import CorrectingPaper from "@/pages/Teacher/CorrectingPaper.vue";
+import PreviewKnowledgeLimitedPaper from "@/pages/Teacher/PreviewKnowledgeLimitedPaper.vue";
+import ViewQuestionDetail from "@/pages/Teacher/ViewQuestionDetail.vue";
+import UploadEssay from "@/pages/Teacher/UploadEssay.vue";
 
 import AuditTeacherPersonalInfo from "@/pages/audit-teacher/PersonalInfo.vue"
 import AuditStrategy from "@/pages/audit-teacher/AuditTest.vue"
@@ -49,14 +54,6 @@ import PersonalProfiling from "@/pages/Student/PersonalProfiling.vue";
 import AnswerHomework from "@/pages/Student/AnswerHomework.vue";
 import HomeworkDetail from "@/pages/Student/HomeworkDetail.vue";
 import store from '@/store/user';
-import PreviewAutoPaper from "@/pages/Teacher/PreviewAutoPaper.vue";
-import CorrectingPaper from "@/pages/Teacher/CorrectingPaper.vue";
-import PreviewKnowledgeLimitedPaper from "@/pages/Teacher/PreviewKnowledgeLimitedPaper.vue";
-import ViewQuestionDetail from "@/pages/Teacher/ViewQuestionDetail.vue";
-
-
-
-
 
 const routes = [
     //首页
@@ -104,6 +101,13 @@ const routes = [
         path: '/teacher/upload-single-question',
         name: 'UploadSingleQuestion',
         component: UploadSingleQuestion,
+        meta: { requiresAuth: true }
+    },
+    //上传作文
+    {
+        path: '/teacher/upload-essay',
+        name: 'UploadEssay',
+        component: UploadEssay,
         meta: { requiresAuth: true }
     },
     //上传组合题目

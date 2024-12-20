@@ -28,6 +28,15 @@
                             <el-button type="primary" @click="startCombinedUpload">开始上传</el-button>
                         </div>
                     </el-card>
+
+                    <!-- 作文上传卡片 -->
+                    <el-card shadow="hover" class="upload-card">
+                        <h3 class="card-title">作文上传</h3>
+                        <p class="card-description">适用于优秀作文</p>
+                        <div class="card-footer">
+                            <el-button type="primary" @click="startEssayUpload">开始上传</el-button>
+                        </div>
+                    </el-card>
                 </div>
             </div>
         </div>
@@ -44,16 +53,21 @@ const router = useRouter();
 
 // 单题上传按钮点击事件
 const startSingleUpload = () => {
-    ElMessage.info('进入单题上传页面');
-    // 在这里添加跳转逻辑或其他处理
+
     router.push('/teacher/upload-single-question');
+};
+
+// 作文上传按钮点击事件
+const startEssayUpload = () => {
+
+    router.push('/teacher/upload-essay');
 };
 
 // 组合式题目上传按钮点击事件
 const startCombinedUpload = () => {
-    ElMessage.info('进入组合式题目上传页面');
+
     router.push( '/teacher/upload-combined-question');
-    // 在这里添加跳转逻辑或其他处理
+
 };
 </script>
 
@@ -85,13 +99,15 @@ const startCombinedUpload = () => {
 
 .card-container {
     display: flex;
-    width: 100%;
+
     gap: 20px; /* 卡片之间的间距 */
+    flex-wrap: wrap; /* 允许换行 */
     justify-content: space-between;
 }
 
 .upload-card {
-    flex: 1; /* 每个卡片等宽 */
+    flex: 1 1 calc(45% - 10px); /* 每个卡片约占50%的宽度，减去间隙 */
+    max-width: calc(45% - 10px); /* 确保卡片不会超过50%的宽度 */
     padding: 20px;
     border-radius: 12px;
     border: 1px solid #e0e0e0;

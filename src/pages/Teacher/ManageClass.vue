@@ -30,7 +30,17 @@
                             <el-button type="primary" class="custom-button view-members-button" @click="viewMembers(scope.row)">查看成员</el-button>
                             <el-button type="warning" class="custom-button edit-button" @click="openEditDialog(scope.row)">修改信息</el-button>
                             <el-button type="success" class="custom-button view-stats-button" @click="viewStats(scope.row)">统计概况</el-button>
-                            <el-button type="danger"  class="custom-button disband-button" @click="disbandClass(scope.row)">解散班级</el-button>
+                            <el-popconfirm
+                                    title="确定要解散班级吗？"
+                                    @confirm="() => disbandClass(scope.row)"
+                            >
+                                <template #reference>
+                            <el-button type="danger"
+                                       class="custom-button disband-button">
+                                解散班级
+                            </el-button>
+                                </template>
+                            </el-popconfirm>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -74,13 +84,20 @@
                         <el-table-column prop="studentId" label="学生ID" width="100"></el-table-column>
                         <el-table-column label="操作" width="300">
                             <template #default="scope">
-                                <el-button
-                                        type="danger"
-                                        size="small"
-                                        @click="removeMember(scope.row)"
+
+
+                                <el-popconfirm
+                                        title="确定要移除该成员吗？"
+                                        @confirm="() => removeMember(scope.row)"
                                 >
-                                    移除成员
-                                </el-button>
+                                    <template #reference>
+                                        <el-button type="danger"
+                                                   size="small">
+                                            移除成员
+                                        </el-button>
+                                    </template>
+                                </el-popconfirm>
+
                                 <el-button
                                         type="primary"
                                         size="small"
@@ -137,13 +154,19 @@
                         <el-table-column prop="studentName" label="学生姓名" width="150"></el-table-column>
                         <el-table-column label="操作" width="200">
                             <template #default="scope">
-                                <el-button
-                                        type="danger"
-                                        size="small"
-                                        @click="removeGroupMember(scope.row)"
+
+                                <el-popconfirm
+                                        title="确定要移除该成员吗？"
+                                        @confirm="() => removeGroupMember(scope.row)"
                                 >
-                                    移除成员
-                                </el-button>
+                                    <template #reference>
+                                        <el-button type="danger"
+                                                   size="small">
+                                            移除成员
+                                        </el-button>
+                                    </template>
+                                </el-popconfirm>
+
                                 <el-button
                                         type="primary"
                                         size="small"
@@ -184,7 +207,18 @@
                         <template #default="scope">
                             <el-button type="primary" class="custom-button view-members-button" @click="viewGroupMembers(scope.row)">查看成员</el-button>
                             <el-button type="success" class="custom-button view-stats-button" @click="viewGroupStats(scope.row)">统计概况</el-button>
-                            <el-button type="danger" class="custom-button disband-button" @click="disbandGroup(scope.row)">解散小组</el-button>
+
+                            <el-popconfirm
+                                    title="确定要解散小组吗？"
+                                    @confirm="() => disbandGroup(scope.row)">
+                                <template #reference>
+                                    <el-button type="danger"
+                                               class="custom-button disband-button">
+                                        解散小组
+                                    </el-button>
+                                </template>
+                            </el-popconfirm>
+
                         </template>
                     </el-table-column>
                 </el-table>
@@ -375,6 +409,8 @@ import {CirclePlusFilled} from "@element-plus/icons-vue";
 import {ElMessage} from "element-plus";
 import * as echarts from 'echarts';
 import {onBeforeUnmount} from "vue-demi";
+
+import { ElPopconfirm, ElButton } from 'element-plus';
 
 
 const isLoading = ref(false);
@@ -679,7 +715,6 @@ const disbandClass = async (classItem) => {
             ElMessage.success(response.data.message); // 使用 ElMessage 显示成功提示
 
             classList.value = classList.value.filter(clazz => clazz.classId !== classItem.classId);
-
 
         }else if(response.status===400)
         {
@@ -1261,7 +1296,7 @@ onBeforeUnmount(() => {
 }
 
 .create-class-button {
-    margin-bottom: 0px; /* 为生成班级按钮添加一些下方间距 */
+    margin-bottom: 0; /* 为生成班级按钮添加一些下方间距 */
 }
 
 .el-table {
