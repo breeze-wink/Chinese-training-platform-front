@@ -348,10 +348,6 @@
                         <el-button @click="studentDetailsDialogVisible = false">关闭</el-button>
                     </template>
                 </el-dialog>
-
-
-
-
             </div>
         </div>
         <!-- 加载提示 -->

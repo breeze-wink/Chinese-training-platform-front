@@ -24,18 +24,22 @@
                                         </ul>
                                     </div>
 
-                                    <div v-if="showExplanations" class="explanation">
-                                        <p><strong>答案：</strong>{{ sub.answer }}</p>
-                                        <p><strong>解析：</strong>{{ sub.explanation }}</p>
-                                    </div>
+
                                     <!-- 分数选择器和删除按钮紧跟在小题下面 -->
                                     <div class="action-buttons">
+                                        <p><strong>分值:</strong></p>
                                         <input
                                                 type="number"
                                                 v-model.number="sub.score"
                                                 min="0"
                                                 placeholder="设置分数"
                                         />
+                                    </div>
+
+                                    <div v-if="showExplanations" class="explanation">
+
+                                        <p><strong>答案：</strong>{{ sub.answer }}</p>
+                                        <p><strong>解析：</strong>{{ sub.explanation }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -63,12 +67,9 @@
                                 </ul>
                             </div>
 
-                            <div v-if="showExplanations" class="explanation">
-                                <p><strong>答案：</strong>{{ question.answer }}</p>
-                                <p><strong>解析：</strong>{{ question.explanation }}</p>
-                            </div>
                             <!-- 分数选择器和删除按钮紧跟在单题下面 -->
                             <div class="action-buttons">
+                                <p><strong>分值:</strong></p>
                                 <input
                                         type="number"
                                         v-model.number="question.score"
@@ -76,6 +77,10 @@
                                         placeholder="设置分数"
                                 />
                             </div>
+                                <div v-if="showExplanations" class="explanation">
+                                    <p><strong>答案：</strong>{{ question.answer }}</p>
+                                    <p><strong>解析：</strong>{{ question.explanation }}</p>
+                                </div>
                             </div>
                         </div>
                         <!-- 删除按钮放在卡片的右下角 -->
@@ -91,7 +96,9 @@
             <div class="right-content top">
 
                 <button @click="continueAdding">继续添加</button>
+
                 <button @click="toggleExplanations">{{ showExplanations ? '隐藏解析' : '查看解析' }}</button>
+                <button @click="clearBasket" >清空题目</button>
             </div>
             <div class="right-content bottom">
                 <div class="paper-name">
@@ -102,7 +109,7 @@
                 <p>题目数量：{{ questionCount }}</p>
                 <p>试卷总分：{{ totalScore }}</p>
                 <p>难度系数：{{ difficultyCoefficient }}</p>
-                <button @click="clearBasket">清空题目</button>
+
                 <button @click="generatePaper">生成试卷</button>
             </div>
         </div>
@@ -357,7 +364,7 @@ const  generatePaper = async () => {
     right: 100px;
     display: flex;
     gap: 10px;
-    background-color: #ffffff;
+    background-color: #fffbe8;
     padding: 10px;
     width: 300px;
     border-radius: 8px;
@@ -371,23 +378,12 @@ const  generatePaper = async () => {
     display: flex;
     flex-direction: column;
     gap: 3px;
-    background-color: #a2bbe7;
+    background-color: #fffbe8;
     padding: 10px;
     width: 300px;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
-
-.right-content.top button:nth-child(1) {
-    background-color: #f56c6c; /* 继续添加按钮的颜色 */
-    color: white;
-}
-
-.right-content.top button:nth-child(2) {
-    background-color: #409EFF; /* 查看解析按钮的颜色 */
-    color: white;
-}
-
 
 .paper-name {
     display: flex;
@@ -436,10 +432,12 @@ const  generatePaper = async () => {
 }
 
 .explanation {
+    font-style: italic; /* 设置斜体 */
+    color: #96a8e7; /* 设置灰色 */
     margin-top: 10px;
     padding: 10px;
     background-color: #f9f9f9;
-    border-left: 3px solid #409EFF;
+    border-left: 3px solid #babcec;
 }
 
 .action-buttons {
@@ -498,9 +496,8 @@ const  generatePaper = async () => {
     background-color: #409EFF;
     color: white;
 }
-
 .right-content.top button:nth-child(3) {
-    background-color: #66b1ff;
+    background-color:   #f56c6c;
     color: white;
 }
 
@@ -513,7 +510,7 @@ const  generatePaper = async () => {
 }
 
 .right-content.top button:nth-child(3):hover {
-    background-color: #409EFF;
+    background-color: #d9363e;
 }
 
 .right-content.bottom p {
@@ -529,6 +526,7 @@ const  generatePaper = async () => {
 .right-content.bottom button:hover {
     background-color: #85d587;
 }
+
 
 .paper-name input {
     width: 100%;

@@ -37,6 +37,7 @@
                                     </div>
 
                                     <div v-if="showExplanations" class="explanation">
+                                        <p><strong>涉及知识点：</strong>{{ sub.knowledgePoint }}</p>
                                         <p><strong>答案：</strong>{{ sub.answer }}</p>
                                         <p><strong>解析：</strong>{{ sub.explanation }}</p>
                                     </div>
@@ -60,10 +61,6 @@
                                     </ul>
                                 </div>
 
-                                <div v-if="showExplanations" class="explanation">
-                                    <p><strong>答案：</strong>{{ question.answer }}</p>
-                                    <p><strong>解析：</strong>{{ question.explanation }}</p>
-                                </div>
                             </div>
                             <!-- 分数选择器和删除按钮紧跟在单题下面 -->
                             <div class="action-buttons">
@@ -75,15 +72,16 @@
                                         placeholder="设置分数"
                                 />
                             </div>
-                        </div>
-
-                        <div v-else-if="question.type === 'essay'">
-                            <strong>作文题目 {{ index + 1 }} ({{ question.score }}分): <span v-html="question.content"></span></strong>
 
                             <div v-if="showExplanations" class="explanation">
+                                <p><strong>涉及知识点：</strong>{{ question.knowledgePoint }}</p>
                                 <p><strong>答案：</strong>{{ question.answer }}</p>
                                 <p><strong>解析：</strong>{{ question.explanation }}</p>
                             </div>
+                        </div>
+
+                        <div v-else-if="question.type === 'essay'">
+                            <strong>题目 {{ index + 1 }} ({{ question.score }}分): <span v-html="question.content"></span></strong>
 
                             <!-- 分数选择器 -->
                             <div class="action-buttons">
@@ -95,6 +93,12 @@
                                         placeholder="设置分数"
                                 />
                             </div>
+
+                            <div v-if="showExplanations" class="explanation">
+                                <p><strong>涉及知识点：</strong>{{ question.knowledgePoint }}</p>
+                                <p><strong>解析：</strong>{{ question.explanation }}</p>
+                            </div>
+
                         </div>
 
                     </div>
@@ -195,6 +199,7 @@ const initializeScores = () => {
 initializeScores();
 
 const returnToPaperList = () => {
+    store.dispatch('clearBasket');
     router.push('/teacher/test-generation-strategy'); // 根据实际路由调整
 };
 // 监视试卷篮变化，重新初始化分数
@@ -563,10 +568,12 @@ onBeforeUnmount(() => {
 }
 
 .explanation {
+    font-style: italic; /* 设置斜体 */
+    color: #96a8e7; /* 设置灰色 */
     margin-top: 10px;
     padding: 10px;
     background-color: #f9f9f9;
-    border-left: 3px solid #409EFF;
+    border-left: 3px solid #babcec;
 }
 
 .action-buttons {
@@ -601,7 +608,7 @@ onBeforeUnmount(() => {
     right: 100px;
     display: flex;
     gap: 10px;
-    background-color: #ffffff;
+    background-color: #fffbe8;
     padding: 10px;
     width: 300px;
     border-radius: 8px;
@@ -615,7 +622,7 @@ onBeforeUnmount(() => {
     display: flex;
     flex-direction: column;
     gap: 3px;
-    background-color: #a2bbe7;
+    background-color: #fffbe8;
     padding: 10px;
     width: 300px;
     border-radius: 8px;
