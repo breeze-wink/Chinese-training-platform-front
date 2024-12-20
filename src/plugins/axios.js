@@ -16,7 +16,10 @@ apiClient.interceptors.request.use(
         console.log('Request Interceptor:', config);
         const token = store.getters.getToken; // 直接使用 store 实例访问 getters
         if (token && (!config.url.endsWith('login') &&
-            !config.url.endsWith('register') && !config.url.endsWith('send-verification'))) { // 假设登录接口都以 'login' 结尾
+            !config.url.endsWith('register') &&
+            !config.url.endsWith('send-verification') &&
+            !config.url.endsWith('send-code') &&
+            !config.url.endsWith('reset-password'))) { // 假设登录接口都以 'login' 结尾
             config.headers.Authorization = `${token}`;
         }
         return config;

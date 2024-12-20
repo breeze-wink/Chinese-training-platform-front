@@ -338,7 +338,7 @@ export default {
 
             try {
                 // 发送请求
-                const response = await axios.post(`/api/student/${this.studentInfo.accountId}/editInformation`, requestBody, {
+                const response = await axios.post(`/api/student/${this.studentInfo.accountId}/edit-information`, requestBody, {
                     headers: {
                         'Content-Type': 'application/json'
                     }
