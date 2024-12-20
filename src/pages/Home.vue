@@ -470,12 +470,23 @@ function handleRegisterKeydown(event) {
 const emit = defineEmits(['login', 'register']);
 const handleEnter = (event) => {
     if (event.key === "Enter") {
-        if (activeTab.value === "student") {
-            submitForm("registerFormStudent", "student");
-        } else if (activeTab.value === "teacher") {
-            submitForm("registerFormTeacher", "teacher");
-        } else {
-            login();
+        console.log(activeTab)
+        console.log(loginDialogVisible)
+        console.log(registerDialogVisible)
+        if (loginDialogVisible) {
+            if (activeTab.value === "student") {
+                login();
+            } else if (activeTab.value === "teacher") {
+                login();
+            }
+
+        }
+        if (registerDialogVisible) {
+            if (activeTab.value === "student") {
+                submitForm("registerFormStudent", "student");
+            } else if (activeTab.value === "teacher") {
+                submitForm("registerFormTeacher", "teacher");
+            }
         }
     }
 };
