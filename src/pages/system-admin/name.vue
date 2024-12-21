@@ -59,11 +59,11 @@
                 </el-form-item>
                 <el-form-item label="验证码" prop="verificationCode">
                     <el-row :gutter="10">
-                        <el-col :span="16">
+                        <el-col :span="10">
                             <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="width: 95%;"></el-input>
                         </el-col>
                         <el-col :span="8">
-                            <el-button @click="sendVerificationCode" class="verify-button" style="margin-left: -18px;">发送验证码</el-button>
+                            <el-button @click="sendVerificationCode" class="verify-button" style="margin-left: -10px;">{{ codeButtonText }}</el-button>
                         </el-col>
                     </el-row>
                 </el-form-item>
@@ -100,7 +100,7 @@
 <script setup>
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import { ref, reactive, onMounted, computed } from 'vue';
+import {ref, reactive, onMounted, computed, watch} from 'vue';
 import { ElIcon, ElCard, ElInput, ElMessage, ElDialog, ElForm, ElFormItem } from 'element-plus';
 import { Edit } from '@element-plus/icons-vue';
 import { useStore } from "vuex";
@@ -175,7 +175,42 @@ const handlePasswordChange = async () => {
   }
 };
 
+const countdown = ref(60)
+const codeButtonText = ref('获取验证码')
+let timer; // 用于存储定时器ID
+let isCountingDown = ref(false); // 标记是否正在倒计时
+function startCountdown() {
+    console.log('Starting countdown...');
+    clearInterval(timer); // 清除任何现有的定时器
+    isCountingDown.value = true;
+    if (codeButtonText.value === '重新获取验证码') {
+        countdown.value = 60
+    }
+    timer = setInterval(() => {
+        console.log(`Countdown value: ${countdown.value}`);
+        if (countdown.value > 0) {
+            countdown.value--;
+        } else {
+            clearInterval(timer);
+            isCountingDown.value = false;
+            console.log('Countdown finished.');
+        }
+    }, 1000);
+}
+function resetCountdown() {
+    clearInterval(timer);
+    countdown.value = 60;
+    isCountingDown.value = false;
+}
 
+// 使用 watch 监听 countdown 的变化并更新按钮文本
+watch(countdown, (newVal) => {
+    if (newVal > 0 && newVal <= 60) {
+        codeButtonText.value = `${newVal}s 后重新获取`;
+    } else {
+        codeButtonText.value = '重新获取验证码';
+    }
+});
 // 获取信息
 const getSystemAdminInfo = async () => {
   try {
@@ -286,6 +321,9 @@ const hideChangeEmailModal = () => {
 
 // 发送验证码
 const sendVerificationCode = async () => {
+    // 如果当前正在倒计时，则不允许再次发送验证码
+    if (countdown.value !== 60) return;
+    startCountdown();
     try {
         const response = await axios.get(`/api/system-admin/send-email-code`, {
             params: {
@@ -300,10 +338,12 @@ const sendVerificationCode = async () => {
             successMessage.value = '验证码已发送，请查收您的邮箱';
         } else {
             errorMessage.value = '验证码发送失败';
+            resetCountdown(); // 发送失败时重置倒计时
         }
     } catch (error) {
         errorMessage.value = '验证码发送失败，请稍后再试';
         console.error('验证码发送失败:', error.response ? error.response.data : error.message);
+        resetCountdown(); // 发送失败时重置倒计时
     }
 };
 
