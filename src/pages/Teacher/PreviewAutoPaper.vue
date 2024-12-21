@@ -124,6 +124,18 @@
                 <button @click="returnToPaperList" class="return-button">返回选择出卷界面</button>
             </div>
         </div>
+
+        <!-- 加载提示 -->
+        <div v-if="isLoading " class="loading-modal">
+            <div class="modal-content">
+                <p v-if="isLoading">正在加载，请稍候...</p>
+
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- 遮罩层 -->
+        <div v-if="isLoading" class="overlay"></div>
     </div>
 </template>
 
@@ -142,7 +154,7 @@ const store = useStore();
 const router = useRouter();
 const route = useRoute();
 const imageCache = [];
-
+const isLoading = ref(false);
 // 获取认证 Token
 const token = store.getters.getToken;
 
@@ -322,6 +334,7 @@ const generatePaper = async () => {
 
 // 重新生成试卷的逻辑
 const regeneratePaper = async () => {
+    isLoading.value=true;
     try {
         const response = await axios.get('/api/teacher/paper/auto', {
             headers: {
@@ -417,7 +430,7 @@ const regeneratePaper = async () => {
                     explanation: processedEssay.explanation,
                     options: processedEssay.options,
                     score: processedEssay.score,
-                    difficulty: processedEssay.difficulty,
+                    difficulty: processedEssay.difficulty || 0,
                     knowledgePoint: processedEssay.knowledgePoint
                 });
             }
@@ -452,6 +465,7 @@ const regeneratePaper = async () => {
         });
         console.error(error);
     }
+    isLoading.value=false;
 };
 
 // 辅助函数：替换图片路径
@@ -506,10 +520,13 @@ const replaceImageSrc = async (htmlContent) => {
 
 
 // 在脚本部分添加
-onBeforeUnmount(() => {
+onMounted(() => {
+
     imageCache.forEach((blobUrl) => {
         URL.revokeObjectURL(blobUrl);
     });
+
+    regeneratePaper();
 });
 </script>
 
@@ -698,5 +715,67 @@ onBeforeUnmount(() => {
 .right-content.bottom p {
     font-size: 16px;
     margin: 5px 0;
+}
+
+
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 300px;
+    width: 100%;
+}
+
+.modal-content p {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+.loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* 确保模态窗在遮罩层之上 */
+}
+
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+    z-index: 999; /* 确保遮罩层在最上层 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.2em;
 }
 </style>
