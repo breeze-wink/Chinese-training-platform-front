@@ -232,6 +232,7 @@ onMounted(() => {
 .main-container {
     display: flex;
     flex: 1;
+    background-color: #f0f0f0;
 }
 
 .content {
@@ -242,6 +243,7 @@ onMounted(() => {
     overflow-y: auto;
     margin-right: 50px;
     margin-left: 300px;
+    margin-bottom: 30px;
 }
 
 /* 确保弹窗背景不被遮挡 */
