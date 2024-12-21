@@ -358,10 +358,13 @@ const updateUsername = async () => {
         });
 
         // 处理响应
-        if (response.status === 200 && response.data.message === '用户名修改成功') {
+        if (response.status === 200) {
             console.log(response.data.message);
+            ELMessage.success('修改成功');
+
         } else {
             console.error(response.data.message);
+            ELMessage.error('修改失败' + response.data.message);
         }
     } catch (error) {
         // 处理错误
@@ -380,8 +383,10 @@ const updatePhoneNumber = async () => {
 
         if (response.status === 200 ) {
             console.log(response.data.message);
+            ElMessage.success('修改成功');
         } else {
             console.error(response.data.message);
+            ElMessage.error('修改失败' + response.data.message);
         }
     } catch (error) {
         console.error('请求失败' + error.message);
