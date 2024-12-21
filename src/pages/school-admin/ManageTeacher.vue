@@ -21,20 +21,19 @@
           <el-table-column prop="email" label="邮箱" width="250"></el-table-column>
           <el-table-column prop="username" label="用户名" width="150"></el-table-column>
           <el-table-column prop="phoneNumber" label="联系电话"></el-table-column>
-            <el-table-column label="是否为审核老师">
+          <el-table-column label="是否为审核老师" >
 
-                <template #default="{ row }">
-                    <el-switch
-                            :checked="row.permission === 1"
-                            active-text="是"
-                            inactive-text="否"
-                            active-color="#13ce66"
-                            inactive-color="#ff4949"
-                            @change="handleSwitchChange(row, $event)"
-                    ></el-switch>
-                </template>
+            <template #default="{ row }">
+                <el-switch
+                        v-model="row.permissionSwitch"
+                        inline-prompt
+                        active-text="是"
+                        inactive-text="否"
+                        @change="handleSwitchChange(row, $event)"
+                ></el-switch>
+            </template>
 
-            </el-table-column>
+          </el-table-column>
 
 
             <el-table-column label="操作">
@@ -95,10 +94,18 @@ const getTeachers = async () => {
     const response = await axios.get(`/api/school-admin/${adminId.value}/query-all-teachers`);
     console.log(response.data.data );
     if (response.status === 200) {
-      teachers.value = response.data.data;
+      teachers.value = response.data.data.sort((a, b) => b.permission - a.permission);
       totalItems.value = response.data.data.length;
       filteredData.value = teachers.value;  // 默认加载所有数据
-        console.log(filteredData.value)
+      teachers.value.forEach(teacher => {
+        teacher.permissionSwitch = computed({
+          get: () => teacher.permission === 1,
+          set: (value) => {
+            teacher.permission = value ? 1 : 0;
+          }
+        });
+      });
+
     } else {
       ElMessage({ message: '教师账号信息查询失败：' + response.data.message, type: 'error' });
     }
@@ -107,16 +114,15 @@ const getTeachers = async () => {
     ElMessage({ message: '获取教师信息失败，请稍后再试', type: 'error' });
   }
 };
-// 添加在 <script setup> 中
-// 处理滑块变化，弹出确认框
+
 const handleSwitchChange = (row, newVal) => {
     // 计算用户想要的新的权限状态
     const newPermission = newVal ? 1 : 0;
 
-    const actionText = newPermission === 1 ? '升级' : '降级';
+    const actionText = newPermission === 1 ? '升级为审核老师' : '降级为普通老师';
 
     ElMessageBox.confirm(
-            `确定要${actionText} "${row.name}" 为审核老师吗？`,
+            `确定要将"${row.name}${actionText} `,
             '提示',
             {
                 confirmButtonText: '确定',
@@ -144,13 +150,14 @@ const toggleManager = async (row, newPermission) => {
         if (response.status === 200) {
             // 更新本地数据
             row.permission = newPermission;
+            row.permissionSwitch = newPermission === 1;
             ElMessage({
-                message: `已成功 ${newPermission === 1 ? '升级' : '降级'} 为审核老师`,
+                message: `已成功 ${newPermission === 1 ? '升级' : '降级'}`,
                 type: 'success',
             });
         } else {
             // 请求失败，恢复滑块状态
-            row.permission = newPermission === 1 ? 0 : 1;
+            row.permission = !(newPermission === 1);
             ElMessage({
                 message: `操作失败：${response.data.message}`,
                 type: 'error',
@@ -158,7 +165,7 @@ const toggleManager = async (row, newPermission) => {
         }
     } catch (error) {
         // 请求异常，恢复滑块状态
-        row.permission = newPermission === 1 ? 0 : 1;
+        row.permission = !(newPermission === 1);
         ElMessage({
             message: error.response?.data.message || '操作失败，请稍后再试',
             type: 'error',
