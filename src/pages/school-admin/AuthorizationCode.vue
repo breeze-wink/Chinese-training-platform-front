@@ -107,22 +107,6 @@
         </div>
       </el-dialog>
 
-    <!-- 修改密码对话框 -->
-    <el-dialog title="修改密码" v-model="showChangePasswordDialog" width="25%" align-center>
-      <el-form :model="changePasswordForm" label-width="100px">
-        <el-form-item label="旧密码">
-          <el-input v-model="changePasswordForm.password" type="password" placeholder="请输入旧密码" style="width: 95%;"></el-input>
-        </el-form-item>
-        <el-form-item label="新密码">
-          <el-input v-model="changePasswordForm.newPassword" type="password" placeholder="请输入新密码" style="width: 95%;"></el-input>
-        </el-form-item>
-      </el-form>
-        <div class="form-buttons">
-          <el-button @click="closeChangePasswordDialog" class="action-button">取 消</el-button>
-          <el-button type="primary" @click="submitChangePassword" class="action-button">确 定</el-button>
-        </div>
-    </el-dialog>
-
       <!-- 更换邮箱模态窗口 -->
       <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="25%" align-center>
           <el-form :model="bindEmailForm" :rules="emailRules" ref="emailFormRef" label-width="100px">
@@ -145,6 +129,22 @@
           </el-form>
           <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
           <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
+      </el-dialog>
+
+      <!-- 修改密码对话框 -->
+      <el-dialog title="修改密码" v-model="showChangePasswordDialog" width="25%" align-center>
+          <el-form :model="changePasswordForm" label-width="100px">
+              <el-form-item label="旧密码">
+                  <el-input v-model="changePasswordForm.password" type="password" placeholder="请输入旧密码" style="width: 95%;"></el-input>
+              </el-form-item>
+              <el-form-item label="新密码">
+                  <el-input v-model="changePasswordForm.newPassword" type="password" placeholder="请输入新密码" style="width: 95%;"></el-input>
+              </el-form-item>
+          </el-form>
+          <div class="form-buttons">
+              <el-button @click="closeChangePasswordDialog" class="action-button">取 消</el-button>
+              <el-button type="primary" @click="submitChangePassword" class="action-button">确 定</el-button>
+          </div>
       </el-dialog>
   </div>
 </template>

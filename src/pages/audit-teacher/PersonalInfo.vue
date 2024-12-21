@@ -134,6 +134,24 @@
                     <el-button type="primary" @click="submitRealNameVerification">确认</el-button>
                 </div>
             </el-dialog>
+            <!-- 修改密码的模态框 -->
+            <el-dialog v-model="isChangePasswordModalVisible" title="修改密码" @close="resetPasswordForm" custom-class="square-modal" width="25%" align-center>
+                <el-form ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-width="100px">
+                    <el-form-item label="旧密码" prop="oldPassword">
+                        <el-input type="password" v-model="passwordForm.oldPassword" autocomplete="off" style="width: 95%;"></el-input>
+                    </el-form-item>
+                    <el-form-item label="新密码" prop="newPassword">
+                        <el-input type="password" v-model="passwordForm.newPassword" autocomplete="off" style="width: 95%;"></el-input>
+                    </el-form-item>
+                    <el-form-item label="确认新密码" prop="confirmNewPassword">
+                        <el-input type="password" v-model="passwordForm.confirmNewPassword" autocomplete="off" style="width: 95%;"></el-input>
+                    </el-form-item>
+                </el-form>
+                <div class="form-buttons">
+                    <el-button @click="hideChangePasswordModal" class="action-button">取 消</el-button>
+                    <el-button type="primary" @click="handlePasswordChange" class="action-button">确 定</el-button>
+                </div>
+            </el-dialog>
         </div>
     </div>
 </template>
@@ -142,7 +160,7 @@
 //公共组件引入
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import {computed, ref, onMounted} from 'vue';
+import {computed, ref, onMounted, reactive} from 'vue';
 //图标引入
 import {ElIcon, ElCard, ElInput, ElMessageBox, ElMessage} from 'element-plus';
 import {Edit} from '@element-plus/icons-vue';
@@ -199,6 +217,95 @@ const emailRules = ref({
     ]
 });
 
+const isChangePasswordModalVisible = ref(false);
+const passwordErrorMessage = ref('');
+const passwordSuccessMessage = ref('');
+const passwordFormRef = ref(null);
+const passwordForm = ref({
+    oldPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+});
+const validateConfirmPassword = (rule, value, callback) => {
+    if (value !== passwordForm.value.newPassword) {
+        callback(new Error('两次输入的新密码不一致'));
+    } else {
+        callback();
+    }
+};
+const passwordRules = ref({
+    oldPassword: [
+        { required: true, message: '请输入旧密码', trigger: 'blur' }
+    ],
+    newPassword: [
+        { required: true, message: '请输入新密码', trigger: 'blur' },
+        { min: 6, message: '新密码至少6位', trigger: 'blur' }
+    ],
+    confirmNewPassword: [
+        { required: true, message: '请再次输入新密码', trigger: 'blur' },
+        { validator: validateConfirmPassword, trigger: 'blur' }
+    ]
+});
+const resetPasswordForm = () => {
+    console.log('resetPasswordForm called');
+    // 清空表单
+    Object.assign(passwordForm.value, {
+        oldPassword: '',
+        newPassword: '',
+        confirmNewPassword: ''
+    });
+    // 清理错误和成功消息
+    passwordErrorMessage.value = '';
+    passwordSuccessMessage.value = '';
+    // 重置表单验证状态
+    passwordFormRef.value?.resetFields();
+};
+// 编辑密码的逻辑（可以弹出对话框等）
+const editPassword = () => {
+    console.log('showChangePasswordModal called');
+    isChangePasswordModalVisible.value = true;
+};
+
+const hideChangePasswordModal = () => {
+    console.log('hideChangePasswordModal called');
+    isChangePasswordModalVisible.value = false;
+};
+const handlePasswordChange = async () => {
+    const form = passwordFormRef.value;
+    if (!form) return;
+
+    await form.validate(async (valid) => {
+        if (valid) {
+            try {
+                const response = await axios.post(
+                    `/api/teacher/${teacherId.value}/change-password`,
+                    {
+                        oldPassword: passwordForm.value.oldPassword,
+                        newPassword: passwordForm.value.newPassword,
+                    },
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                if (response.status === 200) {
+                    passwordSuccessMessage.value = '密码更改成功';
+                    hideChangePasswordModal();
+                } else {
+                    passwordErrorMessage.value = '密码更改失败，请稍后再试';
+                }
+            } catch (error) {
+                passwordErrorMessage.value = '密码更改失败，请检查网络连接或稍后再试';
+                console.error('密码更改失败:', error.response ? error.response.data : error.message);
+            }
+        } else {
+            console.log('表单验证失败');
+            return false;
+        }
+    });
+};
 
 
 // 获取教师信息
@@ -326,15 +433,6 @@ const submitRealNameVerification = async () => {
         console.error('实名认证请求失败:', error.message);
     }
 };
-
-// 编辑密码的逻辑（可以弹出对话框等）
-function editPassword() {
-    console.log('编辑密码');
-}
-
-
-
-
 
 const showChangeEmailModal = () => {
     isChangeEmailModalVisible.value = true;
