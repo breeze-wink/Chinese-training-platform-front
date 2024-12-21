@@ -128,6 +128,7 @@ const toggleExplanations = () => {
 
 // 返回试卷列表
 const returnToPaperList = () => {
+    store.dispatch('clearBasket');
     router.push('/teacher/paper-manage'); // 根据实际路由调整
 };
 </script>
