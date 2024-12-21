@@ -128,6 +128,7 @@ const paginatedData = computed(() => {
 
 .main-container {
   display: flex;
+    background-color: #f0f0f0;
   flex: 1;
 }
 
@@ -139,6 +140,7 @@ const paginatedData = computed(() => {
   overflow-y: auto;
   margin-right: 50px;
     margin-left: 300px;
+    margin-bottom: 30px;
 }
 
 .input-button-group {
@@ -150,7 +152,6 @@ const paginatedData = computed(() => {
 
 .el-button {
   appearance: auto;
-  -webkit-appearance: auto;
-  -moz-appearance: auto;
+
 }
 </style>
