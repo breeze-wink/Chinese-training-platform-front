@@ -433,7 +433,29 @@ margin-top: 20px; / 给表单添加上方的间距，使标题与表单之间有
   width: 300px; /* 限定输入框的宽度 /
 max-width: 100%; / 防止超出父容器 */
 }
+.form-buttons {
+    text-align: center;
+    margin-top: 20px;
+}
+.action-button {
+    background-color: #409eff;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
 
+.action-button:hover {
+    background-color: #66b1ff;
+    transform: scale(1.05);
+}
+
+.action-button:active {
+    transform: scale(0.95);
+}
 .error-message,
 .success-message,
 .result-message {

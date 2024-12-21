@@ -113,18 +113,18 @@
         </div>
 
         <!-- 更换邮箱模态窗口 -->
-        <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal">
-            <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef">
+        <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="25%" align-center>
+            <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef" label-width="100px">
                 <el-form-item label="新邮箱" prop="newEmail">
-                    <el-input v-model="emailForm.newEmail" placeholder="请输入新邮箱地址"></el-input>
+                    <el-input v-model="emailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 95%;"></el-input>
                 </el-form-item>
                 <el-form-item label="验证码" prop="verificationCode">
                     <el-row :gutter="10">
                         <el-col :span="16">
-                            <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码"></el-input>
+                            <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="width: 95%;"></el-input>
                         </el-col>
                         <el-col :span="8">
-                            <el-button @click="sendVerificationCode" class="verify-button">发送验证码</el-button>
+                            <el-button @click="sendVerificationCode" class="verify-button" style="margin-left: -18px;">发送验证码</el-button>
                         </el-col>
                     </el-row>
                 </el-form-item>
@@ -137,16 +137,16 @@
         </el-dialog>
 
         <!-- 修改密码的模态框 -->
-        <el-dialog v-model="isChangePasswordModalVisible" title="修改密码" @close="resetPasswordForm" custom-class="square-modal">
+        <el-dialog v-model="isChangePasswordModalVisible" title="修改密码" @close="resetPasswordForm" custom-class="square-modal" width="25%" align-center>
             <el-form ref="passwordForm" :model="passwordForm" :rules="passwordRules" label-width="100px">
                 <el-form-item label="旧密码" prop="oldPassword">
-                    <el-input type="password" v-model="passwordForm.oldPassword" autocomplete="off"></el-input>
+                    <el-input type="password" v-model="passwordForm.oldPassword" autocomplete="off" style="width: 95%;"></el-input>
                 </el-form-item>
                 <el-form-item label="新密码" prop="newPassword">
-                    <el-input type="password" v-model="passwordForm.newPassword" autocomplete="off"></el-input>
+                    <el-input type="password" v-model="passwordForm.newPassword" autocomplete="off" style="width: 95%;"></el-input>
                 </el-form-item>
                 <el-form-item label="确认新密码" prop="confirmNewPassword">
-                    <el-input type="password" v-model="passwordForm.confirmNewPassword" autocomplete="off"></el-input>
+                    <el-input type="password" v-model="passwordForm.confirmNewPassword" autocomplete="off" style="width: 95%;"></el-input>
                 </el-form-item>
             </el-form>
             <div class="form-buttons">
@@ -174,12 +174,13 @@
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import axios from 'axios';
-import { ElMessageBox, ElMessage } from 'element-plus';
+import {ElMessageBox, ElMessage, ElForm, ElDialog, ElInput, ElFormItem, ElButton} from 'element-plus';
 import { Edit } from '@element-plus/icons-vue';
 import { mapGetters } from 'vuex';
 
 export default {
     components: {
+        ElButton, ElFormItem, ElInput, ElDialog, ElForm,
         Edit,
         Header,
         Sidebar
