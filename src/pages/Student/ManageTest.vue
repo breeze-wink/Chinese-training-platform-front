@@ -107,6 +107,7 @@ import axios from 'axios';
 import router from '@/router'; // 引入路由模块
 import { mapGetters } from 'vuex';
 import {useRouter} from "vue-router";
+import {ElMessageBox, ElNotification} from "element-plus";
 
 export default {
     components: { Header, Sidebar },
@@ -228,6 +229,7 @@ export default {
             const router = useRouter();
             try {
                 this.isContinuing = true;
+                this.isProcessing = true;
                 const endpoint = `/api/student/${this.getUserId}/homework/get-detail`;
                 const params = { assignmentId: item.assignmentId };
 
@@ -248,12 +250,10 @@ export default {
                         }
                     });
                 } else {
-                    console.error('获取作业详情失败', response.data.message);
-                    alert('获取作业详情失败，请稍后重试');
+                    ElNotification.error({ title: '获取作业详情失败', message: '获取作业详情失败，请稍后重试' });
                 }
             } catch (error) {
-                console.error('获取作业详情失败', error.response ? error.response.data : error.message);
-                alert('获取作业详情失败，请稍后重试');
+                ElNotification.error({ title: '获取作业详情失败', message: '获取作业详情失败，请稍后重试' });
             } finally {
                 this.isContinuing = false;
                 this.isProcessing = false;
@@ -271,6 +271,7 @@ export default {
             const router = useRouter();
             try {
                 this.isContinuing = true;
+                this.isProcessing = true;
                 const endpoint = `/api/student/${this.getUserId}/continue-practice`;
                 const params = { practiceId: item.practiceId };
 
@@ -306,12 +307,10 @@ export default {
             }
         },
         showSystemConfirmViewHomeworkAnswers(item) {
-            if (window.confirm(`确定要查看 "${item.assignmentName || item.title}" 的答案吗？`)) {
-                this.answersToView = item;
-                this.isViewingAnswers = true; // 显示加载提示
-                this.isProcessing = true; // 设置为正在处理
-                this.performViewHomeworkAnswers();
-            }
+            this.answersToView = item;
+            this.isViewingAnswers = true; // 显示加载提示
+            this.isProcessing = true; // 设置为正在处理
+            this.performViewHomeworkAnswers();
         },
         performViewHomeworkAnswers() {
             this.viewHomeworkAnswers(this.answersToView);
@@ -345,12 +344,10 @@ export default {
             }
         },
         showSystemConfirmViewAnswers(item) {
-            if (window.confirm(`确定要查看 "${item.practiceName || item.title}" 的答案吗？`)) {
-                this.answersToView = item;
-                this.isViewingAnswers = true; // 显示加载提示
-                this.isProcessing = true; // 设置为正在处理
-                this.performViewAnswers();
-            }
+            this.answersToView = item;
+            this.isViewingAnswers = true; // 显示加载提示
+            this.isProcessing = true; // 设置为正在处理
+            this.performViewAnswers();
         },
         viewAnswers(item) {
             try {
@@ -378,13 +375,23 @@ export default {
         performViewAnswers() {
             this.viewAnswers(this.answersToView);
         },
-        showSystemConfirmDelete(item) {
-            if (window.confirm(`确定要删除练习 "${item.practiceName || item.title}" 吗？`)) {
-                this.practiceToDelete = item;
-                this.isDeleting = true; // 显示加载提示
-                this.isProcessing = true; // 设置为正在处理
-                this.performDelete();
-            }
+        async showSystemConfirmDelete(item) {
+            await ElMessageBox.confirm(
+                `确定要删除练习 "${item.practiceName || item.title}" 吗？`,
+                '提示',
+                {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }
+            );
+
+            this.practiceToDelete = item;
+            this.isDeleting = true; // 显示加载提示
+            this.isProcessing = true; // 设置为正在处理
+
+            // 执行删除操作
+            await this.performDelete();
         },
         async performDelete() {
             if (!this.practiceToDelete) {
@@ -419,14 +426,14 @@ export default {
                     console.log('Pending items after deletion:', this.pendingItems.练习); // 调试日志
                     console.log('Completed items after deletion:', this.completedItems.练习); // 调试日志
 
-                    alert(response.data.message); // 显示成功消息
+                    ElNotification.success({ title: '删除练习成功', message: response.data.message });
                 } else {
                     console.error('删除练习失败', response.data.message);
-                    alert(response.data.message); // 显示错误消息
+                    ElNotification.error({ title: '删除练习失败', message: response.data.message });
                 }
             } catch (error) {
                 console.error('删除练习失败', error.response ? error.response.data : error.message);
-                alert('网络错误或服务器错误，请稍后再试');
+                ElNotification.error({ title: '删除练习失败', message: '删除练习失败，请稍后再试' });
             } finally {
                 this.isDeleting = false; // 隐藏加载提示
                 this.isProcessing = false; // 结束处理状态
@@ -517,8 +524,6 @@ p {
     display: flex;
     justify-content: center;
     align-items: center;
-    color: white;
-    font-size: 1.2em;
 }
 
 .loading-modal {

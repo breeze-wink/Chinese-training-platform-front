@@ -415,8 +415,6 @@ const rules = ref({
 })
 
 const sendingCode = ref(false)
-const countdown = ref(60)
-const codeButtonText = ref('获取验证码')
 const smsLoading = ref(false)
 const verificationCode = ref(''); // 用于存储后端返回的验证码
 
@@ -615,6 +613,9 @@ async function sendVerificationCode(userType) {
         smsLoading.value = false;
         return;
     }
+// 如果当前正在倒计时，则不允许再次发送验证码
+    if (countdown.value !== 60) return;
+    startCountdown();
 
     try {
         let url = '/api/student/send-verification';
@@ -638,13 +639,14 @@ async function sendVerificationCode(userType) {
             }
             // console.log(verificationCode.value);
             // alert(`验证码已发送: ${verificationCode.value}`);
-            startCountdown();
         } else {
             const errorMessage = response.data.message || '验证码发送失败，请稍后再试';
             ElNotification.error({ title: '邮箱错误', message: '请输入正确的邮箱地址' });
+            resetCountdown(); // 发送失败时重置倒计时
         }
     } catch (error) {
         ElNotification.error({ title: '网络错误:', message: error.response ? error.response.data : error.message });
+        resetCountdown(); // 发送失败时重置倒计时
     } finally {
         sendingCode.value = false;
         smsLoading.value = false;
@@ -658,6 +660,10 @@ const sendVerificationCodeFor = async () => {
         return;
     }
 
+// 如果当前正在倒计时，则不允许再次发送验证码
+    if (countdown.value !== 60) return;
+    startCountdown();
+
     try {
         sendingCode.value = true;
         const response = await axios.post(`api/find-password/send-code`, {
@@ -668,11 +674,12 @@ const sendVerificationCodeFor = async () => {
             // 验证码发送成功后的逻辑
             console.log('验证码已发送');
             ElNotification.success({ title: '验证码已发送', message: '验证码已发送，请注意查收' });
-            startCountdown();
+            resetCountdown(); // 发送失败时重置倒计时
         }
     } catch (error) {
         console.error('Error occurred while sending verification code:', error);
         ElNotification.error({ title: '验证码发送失败', message: '验证码发送失败，请检查网络连接或稍后再试' });
+        resetCountdown(); // 发送失败时重置倒计时
     } finally {
         sendingCode.value = false;
     }
@@ -717,17 +724,42 @@ const resetPassword = () => {
     });
 };
 
+const countdown = ref(60)
+const codeButtonText = ref('获取验证码')
+let timer; // 用于存储定时器ID
+let isCountingDown = ref(false); // 标记是否正在倒计时
 function startCountdown() {
-    const timer = setInterval(() => {
+    console.log('Starting countdown...');
+    clearInterval(timer); // 清除任何现有的定时器
+    isCountingDown.value = true;
+    if (codeButtonText.value === '重新获取验证码') {
+        countdown.value = 60
+    }
+    timer = setInterval(() => {
+        console.log(`Countdown value: ${countdown.value}`);
         if (countdown.value > 0) {
             countdown.value--;
-            codeButtonText.value = `${countdown.value}s 后重新获取`;
         } else {
             clearInterval(timer);
-            codeButtonText.value = '重新获取验证码';
+            isCountingDown.value = false;
+            console.log('Countdown finished.');
         }
-    }, 1000)
+    }, 1000);
 }
+function resetCountdown() {
+    clearInterval(timer);
+    countdown.value = 60;
+    isCountingDown.value = false;
+}
+
+// 使用 watch 监听 countdown 的变化并更新按钮文本
+watch(countdown, (newVal) => {
+    if (newVal > 0 && newVal <= 60) {
+        codeButtonText.value = `${newVal}s 后重新获取`;
+    } else {
+        codeButtonText.value = '重新获取验证码';
+    }
+});
 
 async function submitForm(formName, userType) {
     if (!proxy.$refs[formName]) {
