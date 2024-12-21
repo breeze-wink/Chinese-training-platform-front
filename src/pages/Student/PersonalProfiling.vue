@@ -164,15 +164,6 @@
                       <!-- 横轴 -->
 <!--                      <line :x1="margin.left" :y1="chartHeight - margin.bottom" :x2="chartWidth - margin.right" :y2="chartHeight - margin.bottom" stroke="#ccc" stroke-width="1"/>-->
 
-                      <!-- 横轴日期文本 -->
-                      <text v-for="(item, index) in scoreFluctuations" :key="'date-' + index"
-                            v-if="dataPoints[index]"
-                            :x="dataPoints[index].x"
-                            :y="chartHeight - margin.bottom + 20"
-                            text-anchor="middle" font-size="12" fill="#444">
-                        {{ item.date }}
-                      </text>
-
                       <g v-if="tooltip.visible">
                         <!-- 背景矩形 -->
                         <rect
@@ -425,6 +416,7 @@ export default {
         },
       // Tooltip 方法
       showTooltip(point) {
+        clearTimeout(this.hideTooltipTimeout);
         // 添加偏移量，使 Tooltip 位于数据点的右上方
         const offsetX = 10; // 向右偏移10px
         const offsetY = -30; // 向上偏移30px
@@ -436,7 +428,9 @@ export default {
         this.tooltip.score = point.score;
       },
       hideTooltip() {
-        this.tooltip.visible = false;
+        this.hideTooltipTimeout = setTimeout(() => {
+          this.tooltip.visible = false;
+        }, 200);
       },
 
         radarPoints() {

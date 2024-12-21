@@ -341,11 +341,11 @@ router.beforeEach(async (to, from, next) => {
         console.log(`[Navigation] Trying to navigate to: ${to.path}`);
         console.log(`[Navigation] User role: ${userRole}, Permission: ${permission}, Allowed route prefix: ${allowedRoutePrefix}`);
 
-        // 特殊处理：如果用户是老师且有特殊权限，则允许访问审核老师的路径
-        if (userRole === 'teacher' && permission === 1 && to.path.startsWith('/audit-teacher')) {
-            allowedRoutePrefix = '/audit-teacher';
-            console.log('[Navigation] Teacher with special permission accessing audit-teacher path.');
-        }
+        // // 特殊处理：如果用户是老师且有特殊权限，则允许访问审核老师的路径
+        // if (userRole === 'teacher' && permission === 1 && to.path.startsWith('/audit-teacher')) {
+        //     allowedRoutePrefix = '/audit-teacher';
+        //     console.log('[Navigation] Teacher with special permission accessing audit-teacher path.');
+        // }
 
         // 如果当前路由已经在白名单中，直接放行
         if (whiteList.includes(to.path)) {

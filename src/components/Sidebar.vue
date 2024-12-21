@@ -82,7 +82,6 @@ const menuItems = computed(() => {
     const permission = store.getters['getPermission'];
     switch (userRole) {
         case 'teacher':
-            if (permission === 0) {
             return [
                 { index: '/teacher/personal-info', label: '个人信息', icon: User, path: '/teacher/personal-info' },
                 {
@@ -116,13 +115,12 @@ const menuItems = computed(() => {
                 },
 
             ];
-            } else if (permission === 1) {
-                return [
-                    { index: '/audit-teacher/personal-info', label: '个人信息', icon: User, path: '/audit-teacher/personal-info' },
-                    { index: '/audit-teacher/question-list', label: '审核题目', icon: Edit, path: '/audit-teacher/question-list' },
-                ];
-            }
-            break;
+       case 'audit-teacher':
+            return [
+                { index: '/audit-teacher/personal-info', label: '个人信息', icon: User, path: '/audit-teacher/personal-info' },
+                { index: '/audit-teacher/question-list', label: '审核题目', icon: Edit, path: '/audit-teacher/question-list' },
+            ];
+
         case 'student':
             return [
                 { index: '/student/personal-info', label: '个人信息', icon: User, path: '/student/personal-info' },

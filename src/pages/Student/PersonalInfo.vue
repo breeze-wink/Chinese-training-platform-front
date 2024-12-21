@@ -156,7 +156,7 @@
         </el-dialog>
 
         <!-- 加入班级模态窗口 -->
-        <el-dialog v-model="isJoinClassModalVisible" title="加入班级" @close="hideJoinClassModal" custom-class="square-modal">
+        <el-dialog v-model="isJoinClassModalVisible" title="加入班级" width=300px align-center @close="hideJoinClassModal" custom-class="square-modal">
             <el-form :model="joinClassForm" :rules="joinClassRules" ref="joinClassFormRef">
                 <el-form-item prop="inviteCode">
                     <el-input v-model="inviteCode" placeholder="请输入班级邀请码"></el-input>

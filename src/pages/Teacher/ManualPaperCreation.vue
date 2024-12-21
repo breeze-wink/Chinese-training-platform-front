@@ -61,26 +61,26 @@
                             </button>
                             <button
                                     class="type-button"
-                                    :class="{ 'is-selected': selectedType === '选择' }"
-                                    @click="selectedType = '选择';fetchQuestions()">
+                                    :class="{ 'is-selected': selectedType === 'CHOICE' }"
+                                    @click="selectedType = 'CHOICE';fetchQuestions()">
                                 选择
                             </button>
                             <button
                                     class="type-button"
-                                    :class="{ 'is-selected': selectedType === '填空' }"
-                                    @click="selectedType = '填空';fetchQuestions()">
+                                    :class="{ 'is-selected': selectedType === 'FILL_IN_BLANK' }"
+                                    @click="selectedType = 'FILL_IN_BLANK';fetchQuestions()">
                                 填空
                             </button>
                             <button
                                     class="type-button"
-                                    :class="{ 'is-selected': selectedType === '问答' }"
-                                    @click="selectedType = '问答';fetchQuestions()">
+                                    :class="{ 'is-selected': selectedType === 'SHORT_ANSWER' }"
+                                    @click="selectedType = 'SHORT_ANSWER';fetchQuestions()">
                                 问答
                             </button>
                             <button
                                     class="type-button"
-                                    :class="{ 'is-selected': selectedType === '作文' }"
-                                    @click="selectedType = '作文';fetchQuestions()">
+                                    :class="{ 'is-selected': selectedType === 'ESSAY' }"
+                                    @click="selectedType = 'ESSAY';fetchQuestions()">
                                 作文
                             </button>
                         </div>

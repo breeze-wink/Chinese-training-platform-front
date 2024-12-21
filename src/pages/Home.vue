@@ -449,7 +449,7 @@ const login = async () => {
             //使用vuex更新用户信息
             await store.dispatch('login', {
                 id: response.data.id,
-                role: Identity.value,
+                role: response.data.permission === 1 ? 'audit-teacher': Identity.value,
                 token: response.data.token,
                 permission: response.data.permission // 使用正确的字段名
         });
