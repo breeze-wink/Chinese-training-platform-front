@@ -267,10 +267,12 @@ const updateUsername = async () => {
         });
 
         // 处理响应
-        if (response.status === 200 && response.data.message === '用户名修改成功') {
+        if (response.status === 200) {
             console.log(response.data.message);
+            ElMessage.success('用户名修改成功');
         } else {
             console.error(response.data.message);
+            ElMessage.error(response.data.message);
         }
     } catch (error) {
         // 处理错误

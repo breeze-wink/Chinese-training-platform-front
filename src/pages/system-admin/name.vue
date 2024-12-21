@@ -213,10 +213,12 @@ const updateUsername = async () => {
     });
 
     // 处理响应
-    if (response.status === 200 && response.data.message === '用户名修改成功') {
+    if (response.status === 200) {
+      ElMessage.success('用户名修改成功');
       console.log(response.data.message);
     } else {
       console.error(response.data.message);
+      ElMessage.error(response.data.message);
     }
   } catch (error) {
     // 处理错误
@@ -313,7 +315,8 @@ const handleChangeEmail = async () => {
             try {
                 const response = await axios.get(`/api/system-admin/change-email`, {
                     params: {
-                        newEmail: emailForm.value.newEmail
+                        newEmail: emailForm.value.newEmail,
+                        code : emailForm.value.verificationCode
                     },
                     headers: {
                         'Content-Type': 'application/json'
