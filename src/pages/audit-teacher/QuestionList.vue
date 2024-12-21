@@ -89,11 +89,21 @@
                         layout="prev, pager, next, jumper">
                     </el-pagination>
 
-                    <div v-if="loading" class="loading">加载中...</div>
-                    <div v-if="error" class="error">{{ error }}</div>
+                    <div v-if="isAccess || isWait" class="loading-modal">
+                        <div class="modal-content">
+                            <p v-if="isAccess">正在加载已审核题目，请稍候...</p>
+                            <p v-if="isWait">正在加载未审核题目，请稍候...</p>
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+
+                    <!-- 遮罩层 -->
+                    <div v-if="isProcessing" class="overlay"></div>
                 </div>
             </div>
         </div>
+        <!-- 加载提示 -->
+
     </div>
 </template>
 
@@ -110,12 +120,13 @@ export default {
         return {
             questions: [],
             paginatedQuestions: [],
-            loading: false,
-            error: null,
             questionType: 'waiting', // 'waiting' 或 'access'
             currentPage: 1,
             pageSize: 10,
-            totalQuestions: 0
+            totalQuestions: 0,
+            isAccess: false,
+            isWait: false,
+            isProcessing: false
         };
     },
     setup() {
@@ -127,9 +138,14 @@ export default {
     methods: {
         // 获取题目列表
         async fetchQuestions() {
-            this.loading = true;
-            this.error = null;
 
+            if (this.questionType === 'access') {
+                this.isAccess = true;
+                this.isProcessing = true;
+            } else if (this.questionType === 'waiting') {
+                this.isWait = true;
+                this.isProcessing = true;
+            }
             try {
                 const token = this.$store.getters.getToken;
                 if (!token) {
@@ -161,7 +177,13 @@ export default {
                     err.response?.data?.message || err.message || '无法连接到服务器，请稍后再试';
                 ElMessage.error(this.error);
             } finally {
-                this.loading = false;
+                if (this.questionType === 'access') {
+                    this.isAccess = false;
+                    this.isProcessing = false;
+                } else if (this.questionType === 'waiting') {
+                    this.isWait = false;
+                    this.isProcessing = false;
+                }
             }
         },
 
@@ -331,5 +353,61 @@ export default {
     color: red;
     text-align: center;
     margin-top: 50px;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+    z-index: 999; /* 确保遮罩层在最上层 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* 确保模态窗在遮罩层之上 */
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 300px;
+    width: 100%;
+}
+
+.modal-content p {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 </style>

@@ -51,10 +51,17 @@
             </div>
         </div>
 
-        <!-- 加载提示框 -->
-        <div v-if="loading" class="loading-overlay">
-            <div class="loading-spinner"></div>
+        <!-- 加载提示 -->
+        <div v-if="isSubmit || isStore" class="loading-modal">
+            <div class="modal-content">
+                <p v-if="isSubmit">正在提交练习，请稍候...</p>
+                <p v-if="isStore">正在保存练习，请稍候...</p>
+                <div class="spinner"></div>
+            </div>
         </div>
+
+        <!-- 遮罩层 -->
+        <div v-if="isProcessing" class="overlay"></div>
     </div>
 </template>
 
@@ -76,7 +83,10 @@ export default {
             parsedQuestions: [],
             currentIndex: 0,
             observer: null,
-            quillEditors: {}
+            quillEditors: {},
+            isSubmit: false,
+            isProcessing: false,
+            isStore: false
         };
     },
     created() {
@@ -234,6 +244,8 @@ export default {
 
             console.log('开始提交答案');
 
+            this.isSubmit = true;
+            this.isProcessing = true;
             const studentId = this.getUserId;
             if (!studentId) {
                 console.error('studentId 未定义');
@@ -268,7 +280,6 @@ export default {
 
             setTimeout(() => {
                 this.toggleLoading(false); // 提交后隐藏加载提示框
-                alert('答案已提交！');
             }, 2000);
 
             console.log('即将发送的答案数据:', answers);
@@ -309,6 +320,8 @@ export default {
             this.toggleLoading(true);
             console.log('开始保存答案');
 
+            this.isStore = true;
+            this.isProcessing = true;
             const studentId = this.getUserId;
             if (!studentId) {
                 console.error('studentId 未定义');
@@ -337,7 +350,6 @@ export default {
 
             setTimeout(() => {
                 this.toggleLoading(false); // 保存后隐藏加载提示框
-                alert('答案已暂存！');
             }, 2000);
 
             console.log('即将发送的答案数据:', answers);
@@ -699,26 +711,58 @@ input[type="text"]:focus, textarea:focus {
     background-color: #0056b3; /* 更深的蓝色背景 */
     transform: scale(1.1); /* 鼠标悬停时放大效果 */
 }
-.loading-overlay {
+
+
+.overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+    z-index: 999; /* 确保遮罩层在最上层 */
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 9999;
+    color: white;
+    font-size: 1.2em;
+}
+.loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* 确保模态窗在遮罩层之上 */
 }
 
-.loading-spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #007BFF;
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 300px;
+    width: 100%;
+}
+
+.modal-content p {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #3498db;
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     animation: spin 1s linear infinite;
+    margin: 20px auto;
 }
 
 @keyframes spin {
