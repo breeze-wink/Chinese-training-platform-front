@@ -245,6 +245,7 @@ const submitCreateManager = async () => {
 
 .main-container {
   display: flex;
+    background-color: #f0f0f0;
   flex: 1;
 }
 
@@ -256,6 +257,7 @@ const submitCreateManager = async () => {
   overflow-y: auto;
   margin-right: 50px;
     margin-left: 300px;
+    margin-bottom: 30px;
 }
 
 .input-button-group {
@@ -267,8 +269,6 @@ const submitCreateManager = async () => {
 
 .el-button {
   appearance: auto;
-  -webkit-appearance: auto;
-  -moz-appearance: auto;
 }
 
 .button-container {
