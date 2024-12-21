@@ -462,7 +462,8 @@ const handleChangeEmail = async () => {
             try {
                 const response = await axios.get(`/api/school-admin/change-email`, {
                     params: {
-                        newEmail: bindEmailForm.value.newEmail
+                        newEmail: bindEmailForm.value.newEmail,
+                        code: bindEmailForm.value.verificationCode
                     },
                     headers: {
                         'Content-Type': 'application/json'
