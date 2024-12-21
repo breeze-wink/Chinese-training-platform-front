@@ -115,11 +115,11 @@
               </el-form-item>
               <el-form-item label="验证码" prop="verificationCode">
                   <el-row :gutter="10">
-                      <el-col :span="16">
+                      <el-col :span="10">
                           <el-input v-model="bindEmailForm.verificationCode" placeholder="请输入验证码" style="width: 95%;"></el-input>
                       </el-col>
                       <el-col :span="8">
-                          <el-button @click="sendVerificationCodeForChangeEmail" class="verify-button" style="margin-left: -18px;">发送验证码</el-button>
+                          <el-button @click="sendVerificationCodeForChangeEmail" class="verify-button" style="margin-left: -10px;">{{ codeButtonText }}</el-button>
                       </el-col>
                   </el-row>
               </el-form-item>
@@ -150,7 +150,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import {ref, onMounted, computed, watch} from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
 import {ElButton, ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElIcon} from 'element-plus';
@@ -177,7 +177,6 @@ const bindEmailForm = ref({
 const correctCode = ref('');
 
 const isSendingCode = ref(false);
-const countdown = ref(0);
 const editNickname = ref('');
 const editName = ref('');
 const editPassword = ref('');
@@ -302,21 +301,49 @@ const submitChangePassword = async () => {
   }
 };
 
+const countdown = ref(60)
+const codeButtonText = ref('获取验证码')
+let timer; // 用于存储定时器ID
+let isCountingDown = ref(false); // 标记是否正在倒计时
+function startCountdown() {
+    console.log('Starting countdown...');
+    clearInterval(timer); // 清除任何现有的定时器
+    isCountingDown.value = true;
+    if (codeButtonText.value === '重新获取验证码') {
+        countdown.value = 60
+    }
+    timer = setInterval(() => {
+        console.log(`Countdown value: ${countdown.value}`);
+        if (countdown.value > 0) {
+            countdown.value--;
+        } else {
+            clearInterval(timer);
+            isCountingDown.value = false;
+            console.log('Countdown finished.');
+        }
+    }, 1000);
+}
+function resetCountdown() {
+    clearInterval(timer);
+    countdown.value = 60;
+    isCountingDown.value = false;
+}
+
+// 使用 watch 监听 countdown 的变化并更新按钮文本
+watch(countdown, (newVal) => {
+    if (newVal > 0 && newVal <= 60) {
+        codeButtonText.value = `${newVal}s 后重新获取`;
+    } else {
+        codeButtonText.value = '重新获取验证码';
+    }
+});
 const sendVerificationCode = async () => {
   if (isSendingCode.value) return;
 
+// 如果当前正在倒计时，则不允许再次发送验证码
+    if (countdown.value !== 60) return;
+    startCountdown();
   try {
-    isSendingCode.value = true;
-    countdown.value = 60; // 设置倒计时时间
-    const interval = setInterval(() => {
-      if (countdown.value > 0) {
-        countdown.value--;
-      } else {
-        isSendingCode.value = false;
-        clearInterval(interval);
-      }
-    }, 1000);
-
     const response = await axios.post(`/api/school-admin/${schoolAdminId.value}/send-verification-code`, {
       email: bindEmailForm.value.email
     });
@@ -327,9 +354,11 @@ const sendVerificationCode = async () => {
       ElMessage({ message: '验证码已发送，请查收邮件', type: 'success' });
     } else {
       ElMessage({ message: '发送验证码失败', type: 'error' });
+        resetCountdown(); // 发送失败时重置倒计时
     }
   } catch (error) {
     ElMessage({ message: '发送验证码失败', type: 'error' });
+      resetCountdown(); // 发送失败时重置倒计时
   }
 };
 
@@ -462,7 +491,8 @@ const handleChangeEmail = async () => {
             try {
                 const response = await axios.get(`/api/school-admin/change-email`, {
                     params: {
-                        newEmail: bindEmailForm.value.newEmail
+                        newEmail: bindEmailForm.value.newEmail,
+                        code: bindEmailForm.value.verificationCode
                     },
                     headers: {
                         'Content-Type': 'application/json'

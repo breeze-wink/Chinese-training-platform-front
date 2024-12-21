@@ -9,12 +9,12 @@
                         <p>加载中...</p>
                     </div>
                     <div v-else-if="answers.length > 0" class="answers-container">
-                        <h2>{{ assignmentName }} 作业答案</h2>
+                        <h2>{{ assignmentName }} 作业详情</h2>
                         <p class="score-text"><strong>分数: {{ totalScore }}</strong></p>
-<!--                        <p class="score-text"><strong>老师评语: {{ answer.feedback }}</strong></p>-->
+                        <p class="score-text"><strong>老师评语: {{ feedback }}</strong></p>
                         <div v-for="(answer, index) in answers" :key="index" :id="'question-' + answer.sequence" class="answer">
                             <div v-if="answer.showQuestionContent" class="question-body">
-                                <span class="question-prefix">{{ getMainQuestionNumber(answer.sequence) }}</span>
+                                <span class="sequence">{{ getMainQuestionNumber(answer.sequence) }}</span>
                                 <div v-html="answer.body" class="question-content"></div>
                             </div>
                             <div class="question-sequence-content">
@@ -79,6 +79,7 @@ export default {
             answers: [],
             isLoading: true,
             totalScore: null,
+            feedback: null,
             assignmentId: null,
             assignmentName: '',
             displayedQuestions: new Set() // 用于存储已经显示过的题目编号
@@ -134,6 +135,7 @@ export default {
 
                 if (response.status === 200 && response.data.message === 'success') {
                     this.answers = response.data.data || [];
+                    this.feedback = response.data.feedback;
                     this.totalScore = response.data.totalScore;
 
                     console.log(this.answers)

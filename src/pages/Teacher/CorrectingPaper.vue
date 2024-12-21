@@ -255,7 +255,7 @@ const fetchSubmissionDetails = async () => {
         // 对于独立题（小题）
         if (question.type === 'CHOICE') {
           if (question.answer === question.studentAnswer) {
-            question.markScore = question.subScore;
+            question.markScore = question.score;
           } else {
             question.markScore = 0;
           }
@@ -468,8 +468,10 @@ const nextSubmission = async () => {
 
 // 页面加载时获取批阅的题目
 onMounted(async () => {
+    isSubmitAndGetNext.value = true;
   await fetchSubmissionDetails();
   const basket = computed(() => store.getters.getBasket);
+    isSubmitAndGetNext.value = false;
 
 });
 </script>

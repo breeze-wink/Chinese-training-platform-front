@@ -28,7 +28,7 @@
                             <div class="action-buttons">
                                 <el-button size="small" type="primary" @click="viewClassDetails(row)">基本信息</el-button>
                                 <el-button size="small" type="primary" @click="viewScore(row)">成绩详情</el-button>
-                                <el-button size="small" type="danger" @click="deleteClass(row)">删除</el-button>
+                                <el-button size="small" type="danger" @click="openChangeTeacherDialog(row)">更换老师</el-button>
                             </div>
                         </template>
                     </el-table-column>
@@ -90,6 +90,27 @@
                     </div>
                 </el-dialog>
 
+                <!-- 更换老师弹窗 -->
+                <el-dialog v-model="changeTeacherDialogVisible" width="40%" align-center title="更换老师">
+                    <el-form :model="changeTeacherForm" ref="changeTeacherFormRef">
+                        <el-form-item label="选择新老师" prop="newTeacherId">
+                            <el-select v-model="changeTeacherForm.newTeacherId" placeholder="请选择新老师">
+                                <el-option
+                                    v-for="teacher in teachers"
+                                    :key="teacher.teacherId"
+                                    :label="teacher.name"
+                                    :value="teacher.teacherId">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-form>
+                    <template #footer>
+                        <span class="dialog-footer">
+                            <el-button @click="closeChangeTeacherDialog">取 消</el-button>
+                            <el-button type="primary" @click="submitChangeTeacher">确 定</el-button>
+                        </span>
+                    </template>
+                </el-dialog>
             </div>
         </div>
     </div>
@@ -99,7 +120,7 @@
 import { ref, computed, onMounted } from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElDialog } from 'element-plus';
+import {ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElDialog, ElMessageBox} from 'element-plus';
 import axios from 'axios';
 import { useStore } from 'vuex';
 
@@ -171,19 +192,6 @@ const viewClassDetails = async (item) => {
     }
 };
 
-// 删除班级
-const deleteClass = async (item) => {
-    try {
-        const response = await axios.delete(`/api/class/${item.classId}/delete`);
-        if (response.status === 200) {
-            classes.value = classes.value.filter(i => i.classId !== item.classId);
-            ElMessage({ message: '班级删除成功', type: 'success' });
-        }
-    } catch (error) {
-        ElMessage({ message: '班级删除失败', type: 'error' });
-    }
-};
-
 // 定义成绩详情弹窗相关变量
 const scoreDetailsDialogVisible = ref(false);  // 控制成绩详情弹窗的显示
 const scoreDetails = ref([]);  // 存储成绩数据
@@ -214,7 +222,86 @@ const viewScore = async (item) => {
     }
 };
 
+// 更换老师相关逻辑
+const changeTeacherDialogVisible = ref(false);
+const changeTeacherForm = ref({
+    newTeacherId: ''
+});
+const currentClassForChange = ref(null);
+const teachers = ref([]);
 
+const openChangeTeacherDialog = (row) => {
+    currentClassForChange.value = row;
+    if (teachers.value.length === 0) {
+        getTeachers(); // 如果教师列表为空，加载教师列表
+    }
+    changeTeacherDialogVisible.value = true;
+};
+
+const closeChangeTeacherDialog = () => {
+    changeTeacherForm.value.newTeacherId = '';
+    currentClassForChange.value = null;
+    changeTeacherDialogVisible.value = false;
+};
+
+const submitChangeTeacher = async () => {
+    if (!changeTeacherForm.value.newTeacherId) {
+        ElMessage({ message: '请选择新老师', type: 'warning' });
+        return;
+    }
+
+    try {
+        await ElMessageBox.confirm(
+            `确定要将 "${currentClassForChange.value.name}" 的老师更换为新老师吗？`,
+            '提示',
+            {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }
+        );
+
+        const response = await axios.get(`/api/school-admin/change-teacher-of-class`, {
+            params: {
+                classId: currentClassForChange.value.classId,
+                teacherId: changeTeacherForm.value.newTeacherId
+            }
+        });
+
+        if (response.status === 200) {
+            ElMessage({ message: '更换老师成功', type: 'success' });
+            getAllClasses(); // 刷新班级列表
+        } else {
+            ElMessage({ message: '更换老师失败', type: 'error' });
+        }
+    } catch (error) {
+        if (error && error.message !== 'cancel') {
+            ElMessage({ message: '更换老师失败，请稍后再试', type: 'error' });
+        }
+    } finally {
+        closeChangeTeacherDialog();
+    }
+};
+// 获取所有教师列表
+const getTeachers = async () => {
+    try {
+        const response = await axios.get(`/api/school-admin/${adminId.value}/query-all-teachers`);
+        if (response.status === 200 && response.data.data) {
+            teachers.value = response.data.data.map(teacher => ({
+                teacherId: teacher.id,
+                name: teacher.name,
+                email: teacher.email,
+                phoneNumber: teacher.phoneNumber
+            }));
+            ElMessage({ message: '教师账号信息查询成功', type: 'success' });
+        } else {
+            ElMessage({ message: '教师账号信息查询失败', type: 'error' });
+        }
+    } catch (error) {
+        ElMessage({ message: '教师账号信息查询失败', type: 'error' });
+        console.error("Error fetching teachers:", error);
+    }
+};
 // 加载初始数据
 onMounted(() => {
     getAllClasses();
@@ -232,6 +319,7 @@ onMounted(() => {
 .main-container {
     display: flex;
     flex: 1;
+    background-color: #f0f0f0;
 }
 
 .content {
@@ -242,6 +330,7 @@ onMounted(() => {
     overflow-y: auto;
     margin-right: 50px;
     margin-left: 300px;
+    margin-bottom: 30px;
 }
 
 /* 确保弹窗背景不被遮挡 */

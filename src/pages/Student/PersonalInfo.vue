@@ -120,11 +120,11 @@
                 </el-form-item>
                 <el-form-item label="验证码" prop="verificationCode">
                     <el-row :gutter="10">
-                        <el-col :span="16">
+                        <el-col :span="10">
                             <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="width: 95%;"></el-input>
                         </el-col>
                         <el-col :span="8">
-                            <el-button @click="sendVerificationCode" class="verify-button" style="margin-left: -18px;">发送验证码</el-button>
+                            <el-button @click="sendVerificationCode" class="verify-button" style="margin-left: -10px;">{{ codeButtonText }}</el-button>
                         </el-col>
                     </el-row>
                 </el-form-item>
@@ -156,10 +156,10 @@
         </el-dialog>
 
         <!-- 加入班级模态窗口 -->
-        <el-dialog v-model="isJoinClassModalVisible" title="加入班级" width=300px align-center @close="hideJoinClassModal" custom-class="square-modal">
-            <el-form :model="joinClassForm" :rules="joinClassRules" ref="joinClassFormRef">
+        <el-dialog v-model="isJoinClassModalVisible" title="加入班级" @close="hideJoinClassModal" custom-class="square-modal" width="25%" align-center>
+            <el-form :model="joinClassForm" :rules="joinClassRules" ref="joinClassFormRef" label-width="100px">
                 <el-form-item prop="inviteCode">
-                    <el-input v-model="inviteCode" placeholder="请输入班级邀请码"></el-input>
+                    <el-input v-model="inviteCode" placeholder="请输入班级邀请码" autocomplete="off" style="width: 95%;"></el-input>
                 </el-form-item>
                 <div class="form-buttons">
                     <el-button type="primary" @click="joinClass" class="action-button">确认加入</el-button>
@@ -174,9 +174,47 @@
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import axios from 'axios';
-import {ElMessageBox, ElMessage, ElForm, ElDialog, ElInput, ElFormItem, ElButton} from 'element-plus';
+import {ElMessageBox, ElMessage, ElForm, ElDialog, ElInput, ElFormItem, ElButton, ElNotification} from 'element-plus';
 import { Edit } from '@element-plus/icons-vue';
 import { mapGetters } from 'vuex';
+import {ref, watch} from "vue";
+
+const countdown = ref(60)
+const codeButtonText = ref('获取验证码')
+let timer; // 用于存储定时器ID
+let isCountingDown = ref(false); // 标记是否正在倒计时
+function startCountdown() {
+    console.log('Starting countdown...');
+    clearInterval(timer); // 清除任何现有的定时器
+    isCountingDown.value = true;
+    if (codeButtonText.value === '重新获取验证码') {
+        countdown.value = 60
+    }
+    timer = setInterval(() => {
+        console.log(`Countdown value: ${countdown.value}`);
+        if (countdown.value > 0) {
+            countdown.value--;
+        } else {
+            clearInterval(timer);
+            isCountingDown.value = false;
+            console.log('Countdown finished.');
+        }
+    }, 1000);
+}
+function resetCountdown() {
+    clearInterval(timer);
+    countdown.value = 60;
+    isCountingDown.value = false;
+}
+
+// 使用 watch 监听 countdown 的变化并更新按钮文本
+watch(countdown, (newVal) => {
+    if (newVal > 0 && newVal <= 60) {
+        codeButtonText.value = `${newVal}s 后重新获取`;
+    } else {
+        codeButtonText.value = '重新获取验证码';
+    }
+});
 
 export default {
     components: {
@@ -310,7 +348,7 @@ export default {
         showError(message) {
             // 显示错误提示的方法
             this.errorMessage = message;
-            ElMessage.error(message);
+            ElNotification.error({ title: '学生信息获取失败', message: message });
         },
 
         toggleEdit(field) {
@@ -333,7 +371,7 @@ export default {
 
             // 如果没有任何字段被编辑，则不发送请求
             if (Object.keys(requestBody).length === 0) {
-                ElMessage.warning("没有需要更新的信息");
+                ElNotification.warning({ title: '学生信息未修改', message: "信息未更改，没有需要更新的信息" });
                 return;
             }
 
@@ -353,21 +391,18 @@ export default {
                         this.studentInfo.username = responseData.data.username;
                         this.studentInfo.name = responseData.data.name;
                         this.studentInfo.grade = responseData.data.grade;
-                        ElMessage.success("个人信息更新成功");
+                        ElNotification.success({ title: '个人信息更新成功', message: "个人信息更新成功，请注意查看" });
                         if (this.editGrade) {
                             this.toggleEdit('grade');
                         }
                     } else {
-                        // 后端返回的其他消息
-                        ElMessage.warning(responseData.message);
+                        ElNotification.error({ title: '个人信息更新失败', message: responseData.message });
                     }
                 } else {
-                    // 请求失败
-                    ElMessage.error("个人信息更新失败");
+                    ElNotification.error({ title: '个人信息更新失败', message: "请重新修改个人信息" });
                 }
             } catch (error) {
-                console.error("个人信息更新出错:", error);
-                ElMessage.error("个人信息更新过程中出现错误，请稍后再试");
+                ElNotification.error({ title: '个人信息更新失败', message: "请重新修改个人信息" });
             }
         },
 
@@ -382,6 +417,9 @@ export default {
             this.successMessage = '';
         },
         async sendVerificationCode() {
+            // 如果当前正在倒计时，则不允许再次发送验证码
+            if (countdown.value !== 60) return;
+            startCountdown();
             try {
                 const response = await axios.post(`/api/student/${this.studentInfo.accountId}/change-email/send-code`, {
                     email: this.emailForm.newEmail
@@ -396,6 +434,7 @@ export default {
             } catch (error) {
                 this.errorMessage = '验证码发送失败，请稍后再试';
                 console.error('验证码发送失败:', error.response ? error.response.data : error.message);
+                resetCountdown(); // 发送失败时重置倒计时
             }
         },
         async handleChangeEmail() {
@@ -528,7 +567,7 @@ export default {
                         }
                     }
                 } catch (error) {
-                    this.accountDeactivationErrorMessage = '账号注销失败，请检查网络连接或稍后再试';
+                    this.accountDeactivationErrorMessage = '账号注销失败，请稍后再试';
                     if (error.response && error.response.data && error.response.data.message) {
                         this.accountDeactivationErrorMessage += ' - ' + error.response.data.message;
                     } else if (error.response) {
@@ -569,31 +608,18 @@ export default {
 
                 if (response.status === 200) {
                     this.joinClassResultMessage = response.data.message;
-                    this.studentInfo.class = response.data.data.className; // 如果响应中有新的班级名称，更新学生信息
+                    this.studentInfo.class = response.data.className; // 如果响应中有新的班级名称，更新学生信息
+                    this.studentInfo.schoolName = response.data.schoolName;
                     this.fetchStudentInfo(); // 重新获取学生信息
-                    this.isJoinedClass = true; // 设置已加入班级
-                    ElMessage.success('您已成功加入班级！'); // 显示成功提示
-                    this.hideJoinClassModal();
-                } else if (response.status === 400 && response.data && response.data.message === '请勿重复发送申请') {
-                    this.joinClassResultMessage = '您已经提交过入班申请，请勿重复发送。';
-                    this.isJoinedClass = true; // 设置已加入班级
-                    ElMessage.warning('您已经提交过入班申请，请勿重复发送。');
+                    ElNotification.success({ title: '加入班级成功', message: "您已成功加入班级" });
                     this.hideJoinClassModal();
                 } else {
                     this.joinClassResultMessage = '加入班级失败';
-                    ElMessage.error('加入班级失败，请稍后再试');
+                    ElNotification.error({ title: '加入班级失败', message: "请重新输入班级邀请码" });
                 }
             } catch (error) {
-                if (error.response && error.response.status === 400 && error.response.data && error.response.data.message === '请勿重复发送申请') {
-                    this.joinClassResultMessage = '您已经提交过入班申请，请勿重复发送。';
-                    this.isJoinedClass = true; // 设置已加入班级
-                    ElMessage.warning('您已经提交过入班申请，请勿重复发送。');
-                    this.hideJoinClassModal();
-                } else {
-                    this.joinClassResultMessage = '加入班级失败，请检查您的网络连接或稍后再试';
-                    console.error('加入班级失败:', error.response ? error.response.data : error.message);
-                    ElMessage.error('加入班级失败，请检查您的网络连接或稍后再试');
-                }
+                console.error('加入班级失败:', error.response ? error.response.data : error.message);
+                ElNotification.error({ title: '加入班级失败', message: "请输入正确的班级邀请码" });
             }
         }
     },

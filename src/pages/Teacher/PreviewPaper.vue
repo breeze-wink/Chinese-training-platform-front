@@ -107,6 +107,8 @@
                 <button  >清空题目</button>
                     </template>
                 </el-popconfirm>
+
+                <button @click="continueAdding">返回</button>
             </div>
             <div class="right-content bottom">
                 <div class="paper-name">
@@ -508,6 +510,10 @@ const  generatePaper = async () => {
     background-color:   #f56c6c;
     color: white;
 }
+.right-content.top button:nth-child(4) {
+    background-color: #f5b16c;
+    color: white;
+}
 
 .right-content.top button:first-child:hover {
     background-color: #85d587;
@@ -520,7 +526,9 @@ const  generatePaper = async () => {
 .right-content.top button:nth-child(3):hover {
     background-color: #d9363e;
 }
-
+.right-content.top button:nth-child(4):hover {
+    background-color: #ef9447;
+}
 .right-content.bottom p {
     font-size: 16px;
     margin: 5px 0;
