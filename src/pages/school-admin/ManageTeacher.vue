@@ -14,7 +14,6 @@
           <el-input v-model="search" placeholder="输入教师姓名" style="width: 300px;"></el-input>
           <el-button type="primary" @click="searchTeacher">查询</el-button>
           <el-button type="warning" @click="resetSearch">重置</el-button>
-            <el-button type="success" @click="showCreateManagerDialog">创建审核老师账号</el-button>
         </div>
 
         <el-table :data="paginatedData" style="width: 100%; margin-top: 20px;">
@@ -23,9 +22,18 @@
           <el-table-column prop="username" label="用户名" width="150"></el-table-column>
           <el-table-column prop="phoneNumber" label="联系电话"></el-table-column>
             <el-table-column label="是否为审核老师">
+
                 <template #default="{ row }">
-                    <span>{{ row.permission === 1 ? '是' : '否' }}</span>
+                    <el-switch
+                            :checked="row.permission === 1"
+                            active-text="是"
+                            inactive-text="否"
+                            active-color="#13ce66"
+                            inactive-color="#ff4949"
+                            @change="handleSwitchChange(row, $event)"
+                    ></el-switch>
                 </template>
+
             </el-table-column>
 
 
@@ -45,23 +53,7 @@
             :total="filteredData.length"
         />
 
-          <!-- 创建审核老师弹窗 -->
-          <el-dialog v-model="createManagerDialogVisible" width="50%" title="创建审核老师账号">
-              <el-form :model="managerForm" status-icon :rules="rules" ref="managerFormRef">
-                  <el-form-item label="邮箱" prop="email">
-                      <el-input v-model="managerForm.email" autocomplete="off"></el-input>
-                  </el-form-item>
-                  <el-form-item label="密码" prop="password">
-                      <el-input type="password" v-model="managerForm.password" autocomplete="off"></el-input>
-                  </el-form-item>
-              </el-form>
-              <span slot="footer" class="dialog-footer">
-            <div class="button-container">
-                <el-button @click="createManagerDialogVisible = false">取 消</el-button>
-                <el-button type="primary" @click="submitCreateManager">确 定</el-button>
-            </div>
-          </span>
-          </el-dialog>
+
       </div>
     </div>
   </div>
@@ -78,9 +70,6 @@ import {
     ElTableColumn,
     ElMessage,
     ElPagination,
-    ElDialog,
-    ElForm,
-    ElFormItem,
     ElMessageBox
 } from 'element-plus';
 import axios from 'axios';
@@ -104,6 +93,7 @@ const filteredData = ref([]);  // 用来存储筛选后的数据
 const getTeachers = async () => {
   try {
     const response = await axios.get(`/api/school-admin/${adminId.value}/query-all-teachers`);
+    console.log(response.data.data );
     if (response.status === 200) {
       teachers.value = response.data.data;
       totalItems.value = response.data.data.length;
@@ -117,7 +107,64 @@ const getTeachers = async () => {
     ElMessage({ message: '获取教师信息失败，请稍后再试', type: 'error' });
   }
 };
+// 添加在 <script setup> 中
+// 处理滑块变化，弹出确认框
+const handleSwitchChange = (row, newVal) => {
+    // 计算用户想要的新的权限状态
+    const newPermission = newVal ? 1 : 0;
 
+    const actionText = newPermission === 1 ? '升级' : '降级';
+
+    ElMessageBox.confirm(
+            `确定要${actionText} "${row.name}" 为审核老师吗？`,
+            '提示',
+            {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning',
+            }
+    ).then(() => {
+        // 用户确认，执行权限切换
+        toggleManager(row, newPermission);
+    }).catch(() => {
+        // 用户取消，恢复滑块状态
+        row.permission = newPermission === 1 ? 0 : 1;
+        ElMessage({ message: '已取消操作', type: 'info' });
+    });
+};
+
+
+// 切换审核老师权限的方法
+const toggleManager = async (row, newPermission) => {
+    const action = newPermission === 1 ? 'level-up' : 'level-down';
+    const endpoint = `/api/school-admin/${action}?id=${row.id}`;
+
+    try {
+        const response = await axios.put(endpoint);
+        if (response.status === 200) {
+            // 更新本地数据
+            row.permission = newPermission;
+            ElMessage({
+                message: `已成功 ${newPermission === 1 ? '升级' : '降级'} 为审核老师`,
+                type: 'success',
+            });
+        } else {
+            // 请求失败，恢复滑块状态
+            row.permission = newPermission === 1 ? 0 : 1;
+            ElMessage({
+                message: `操作失败：${response.data.message}`,
+                type: 'error',
+            });
+        }
+    } catch (error) {
+        // 请求异常，恢复滑块状态
+        row.permission = newPermission === 1 ? 0 : 1;
+        ElMessage({
+            message: error.response?.data.message || '操作失败，请稍后再试',
+            type: 'error',
+        });
+    }
+};
 // 页面加载时获取教师数据
 onMounted(() => {
   getTeachers(); // 使用动态的 adminId 获取信息
@@ -186,53 +233,8 @@ const deleteTeacher = async (teacher) => {
   }
 };
 
-// 创建审核老师相关
-const createManagerDialogVisible = ref(false);
-const managerForm = ref({
-    email: '',
-    password: ''
-});
-const rules = {
-    email: [
-        { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-        { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
-    ],
-    password: [
-        { required: true, message: '请输入密码', trigger: 'blur' },
-        { min: 6, max: 18, message: '长度在 6 到 18 个字符', trigger: 'blur' }
-    ]
-};
-const managerFormRef = ref();
 
-// 显示创建审核老师对话框
-const showCreateManagerDialog = () => {
-    console.log('创建审核老师对话框显示'); // 调试信息
-    createManagerDialogVisible.value = true;
-};
-// 提交创建审核老师请求
-const submitCreateManager = async () => {
-    try {
-        await managerFormRef.value.validate(async (valid) => {
-            if (valid) {
-                const response = await axios.post('/api/school-admin/create-manager', {
-                    email: managerForm.value.email,
-                    password: managerForm.value.password
-                });
 
-                if (response.status === 200) {
-                    ElMessage({ message: '创建成功', type: 'success' });
-                    createManagerDialogVisible.value = false;
-                    managerForm.value.email = '';
-                    managerForm.value.password = '';
-                } else {
-                    ElMessage({ message: '创建失败', type: 'error' });
-                }
-            }
-        });
-    } catch (error) {
-        ElMessage({ message: error.response?.data.message || '创建失败', type: 'error' });
-    }
-};
 </script>
 
 <style scoped>
