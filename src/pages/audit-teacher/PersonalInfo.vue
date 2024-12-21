@@ -93,18 +93,18 @@
             </div>
 
             <!-- 更换邮箱模态窗口 -->
-            <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal">
-                <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef">
+            <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="25%" align-center>
+                <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef" label-width="100px">
                     <el-form-item label="新邮箱" prop="newEmail">
-                        <el-input v-model="emailForm.newEmail" placeholder="请输入新邮箱地址"></el-input>
+                        <el-input v-model="emailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 95%;"></el-input>
                     </el-form-item>
                     <el-form-item label="验证码" prop="verificationCode">
                         <el-row :gutter="10">
                             <el-col :span="16">
-                                <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码"></el-input>
+                                <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="width: 95%;"></el-input>
                             </el-col>
                             <el-col :span="8">
-                                <el-button @click="sendVerificationCode" class="verify-button">发送验证码</el-button>
+                                <el-button @click="sendVerificationCode" class="verify-button" style="margin-left: -18px;">发送验证码</el-button>
                             </el-col>
                         </el-row>
                     </el-form-item>

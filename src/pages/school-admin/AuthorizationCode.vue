@@ -88,6 +88,25 @@
         </el-card>
       </div>
     </div>
+      <!-- 绑定邮箱对话框 -->
+      <el-dialog title="绑定邮箱" v-model="showBindEmailDialog" width="25%" align-center>
+          <el-form :model="bindEmailForm" label-width="100px">
+              <el-form-item label="邮箱地址">
+                  <el-input v-model="bindEmailForm.email" placeholder="请输入邮箱地址" style="width: 95%;"></el-input>
+              </el-form-item>
+              <el-form-item label="验证码">
+                  <el-input v-model="bindEmailForm.verificationCode" placeholder="请输入验证码" style="width: 60%;"></el-input>
+                  <el-button type="primary" @click="sendVerificationCode" :disabled="isSendingCode" style="margin-left: 10px;">
+                      {{ isSendingCode ? `${countdown}s` : '获取验证码' }}
+                  </el-button>
+              </el-form-item>
+          </el-form>
+        <div class="form-buttons">
+          <el-button @click="showBindEmailDialog = false">取 消</el-button>
+          <el-button type="primary" @click="confirmBindEmail">确 定</el-button>
+        </div>
+      </el-dialog>
+
     <!-- 修改密码对话框 -->
     <el-dialog title="修改密码" v-model="showChangePasswordDialog" width="25%" align-center>
       <el-form :model="changePasswordForm" label-width="100px">
@@ -98,49 +117,25 @@
           <el-input v-model="changePasswordForm.newPassword" type="password" placeholder="请输入新密码" style="width: 95%;"></el-input>
         </el-form-item>
       </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="closeChangePasswordDialog">取 消</el-button>
-          <el-button type="primary" @click="submitChangePassword">确 定</el-button>
-        </span>
-      </template>
-    </el-dialog>
-
-
-    <!-- 绑定邮箱对话框 -->
-    <el-dialog title="绑定邮箱" v-model="showBindEmailDialog" width="25%" align-center>
-      <el-form :model="bindEmailForm" label-width="100px">
-        <el-form-item label="邮箱地址">
-          <el-input v-model="bindEmailForm.email" placeholder="请输入邮箱地址" style="width: 95%;"></el-input>
-        </el-form-item>
-        <el-form-item label="验证码">
-          <el-input v-model="bindEmailForm.verificationCode" placeholder="请输入验证码" style="width: 60%;"></el-input>
-          <el-button type="primary" @click="sendVerificationCode" :disabled="isSendingCode" style="margin-left: 10px;">
-            {{ isSendingCode ? `${countdown}s` : '获取验证码' }}
-          </el-button>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="showBindEmailDialog = false">取 消</el-button>
-          <el-button type="primary" @click="confirmBindEmail">确 定</el-button>
-        </span>
-      </template>
+        <div class="form-buttons">
+          <el-button @click="closeChangePasswordDialog" class="action-button">取 消</el-button>
+          <el-button type="primary" @click="submitChangePassword" class="action-button">确 定</el-button>
+        </div>
     </el-dialog>
 
       <!-- 更换邮箱模态窗口 -->
-      <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal">
-          <el-form :model="bindEmailForm" :rules="emailRules" ref="emailFormRef">
+      <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="25%" align-center>
+          <el-form :model="bindEmailForm" :rules="emailRules" ref="emailFormRef" label-width="100px">
               <el-form-item label="新邮箱" prop="newEmail">
-                  <el-input v-model="bindEmailForm.newEmail" placeholder="请输入新邮箱地址"></el-input>
+                  <el-input v-model="bindEmailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 95%;"></el-input>
               </el-form-item>
               <el-form-item label="验证码" prop="verificationCode">
                   <el-row :gutter="10">
                       <el-col :span="16">
-                          <el-input v-model="bindEmailForm.verificationCode" placeholder="请输入验证码"></el-input>
+                          <el-input v-model="bindEmailForm.verificationCode" placeholder="请输入验证码" style="width: 95%;"></el-input>
                       </el-col>
                       <el-col :span="8">
-                          <el-button @click="sendVerificationCodeForChangeEmail" class="verify-button">发送验证码</el-button>
+                          <el-button @click="sendVerificationCodeForChangeEmail" class="verify-button" style="margin-left: -18px;">发送验证码</el-button>
                       </el-col>
                   </el-row>
               </el-form-item>
@@ -542,7 +537,29 @@ const handleChangeEmail = async () => {
 .text-danger {
   color: red;
 }
+.form-buttons {
+    text-align: center;
+    margin-top: 20px;
+}
+.action-button {
+    background-color: #409eff;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
 
+.action-button:hover {
+    background-color: #66b1ff;
+    transform: scale(1.05);
+}
+
+.action-button:active {
+    transform: scale(0.95);
+}
 .error-message,
 .success-message,
 .result-message {
