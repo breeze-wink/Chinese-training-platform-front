@@ -49,7 +49,12 @@
                     <Edit />
                 </el-icon>
             </div>
+          <div class="form-buttons">
+            <el-button type="primary" @click="beginRegister" class="action-button">注册新的系统管理员</el-button>
+          </div>
         </el-card>
+
+
       </div>
 
         <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="25%" align-center>
@@ -63,7 +68,7 @@
                             <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="width: 95%;"></el-input>
                         </el-col>
                         <el-col :span="8">
-                            <el-button @click="sendVerificationCode" class="verify-button" style="margin-left: -10px;">{{ codeButtonText }}</el-button>
+                            <el-button @click="sendVerificationCode" :disabled="countdown.value > 0" class="verify-button" style="margin-left: -10px;">{{ codeButtonText }}</el-button>
                         </el-col>
                     </el-row>
                 </el-form-item>
@@ -92,6 +97,50 @@
           <el-button @click="hideChangePasswordModal" class="action-button">取 消</el-button>
           <el-button type="primary" @click="handlePasswordChange" class="action-button">确 定</el-button>
         </div>
+      </el-dialog>
+
+      <!-- 注册浮窗 -->
+      <el-dialog
+          v-model="registerDialogVisible"
+          title="注册"
+          width="400px"
+          align-center
+          :close-on-click-modal="false"
+          @close="closeRegisterDialog">
+
+          <el-form :model="registerForm" :rules="rules" ref="registerFormRef"
+                   label-width="80px">
+            <el-form-item label="邮箱" prop="email">
+              <el-input v-model="registerForm.email" placeholder="邮箱"
+                        size="large"></el-input>
+            </el-form-item>
+            <div style="display: flex">
+              <el-form-item label="验证码" style="width: auto;" prop="code">
+                <el-input v-model="registerForm.code" placeholder="验证码" size="large"
+                          ></el-input>
+              </el-form-item>
+              <el-button :disabled="countdown.value > 0" style="margin-left: 10px; height: 40px; " @click="sendCodeForRegister()">
+                {{ codeButtonText }}
+              </el-button>
+            </div>
+            <el-form-item  label="用户名" prop="username">
+              <el-input v-model="registerForm.username" placeholder="用户名"
+                        size="large"></el-input>
+            </el-form-item>
+            <el-form-item  label="密码" prop="password">
+              <el-input type="password" v-model="registerForm.password" placeholder="密码"
+                        size="large"></el-input>
+            </el-form-item>
+            <el-form-item label="确认密码" prop="checkPass">
+              <el-input type="password" v-model="registerForm.checkPass"
+                        placeholder="再次输入密码" size="large"></el-input>
+            </el-form-item>
+            <div class="sign-up-btn">
+              <el-button size="large" type="primary"
+                         @click="submitRegister()">确认注册
+              </el-button>
+            </div>
+          </el-form>
       </el-dialog>
     </div>
   </div>
@@ -123,6 +172,114 @@ const passwordForm = ref({
   confirmNewPassword: '',
 });
 const passwordFormRef = ref(null);
+const registerDialogVisible = ref(false);
+
+const rules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码至少 6 位', trigger: 'blur' }
+  ],
+  checkPass: [
+    { required: true, message: '请再次输入密码', trigger: 'blur' },
+    { validator: validatePassword, trigger: 'blur' }
+  ],
+  email: [
+    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
+  ],
+  code: [
+    { required: true, message: '请输入验证码', trigger: 'blur' }
+  ]
+};
+
+
+const registerForm = ref({
+  email: '',
+  password: '',
+  checkPass: '',
+  username: '',
+  code: '',
+});
+
+const registerFormRef = ref(null);
+
+
+function validatePassword(rule, value, callback){
+  if (value !== registerForm.value.password) {
+    callback(new Error('新密码和确认密码不一致'));
+  } else {
+    callback();
+  }
+}
+
+const sendCodeForRegister = async () => {
+  try {
+    const response = await axios.get(`/api/system-admin/send-email-code`, {
+      params: {
+        email: registerForm.value.email
+      }
+    });
+
+    if (response.status === 200) {
+      ElMessage.success('验证码已发送，请查收您的邮箱');
+
+    } else {
+      ElMessage.error('验证码发送失败' + response.data.message);
+    }
+  } catch (error) {
+    errorMessage.value = '验证码发送失败，请稍后再试';
+    console.error('验证码发送失败:', error.response ? error.response.data : error.message);
+  }
+};
+
+const submitRegister = async () => {
+  try {
+    const formRef = registerFormRef.value; // 确保有引用
+    await registerFormRef.value.validate();
+
+    // 发送注册请求
+    const response = await axios.post('/api/system-admin/create', {
+      email: registerForm.value.email,
+      username: registerForm.value.username,
+      password: registerForm.value.password,
+      code: registerForm.value.code,
+    });
+
+    if (response.status === 200) {
+      ElMessage.success('注册成功');
+      registerDialogVisible.value = false;
+      // 重置表单
+      resetRegisterForm();
+    } else {
+      ElMessage.error(response.data.message || '注册失败');
+    }
+  } catch (error) {
+    ElMessage.error(error.response?.data?.message || '注册失败，请稍后再试');
+    console.error('注册失败:', error);
+  }
+};
+
+const closeRegisterDialog = () => {
+  registerDialogVisible.value = false;
+  resetRegisterForm();
+};
+
+// 重置注册表单的方法
+const resetRegisterForm = () => {
+  registerForm.value = {
+    email: '',
+    password: '',
+    checkPass: '',
+    username: '',
+    code: '',
+  };
+  errorMessage.value = '';
+  successMessage.value = '';
+};
+
 // 自定义确认密码验证
 const validateConfirmPassword = (rule, value, callback) => {
   if (value !== passwordForm.value.newPassword) {
@@ -310,6 +467,9 @@ const emailRules = ref({
 const showChangeEmailModal = () => {
     isChangeEmailModalVisible.value = true;
 };
+const beginRegister = () => {
+    registerDialogVisible.value = true;
+}
 
 const hideChangeEmailModal = () => {
     isChangeEmailModalVisible.value = false;
@@ -394,6 +554,11 @@ const handleChangeEmail = async () => {
 .main-container {
   display: flex;
   flex: 1;
+}
+
+.sign-up-btn {
+  text-align: center; /* 使按钮居中 */
+  margin-top: 1em; /* 添加一些顶部间距 */
 }
 .form-buttons {
   text-align: center;
