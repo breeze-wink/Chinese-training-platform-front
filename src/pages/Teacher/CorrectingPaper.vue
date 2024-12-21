@@ -468,8 +468,10 @@ const nextSubmission = async () => {
 
 // 页面加载时获取批阅的题目
 onMounted(async () => {
+    isSubmitAndGetNext.value = true;
   await fetchSubmissionDetails();
   const basket = computed(() => store.getters.getBasket);
+    isSubmitAndGetNext.value = false;
 
 });
 </script>
