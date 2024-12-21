@@ -52,18 +52,18 @@
         </el-card>
       </div>
 
-        <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal">
-            <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef">
+        <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="25%" align-center>
+            <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef" label-width="100px">
                 <el-form-item label="新邮箱" prop="newEmail">
-                    <el-input v-model="emailForm.newEmail" placeholder="请输入新邮箱地址"></el-input>
+                    <el-input v-model="emailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 95%;"></el-input>
                 </el-form-item>
                 <el-form-item label="验证码" prop="verificationCode">
                     <el-row :gutter="10">
                         <el-col :span="16">
-                            <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码"></el-input>
+                            <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="width: 95%;"></el-input>
                         </el-col>
                         <el-col :span="8">
-                            <el-button @click="sendVerificationCode" class="verify-button">发送验证码</el-button>
+                            <el-button @click="sendVerificationCode" class="verify-button" style="margin-left: -18px;">发送验证码</el-button>
                         </el-col>
                     </el-row>
                 </el-form-item>
@@ -432,6 +432,26 @@ margin-top: 20px; / 给表单添加上方的间距，使标题与表单之间有
 .input-limited {
   width: 300px; /* 限定输入框的宽度 /
 max-width: 100%; / 防止超出父容器 */
+}
+.verify-button {
+    background-color: #fff;
+    border: 1px solid #dcdfe6;
+    color: #606266;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: border-color 0.3s, color 0.3s, transform 0.2s;
+}
+
+.verify-button:hover {
+    border-color: #c6e2ff;
+    color: #409eff;
+    transform: scale(1.05);
+}
+
+.verify-button:active {
+    transform: scale(0.95);
 }
 .form-buttons {
     text-align: center;
