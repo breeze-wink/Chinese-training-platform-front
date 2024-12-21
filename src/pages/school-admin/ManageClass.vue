@@ -28,7 +28,7 @@
                             <div class="action-buttons">
                                 <el-button size="small" type="primary" @click="viewClassDetails(row)">基本信息</el-button>
                                 <el-button size="small" type="primary" @click="viewScore(row)">成绩详情</el-button>
-                                <el-button size="small" type="danger" @click="deleteClass(row)">删除</el-button>
+                                <el-button size="small" type="danger" @click="deleteClass(row)">更换老师</el-button>
                             </div>
                         </template>
                     </el-table-column>

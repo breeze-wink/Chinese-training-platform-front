@@ -49,7 +49,7 @@
 import { ref, computed, onMounted } from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination } from 'element-plus';
+import {ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElPagination, ElMessageBox} from 'element-plus';
 import axios from 'axios';
 import { useStore } from 'vuex'; // 使用 Vuex 进行状态管理
 
@@ -115,6 +115,44 @@ const paginatedData = computed(() => {
   const end = start + pageSize.value;
   return filteredData.value.slice(start, end);
 });
+
+// 删除学生
+const deleteStudent = async (row) => {
+    const studentId = row.id;
+
+    try {
+        // 显示确认对话框
+        await ElMessageBox.confirm('此操作将永久删除该学生账号, 是否继续?', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        });
+
+        // 发起 DELETE 请求
+        const response = await axios.delete(`/api/school-admin/${adminId.value}/delete-student/${studentId}`);
+
+        if (response.status === 200) {
+            ElMessage({
+                message: '学生账号删除成功',
+                type: 'success',
+            });
+            // 刷新学生列表
+            await getStudents();
+        }
+    } catch (error) {
+        if (error.response?.status === 400) {
+            ElMessage({
+                message: error.response.data.message || '学生账号删除失败，请稍后再试',
+                type: 'error',
+            });
+        } else if (error instanceof Error) {
+            ElMessage({
+                message: '操作被取消或发生错误，请检查后重试',
+                type: 'error',
+            });
+        }
+    }
+};
 </script>
 
 

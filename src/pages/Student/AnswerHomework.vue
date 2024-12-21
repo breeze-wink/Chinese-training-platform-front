@@ -53,6 +53,16 @@
                 </ul>
             </div>
         </div>
+        <!-- 加载提示 -->
+        <div v-if="isSubmit" class="loading-modal">
+            <div class="modal-content">
+                <p v-if="isSubmit">正在提交作业，请稍候...</p>
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- 遮罩层 -->
+        <div v-if="isProcessing" class="overlay"></div>
     </div>
 </template>
 
@@ -74,7 +84,9 @@ export default {
             parsedQuestions: [],
             currentIndex: 0,
             observer: null,
-            quillEditors: {}
+            quillEditors: {},
+            isProcessing: false,
+            isSubmit: false
         };
     },
     created() {
@@ -219,6 +231,8 @@ export default {
         async submitAnswers() {
             console.log('开始提交答案');
 
+            this.isSubmit = true;
+            this.isProcessing = true;
             const studentId = this.getUserId;
             if (!studentId) {
                 console.error('studentId 未定义');
@@ -595,4 +609,60 @@ input[type="text"]:focus, textarea:focus {
     transform: scale(1.1); /* 鼠标悬停时放大效果 */
 }
 
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+    z-index: 999; /* 确保遮罩层在最上层 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.2em;
+}
+.loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* 确保模态窗在遮罩层之上 */
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 300px;
+    width: 100%;
+}
+
+.modal-content p {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 </style>
