@@ -277,10 +277,14 @@ const handlePasswordChange = async () => {
     await form.validate(async (valid) => {
         if (valid) {
             try {
+                console.log('Sending data:', {
+                    rawPassword: passwordForm.value.oldPassword,
+                    newPassword: passwordForm.value.newPassword,
+                });
                 const response = await axios.post(
                     `/api/teacher/${teacherId.value}/change-password`,
                     {
-                        oldPassword: passwordForm.value.oldPassword,
+                        rawPassword: passwordForm.value.oldPassword,
                         newPassword: passwordForm.value.newPassword,
                     },
                     {
@@ -611,23 +615,30 @@ const navigateToHome = () => {
     margin-left: 300px;
 }
 
+
 .info-card {
-    padding: 20px;
+    padding: 30px;
     background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.info-card:hover {
+    transform: scale(1.01);
 }
 
 .info-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: 12px;
+    margin-bottom: 20px;
 }
 
 .info-item label {
     font-weight: bold;
     width: 100px;
+    color: #555;
 }
 
 .info-item span {

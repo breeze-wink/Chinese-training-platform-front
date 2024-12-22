@@ -164,7 +164,6 @@
                             <el-input v-model="formData.confirmPassword" placeholder="请重复输入密码" style="width: 250px" type="password"></el-input>
                         </el-form-item>
 
-                        <el-button type="primary" style="display: block; margin: 0 auto;" @click="resetPassword">重置密码</el-button>
                     </div>
 
                     <!-- Step3 -->
@@ -175,7 +174,7 @@
 
                 <div slot="footer" class="dialog-footer1">
                     <el-button v-if="active > 1 && active < 3" @click="front">上一步</el-button>
-                    <el-button v-if="active < 3" @click="nextStep">下一步</el-button>
+                    <el-button v-if="active > 0 && active < 3" @click="handleClick">下一步</el-button>
                     <el-button v-if="active === 3" @click="goToOwnPage" type="primary" class="custom-button">进入平台
                     </el-button>
                 </div>
@@ -723,7 +722,15 @@ const resetPassword = () => {
         }
     });
 };
+const handleClick = () => {
+    if (active.value < 3) {
+        nextStep();
+    }
+    if (active.value === 2) {
+        resetPassword(); // 当 active === 2 时额外调用 resetPassword
+    }
 
+};
 const countdown = ref(60)
 const codeButtonText = ref('获取验证码')
 let timer; // 用于存储定时器ID

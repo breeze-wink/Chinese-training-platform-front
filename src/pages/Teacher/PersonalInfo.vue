@@ -424,8 +424,27 @@ const handlePasswordChange = async () => {
                     passwordErrorMessage.value = '密码更改失败，请稍后再试';
                 }
             } catch (error) {
-                passwordErrorMessage.value = '密码更改失败，请检查网络连接或稍后再试';
-                console.error('密码更改失败:', error.response ? error.response.data : error.message);
+                let errorMessage = '密码更改失败，请检查网络连接或稍后再试';
+
+                // 检查是否有来自服务器的特定错误信息
+                if (error.response) {
+                    switch (error.response.status) {
+                        case 400:
+                            if (error.response.data && error.response.data.message) {
+                                errorMessage = error.response.data.message; // 使用服务器返回的具体错误消息
+                            }
+                            break;
+                        case 500:
+                            errorMessage = '服务器内部错误，请稍后再试'; // 或者使用从服务器得到的消息
+                            console.error('服务器内部错误:', error.response.data);
+                            break;
+                        default:
+                            errorMessage = '未知错误，请联系管理员';
+                            console.error('未知错误:', error.response ? error.response.data : error.message);
+                    }
+                }
+
+                passwordErrorMessage.value = errorMessage;
             }
         } else {
             console.log('表单验证失败');
@@ -603,29 +622,34 @@ const navigateToHome = () => {
 }
 
 .info-card {
-    padding: 20px;
+    padding: 30px;
     background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.info-card:hover {
+    transform: scale(1.01);
 }
 
 .info-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: 12px;
+    margin-bottom: 20px;
 }
 
 .info-item label {
     font-weight: bold;
     width: 100px;
+    color: #555;
 }
 
 .info-item span {
     font-size: 16px;
     color: #333;
 }
-
 .el-icon {
     font-size: 20px;
     cursor: pointer;
