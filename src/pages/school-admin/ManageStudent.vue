@@ -166,6 +166,7 @@ const deleteStudent = async (row) => {
 
 .main-container {
   display: flex;
+    background-color: #f0f0f0;
   flex: 1;
 }
 
@@ -177,6 +178,7 @@ const deleteStudent = async (row) => {
   overflow-y: auto;
   margin-right: 50px;
     margin-left: 300px;
+    margin-bottom: 30px;
 }
 
 .input-button-group {
@@ -188,7 +190,6 @@ const deleteStudent = async (row) => {
 
 .el-button {
   appearance: auto;
-  -webkit-appearance: auto;
-  -moz-appearance: auto;
+
 }
 </style>

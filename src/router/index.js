@@ -322,7 +322,7 @@ const roleRoutesMap = {
     'sys-adm': '/system-admin',
     'sch-adm': '/school-admin',
     'student': '/student',
-    'audit-teacher': '/audit-teacher'
+    'audit-teacher': ['/audit-teacher','/teacher']
 };
 
 
@@ -340,12 +340,6 @@ router.beforeEach(async (to, from, next) => {
 
         console.log(`[Navigation] Trying to navigate to: ${to.path}`);
         console.log(`[Navigation] User role: ${userRole}, Permission: ${permission}, Allowed route prefix: ${allowedRoutePrefix}`);
-
-        // 特殊处理：如果用户是老师且有特殊权限，则允许访问审核老师的路径
-        if (userRole === 'teacher' && permission === 1 && to.path.startsWith('/audit-teacher')) {
-            allowedRoutePrefix = '/audit-teacher';
-            console.log('[Navigation] Teacher with special permission accessing audit-teacher path.');
-        }
 
         // 如果当前路由已经在白名单中，直接放行
         if (whiteList.includes(to.path)) {
@@ -368,12 +362,32 @@ router.beforeEach(async (to, from, next) => {
                 console.log('[Navigation] User is not authenticated, redirecting to login...');
                 ElMessage.error('请先登录'); // 显示提示消息
                 next('/');
-            } else if (userRole && to.path.startsWith(allowedRoutePrefix)) {
-                // 用户已认证，且访问的是允许的路由前缀
-                console.log('[Navigation] User has the correct role and is accessing an allowed route.');
-                next();
+            } else if (userRole) {
+                if (Array.isArray(allowedRoutePrefix)) {
+                    // 如果 allowedRoutePrefix 是数组，检查 to.path 是否以数组中的任何一个前缀开头
+                    if (allowedRoutePrefix.some(prefix => to.path.startsWith(prefix))) {
+                        console.log('[Navigation] User has the correct role and is accessing an allowed route.');
+                        next();
+                    } else {
+                        console.log('[Navigation] User does not have permission for this page.');
+                        ElMessage.warning('您没有权限访问该页面');
+                        const homeRoute = '/';
+                        next(homeRoute);
+                    }
+                } else {
+                    // 如果 allowedRoutePrefix 不是数组，直接检查 to.path 是否以 allowedRoutePrefix 开头
+                    if (to.path.startsWith(allowedRoutePrefix)) {
+                        console.log('[Navigation] User has the correct role and is accessing an allowed route.');
+                        next();
+                    } else {
+                        console.log('[Navigation] User does not have permission for this page.');
+                        ElMessage.warning('您没有权限访问该页面');
+                        const homeRoute = '/';
+                        next(homeRoute);
+                    }
+                }
             } else {
-                // 用户已认证，但访问的不是允许的路由前缀，重定向到角色对应的首页
+                // 用户已认证，但访问的不是允许的路由前缀，重定向首页
                 console.log('[Navigation] User does not have permission for this page.');
                 ElMessage.warning('您没有权限访问该页面');
                 const homeRoute = '/';

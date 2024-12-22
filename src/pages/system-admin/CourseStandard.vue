@@ -93,6 +93,19 @@ const updateFile = (item) => {
 const handleFileUpload = async (event) => {
 
   const file = event.target.files[0];
+
+    // 检查文件类型是否为 PDF
+    if (file && file.type !== 'application/pdf') {
+        ElMessage({ message: '只能上传PDF文件', type: 'warning' });
+        return; // 终止上传操作
+    }
+
+    // 检查文件类型是否为 PDF
+    if (file && file.type !== 'application/pdf') {
+        ElMessage({ message: '只能上传PDF文件', type: 'warning' });
+        return; // 终止上传操作
+    }
+
   if (file) {
     const formData = new FormData();
     formData.append('file', file);

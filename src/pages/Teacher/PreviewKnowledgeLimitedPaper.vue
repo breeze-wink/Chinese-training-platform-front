@@ -84,7 +84,6 @@
                             <strong>论文题目 {{ index + 1 }} ({{ question.score }}分): <span v-html="question.content"></span></strong>
 
                             <div v-if="showExplanations" class="explanation">
-                                <p><strong>答案：</strong>{{ question.answer }}</p>
                                 <p><strong>解析：</strong>{{ question.explanation }}</p>
                             </div>
 

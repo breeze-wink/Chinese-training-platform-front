@@ -82,7 +82,6 @@ const menuItems = computed(() => {
     const permission = store.getters['getPermission'];
     switch (userRole) {
         case 'teacher':
-            if (permission === 0) {
             return [
                 { index: '/teacher/personal-info', label: '个人信息', icon: User, path: '/teacher/personal-info' },
                 {
@@ -116,13 +115,42 @@ const menuItems = computed(() => {
                 },
 
             ];
-            } else if (permission === 1) {
-                return [
-                    { index: '/audit-teacher/personal-info', label: '个人信息', icon: User, path: '/audit-teacher/personal-info' },
-                    { index: '/audit-teacher/question-list', label: '审核题目', icon: Edit, path: '/audit-teacher/question-list' },
-                ];
-            }
-            break;
+       case 'audit-teacher':
+            return [
+              { index: '/audit-teacher/personal-info', label: '个人信息', icon: User, path: '/audit-teacher/personal-info' },
+              {
+                index: '/teacher/view-info',
+                label: '查看资讯',
+                icon: Document,
+                children: [
+                  { index: '/teacher/view-curriculum-standard', label: '课标', path: '/teacher/view-curriculum-standard' },
+                  { index: '/teacher/view-knowledge-point', label: '知识点', path: '/teacher/view-knowledge-point' },
+                ],
+              },
+              { index: '/teacher/manage-class', label: '组织管理', icon: Management, path: '/teacher/manage-class' },
+              {
+                index: '/teacher/question-manage',
+                label: '习题管理',
+                icon: Edit,
+                children: [
+                  { index: '/teacher/upload-question', label: '上传习题', icon: Upload, path: '/teacher/upload-question' },
+                  { index: '/teacher/view-question', label: '上传记录', path: '/teacher/view-question' },
+                  { index: '/audit-teacher/question-list', label: '审核题目', icon: Edit, path: '/audit-teacher/question-list' },
+                ],
+              },
+              {
+                index: '/teacher/paper-manage',
+                label: '管理试卷',
+                icon: Edit,
+                children: [
+                  { index: '/teacher/test-generation-strategy', label: '生成试卷', path: '/teacher/test-generation-strategy'},
+                  { index: '/teacher/paper-manage', label: '查看试卷', path: '/teacher/paper-manage' },
+                  { index: '/teacher/homework-manage', label: '查看作业', path: '/teacher/homework-manage'  }
+                ],
+              },
+
+            ];
+
         case 'student':
             return [
                 { index: '/student/personal-info', label: '个人信息', icon: User, path: '/student/personal-info' },

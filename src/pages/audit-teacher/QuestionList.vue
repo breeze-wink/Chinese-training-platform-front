@@ -16,7 +16,7 @@
                     </el-radio-group>
 
                     <!-- 表格 -->
-                    <el-table :data="paginatedQuestions" style="width: 100%; max-width: 1000px; margin: 0 auto;">
+                    <el-table :data="paginatedQuestions" style="width: 100%; max-width: 1050px; margin: 0 auto;">
                         <!-- 设置每一列的最小宽度和内边距来增大横向间距 -->
                         <el-table-column prop="questionId" label="ID" min-width="200" :show-overflow-tooltip="true">
                             <template #default="scope">
@@ -40,7 +40,7 @@
                                 <div style="padding: 12px;">{{ scope.row.uploadTeacher }}</div>
                             </template>
                         </el-table-column>
-                        <el-table-column label="操作" min-width="400">
+                        <el-table-column label="操作" min-width="250">
                             <template #default="scope">
                                 <!-- 对于未审核题目，显示审核按钮 -->
                                 <el-button
@@ -322,10 +322,12 @@ export default {
 .main-container {
     display: flex;
     flex: 1;
+    background-color: #f0f0f0; /* 背景改为浅灰色 */
+    margin-bottom: 30px;
 }
 
 .content {
-    max-width: 1000px; /* 最大宽度为 1000px */
+    max-width: 1200px; /* 最大宽度为 1000px */
     width: 100%; /* 宽度在正常情况下可以随着窗口大小缩放 */
     padding: 20px;
     background-color: #fff;

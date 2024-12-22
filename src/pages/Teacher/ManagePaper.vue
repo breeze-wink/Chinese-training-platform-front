@@ -265,6 +265,53 @@ const handleSortChange = (sort) => {
 
 /*****************按钮逻辑：开始********************/
 
+const replaceImageSrc = async (htmlContent) => {
+    if (!htmlContent) return htmlContent;
+
+    // 创建一个临时的 DOM 元素来解析 HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+
+    // 查找所有 img 标签
+    const images = tempDiv.querySelectorAll('img');
+
+    // 遍历所有 img 标签并替换 src
+    const replacePromises = Array.from(images).map(async (img) => {
+        const src = img.getAttribute('src');
+        if (src && src.startsWith('/uploads/content/')) {
+            const imageName = src.replace('/uploads/content/', '');
+            const imageUrl = `/api/uploads/images/content/${imageName}`;
+            const token = store.getters.getToken; // 直接使用 store 实例访问 getters
+
+            try {
+                // 使用 Axios 获取图片数据，设置响应类型为 blob
+                const response = await axios.get(imageUrl, {
+                    responseType: 'blob',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 200) {
+                    // 创建 Blob URL
+                    const blobUrl = URL.createObjectURL(response.data);
+                    img.setAttribute('src', blobUrl);
+                } else {
+                    console.error(`获取图片失败: ${imageUrl}`);
+                    // 可以设置一个占位图或保留原始 src
+                }
+            } catch (error) {
+                console.error(`获取图片失败: ${imageUrl}`, error);
+                // 可以设置一个占位图或保留原始 src
+            }
+        }
+    });
+
+    // 等待所有图片替换完成
+    await Promise.all(replacePromises);
+
+    return tempDiv.innerHTML;
+};
 // 在 <script setup> 标签内
 const router = useRouter();
 // 预览试卷
@@ -274,14 +321,16 @@ const previewPaper = async (paper) => {
         const response = await axios.get('/api/teacher/paper', { params: { id: paper.id } });
         if (response.status === 200 && response.data.message === 'success') {
             const paperDetails = response.data;
+            console.log('试卷详情:', paperDetails)
 
             // 处理问题数据，确保每个问题都有唯一的 ID
-            const formattedQuestions = paperDetails.questions.map(q => {
+            const formattedQuestions = await Promise.all(paperDetails.questions.map(async q => {
                 if (q.subQuestions && q.subQuestions.length > 0) {
+
                     // 大题
                     return {
                         id: `paper-${paper.id}-seq-${q.sequence}`,
-                        body: q.body,
+                        body: await replaceImageSrc(q.body),
                         sequence: q.sequence,
                         score: q.score,
                         type: 'big', // 标识为大题
@@ -301,7 +350,7 @@ const previewPaper = async (paper) => {
                     // 单题
                     return {
                         id: `paper-${paper.id}-seq-${q.sequence}`,
-                        question: q.question,
+                        question: await replaceImageSrc(q.question),
                         answer: q.answer,
                         explanation: q.explanation,
                         options: q.options || [],
@@ -311,7 +360,8 @@ const previewPaper = async (paper) => {
                         sequence: q.sequence
                     };
                 }
-            });
+            })
+            );
             console.log(formattedQuestions);
 
             // 将试卷题目信息加入 basket
