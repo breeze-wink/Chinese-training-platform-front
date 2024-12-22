@@ -279,14 +279,15 @@ export default {
 
         // 审核操作
         handleAudit(row) {
-            console.log(row.questions);
+            console.log(row)
+            console.log(row.id)
             this.router.push({
                 name: 'AuditStrategy',
                 query: {
                     id: row.id,
                     questionId: row.questionId,
                     type: row.type,
-                    source: 'audit'
+                    source: 'audit',
                 }
             });
         },

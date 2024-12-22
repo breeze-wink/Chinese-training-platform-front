@@ -599,7 +599,8 @@ async function fetchQuestion() {
         const teacherId = store.state.user.id;
         const role = store.state.user.role;
 
-        if (!token || !teacherId || role !== 'teacher') {
+
+        if (!token || !teacherId || role !== 'audit-teacher') {
             throw new Error('缺少必要的认证信息或权限不足');
         }
 
