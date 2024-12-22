@@ -162,7 +162,7 @@ import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import {computed, ref, onMounted} from 'vue';
 //图标引入
-import {ElIcon, ElCard, ElInput, ElMessageBox, ElMessage} from 'element-plus';
+import {ElIcon, ElCard, ElInput, ElMessageBox, ElMessage, ElNotification} from 'element-plus';
 import {Edit} from '@element-plus/icons-vue';
 import {useStore} from "vuex";
 import axios from "axios";
@@ -407,7 +407,7 @@ const handlePasswordChange = async () => {
                 const response = await axios.post(
                     `/api/teacher/${teacherId.value}/change-password`,
                     {
-                        oldPassword: passwordForm.value.oldPassword,
+                        password: passwordForm.value.oldPassword,
                         newPassword: passwordForm.value.newPassword,
                     },
                     {
@@ -420,30 +420,14 @@ const handlePasswordChange = async () => {
                 if (response.status === 200) {
                     passwordSuccessMessage.value = '密码更改成功';
                     hideChangePasswordModal();
+                    ElNotification.success({ title: '密码更改成功', message: '密码更改成功' });
                 } else {
                     passwordErrorMessage.value = '密码更改失败，请稍后再试';
+                    ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
                 }
             } catch (error) {
                 let errorMessage = '密码更改失败，请检查网络连接或稍后再试';
-
-                // 检查是否有来自服务器的特定错误信息
-                if (error.response) {
-                    switch (error.response.status) {
-                        case 400:
-                            if (error.response.data && error.response.data.message) {
-                                errorMessage = error.response.data.message; // 使用服务器返回的具体错误消息
-                            }
-                            break;
-                        case 500:
-                            errorMessage = '服务器内部错误，请稍后再试'; // 或者使用从服务器得到的消息
-                            console.error('服务器内部错误:', error.response.data);
-                            break;
-                        default:
-                            errorMessage = '未知错误，请联系管理员';
-                            console.error('未知错误:', error.response ? error.response.data : error.message);
-                    }
-                }
-
+                ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
                 passwordErrorMessage.value = errorMessage;
             }
         } else {

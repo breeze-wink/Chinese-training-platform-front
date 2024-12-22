@@ -153,7 +153,7 @@
 import {ref, onMounted, computed, watch} from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import {ElButton, ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElIcon} from 'element-plus';
+import {ElButton, ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElIcon, ElNotification} from 'element-plus';
 import axios from 'axios';
 import { useStore } from 'vuex';
 import {Edit} from "@element-plus/icons-vue";
@@ -285,17 +285,17 @@ const submitChangePassword = async () => {
     });
 
     if (response.status === 200) {
-      ElMessage({ message: '密码修改成功', type: 'success' });
+        ElNotification.success({ title: '密码更改成功', message: '密码更改成功' });
       showChangePasswordDialog.value = false; // 关闭对话框
       changePasswordForm.value.password = '';
       changePasswordForm.value.newPassword = '';
     } else {
       console.error(response.data.message);
-      ElMessage({ message: '密码修改失败,' + response.data.message, type: 'error' });
+        ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
     }
 
   } catch (error) {
-    ElMessage({ message: '密码修改失败, '+ error.response.data.message, type: 'error' });
+      ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
     changePasswordForm.value.password = '';
     changePasswordForm.value.newPassword = '';
   }
