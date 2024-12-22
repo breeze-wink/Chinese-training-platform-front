@@ -520,12 +520,14 @@ export default {
                         if (response.status === 200) {
                             this.passwordSuccessMessage = '密码更改成功';
                             this.hideChangePasswordModal();
+                            ElNotification.success({ title: '密码更改成功', message: '密码更改成功' });
                         } else {
                             this.passwordErrorMessage = '密码更改失败，请稍后再试';
+                            ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
                         }
                     } catch (error) {
                         this.passwordErrorMessage = '密码更改失败，请检查网络连接或稍后再试';
-                        console.error('密码更改失败:', error.response ? error.response.data : error.message);
+                        ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
                     }
                 } else {
                     console.log('表单验证失败');

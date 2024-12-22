@@ -150,7 +150,7 @@
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import {ref, reactive, onMounted, computed, watch} from 'vue';
-import { ElIcon, ElCard, ElInput, ElMessage, ElDialog, ElForm, ElFormItem } from 'element-plus';
+import {ElIcon, ElCard, ElInput, ElMessage, ElDialog, ElForm, ElFormItem, ElNotification} from 'element-plus';
 import { Edit } from '@element-plus/icons-vue';
 import { useStore } from "vuex";
 import axios from "axios";
@@ -322,13 +322,13 @@ const handlePasswordChange = async () => {
     });
 
     if (response.status === 200) {
-      ElMessage.success('密码修改成功');
+        ElNotification.success({ title: '密码更改成功', message: '密码更改成功' });
       hideChangePasswordModal();
     } else {
-      ElMessage.error(response.data.message || '密码修改失败');
+        ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
     }
   } catch (error) {
-    ElMessage.error(error.message || '密码修改失败');
+      ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
   }
 };
 
