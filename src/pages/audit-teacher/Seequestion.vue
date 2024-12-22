@@ -352,7 +352,7 @@ async function fetchQuestion() {
         const teacherId = store.state.user.id;
         const role = store.state.user.role;
 
-        if (!token || !teacherId || role !== 'teacher') {
+        if (!token || !teacherId || role !== 'audit-teacher') {
             const errorMessage = '缺少必要的认证信息或权限不足';
             ElNotification.error({ title: '错误', message: errorMessage });
             throw new Error(errorMessage);
