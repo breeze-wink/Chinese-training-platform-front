@@ -468,14 +468,7 @@ const validationRules = {
         validate: (value) => !!value,
         message: '请选择发布时间'
     },
-    publishTimeAfterNow: {
-        validate: () => {
-            const publishTime = new Date(publishForm.value.publishTime).getTime();
 
-            return publishTime> new Date();
-        },
-        message: '发布时间必须不早于于现在'
-    },
 
     dueTime: {
         validate: (value) => !!value && new Date(value) > new Date(),
