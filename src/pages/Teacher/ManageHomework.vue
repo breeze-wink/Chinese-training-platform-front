@@ -336,7 +336,6 @@ const reviewAssignment = (submission) => {
   // 将未批阅的学生列表存入 Vuex
   store.dispatch('setUnmarkedSubmissions', unmarkedSubmissions);
   const unmarked = computed(() => store.getters.getUnmarkedSubmissions);
-  console.log('存起来的',unmarked.value);
   // 找到当前批阅的学生索引
   const currentIndex = unmarkedSubmissions.findIndex(s => s.studentId === submission.studentId);
   if (currentIndex === -1) {

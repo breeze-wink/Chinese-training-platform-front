@@ -344,7 +344,6 @@ function startCountdown() {
         countdown.value = 60
     }
     timer = setInterval(() => {
-        console.log(`Countdown value: ${countdown.value}`);
         if (countdown.value > 0) {
             countdown.value--;
         } else {
@@ -396,6 +395,11 @@ function toggleEdit(field) {
 }
 
 const updateUsername = async () => {
+
+    if (!SystemAdminInfo.value.username.trim()) {
+        ElMessage.error('昵称不能为空');
+        return; // 阻止发送空昵称
+    }
   try {
     const url = `/api/system-admin/${systemAdminId.value}/update-username`;
 
@@ -407,7 +411,6 @@ const updateUsername = async () => {
     // 处理响应
     if (response.status === 200) {
       ElMessage.success('用户名修改成功');
-      console.log(response.data.message);
     } else {
       console.error(response.data.message);
       ElMessage.error(response.data.message);

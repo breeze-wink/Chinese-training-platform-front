@@ -231,7 +231,6 @@ const editorEssay = ref(null);
 
 
 const onPointSelected = (pointId) => {
-  console.log('父组件接收到的知识点 ID:', pointId);
   KnowledgePointId.value = pointId;
 };
 
@@ -289,7 +288,6 @@ const handleEditorChange = (html, delta, source) => {
 };
 // 上传成功回调
 const handleUploadSuccess = (response, file) => {
-  console.log('范文上传成功:', response, file);
 };
 // 手动更新问题描述
 const updateProblem = (value) => {
@@ -361,7 +359,6 @@ const submitQuestion = async () => {
         ],
         submitTime:submitTime,
     };
-    console.log(requestData);
 
     try {
         const response = await axios.post(
@@ -420,7 +417,6 @@ const uploadImage = async (imageSrc) => {
     });
 
     if (response.status === 200) {
-      console.log(response.data.imageUrl);
       return response.data.imageUrl;
 
 

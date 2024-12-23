@@ -203,7 +203,6 @@ const categories = ref([]); // 所有分类
 const test = () => {
     const quillInstance = editorStem.value.getQuill();
     const content = quillInstance.root.innerHTML; // 或者 quillInstance.getText(); 获取纯文本
-    console.log('Quill 编辑器的内容:', content);
 };
 // 初始化获取知识点数据
 onMounted(async () => {
@@ -211,7 +210,6 @@ onMounted(async () => {
     await nextTick(() => {
         if (editorStem.value) {
             const quill = editorStem.value.getQuill(); // 获取 Quill 实例
-            console.log(quill); // 输出 Quill 实例，验证是否成功获取
         }
     });
 
@@ -290,7 +288,6 @@ const uploadQuestions = async () => {
             }),
         submitTime:submitTime,
     };
-    console.log(requestData);
 
     // 上传请求
     try {
@@ -375,7 +372,6 @@ const uploadImage = async (imageSrc) => {
         });
 
         if (response.status === 200) {
-            console.log(response.data.imageUrl);
             return response.data.imageUrl;
         } else {
             console.error('图片上传失败');
@@ -415,7 +411,6 @@ const fetchKnowledgePoints = async () => {
             const responseData = response.data.knowledgePoints || {};
             knowledgePoints.value = responseData;
             categories.value = Object.keys(responseData); // 提取所有分类
-            console.log(knowledgePoints.value);
         } else {
             console.error('获取知识点失败：', response.data.message);
         }

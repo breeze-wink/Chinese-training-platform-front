@@ -194,7 +194,6 @@ export default {
                         practiceTime: item.practiceTime,
                         totalScore: item.totalScore
                     }));
-                    console.log('Fetched completed practices:', this.completedItems.练习); // 调试日志
                 } else {
                     console.error('获取已完成练习列表失败', response.data.message);
                 }
@@ -233,14 +232,11 @@ export default {
                 const endpoint = `/api/student/${this.getUserId}/homework/get-detail`;
                 const params = { assignmentId: item.assignmentId };
 
-                console.log(`Sending GET request to ${endpoint} with params:`, params); // 调试日志
 
                 const response = await axios.get(endpoint, { params });
 
                 if (response.status === 200) {
                     const questions = response.data.data;
-                    console.log('Received homework details:', questions); // 调试日志
-                    console.log(item.title);
                     this.$router.push({
                         name: 'AnswerHomework',
                         query: {
@@ -275,7 +271,6 @@ export default {
                 const endpoint = `/api/student/${this.getUserId}/continue-practice`;
                 const params = { practiceId: item.practiceId };
 
-                console.log(`Sending POST request to ${endpoint} with params:`, params); // 调试日志
 
                 const response = await axios.post(endpoint, params, {
                     headers: {
@@ -285,7 +280,6 @@ export default {
 
                 if (response.status === 200) {
                     const questions = response.data.data;
-                    console.log('Received questions:', questions); // 调试日志
 
                     this.$router.push({ // 使用 this.$router 来访问路由
                         name: 'AnswerTemporary',
@@ -316,7 +310,6 @@ export default {
             this.viewHomeworkAnswers(this.answersToView);
         },
         async viewHomeworkAnswers(item) {
-            console.log('Item passed to viewAnswers:', item);
 
             if (!item || !item.assignmentId) {
                 this.$message.error('无法查看答案：作业ID缺失');
@@ -351,14 +344,12 @@ export default {
         },
         viewAnswers(item) {
             try {
-                console.log('Item passed to viewAnswers:', item); // 调试日志
 
                 if (!item.practiceId) {
                     console.error('Missing required param "practiceId"', item);
                     return;
                 }
 
-                console.log('Navigating to AnswerDetail with practiceId:', item.practiceId); // 调试日志
                 router.push({
                     name: 'AnswerDetail',
                     params: {
@@ -423,8 +414,6 @@ export default {
                     this.pendingItems.练习 = this.pendingItems.练习.filter(p => p.practiceId !== practiceId);
                     this.completedItems.练习 = this.completedItems.练习.filter(p => p.practiceId !== practiceId);
 
-                    console.log('Pending items after deletion:', this.pendingItems.练习); // 调试日志
-                    console.log('Completed items after deletion:', this.completedItems.练习); // 调试日志
 
                     ElNotification.success({ title: '删除练习成功', message: response.data.message });
                 } else {

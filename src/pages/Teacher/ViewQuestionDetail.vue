@@ -228,15 +228,12 @@ async function replaceImageSrcUtil(htmlContent) {
     tempDiv.innerHTML = htmlContent;
 
     const images = tempDiv.querySelectorAll('img');
-    console.log(`Found ${images.length} images to replace.`);
     const replacePromises = Array.from(images).map(async (img) => {
         const src = img.getAttribute('src');
-        console.log('Original image src:', src);
 
         if (src && src.startsWith('/uploads/content/')) {
             const imageName = src.replace('/uploads/content/', '');
             const imageUrl = `/api/uploads/images/content/${imageName}`;
-            console.log('Fetching image from:', imageUrl);
 
             const token = store.getters.getToken;
 
@@ -255,7 +252,6 @@ async function replaceImageSrcUtil(htmlContent) {
 
                 if (response.status === 200) {
                     const blobUrl = URL.createObjectURL(response.data);
-                    console.log('Generated Blob URL:', blobUrl);
                     img.setAttribute('src', blobUrl);
                 } else {
                     console.error(`Failed to fetch image: ${imageUrl}`);
@@ -287,7 +283,6 @@ async function deleteImage(type, imageName) {
         });
 
         if (response.status === 200) {
-            console.log(`Image ${imageName} deleted successfully.`);
         } else {
             console.error(`Failed to delete image: ${imageName}`);
         }
@@ -301,8 +296,6 @@ async function saveEditedContent() {
     const currentImages = extractImageList(question.value.content);
     const deletedImages = initialImages.value.filter(src => !currentImages.includes(src));
 
-    console.log('当前图片列表:', currentImages);
-    console.log('已删除图片列表:', deletedImages);
 
     // 删除已删除的图片
     for (const imageSrc of deletedImages) {
@@ -322,11 +315,9 @@ async function loadImagesForQuestions() {
 
     const promises = question.value.subQuestions.map(async (subQuestion) => {
         if (subQuestion.content) {
-            console.log(`正在处理问题内容: ${subQuestion.practiceQuestionId}`);
             subQuestion.content = await replaceImageSrcUtil(subQuestion.content);
         }
         if (subQuestion.body) {
-            console.log(`正在处理问题体: ${subQuestion.practiceQuestionId}`);
             subQuestion.body = await replaceImageSrcUtil(subQuestion.body);
         }
     });
@@ -351,18 +342,12 @@ async function fetchQuestion() {
         const token = store.getters['getToken'];
         const teacherId = store.state.user.id;
         const role = store.state.user.role;
-console.log(role, teacherId)
-        console.log('Current role:', role);
-        console.log(token)
         if (!token || !teacherId || !(role === 'teacher' || role === 'audit-teacher') ) {
             const errorMessage = '缺少必要的认证信息或权限不足';
             ElNotification.error({ title: '错误', message: errorMessage });
             throw new Error(errorMessage);
         }
 
-        console.log(token)
-        console.log(route.query);
-        console.log(route.query.questionId)
         const response = await axios.get(`/api/teacher/get-question`, {
             params: {
                 questionId: route.query.questionId,
@@ -376,7 +361,6 @@ console.log(role, teacherId)
         if (response.status === 200) {
             const questionData = response.data;
 
-            console.log('Received question data:', response.data);
 
             // 验证返回的数据是否完整
             if (!questionData || (!questionData.content && !questionData.subQuestions)) {

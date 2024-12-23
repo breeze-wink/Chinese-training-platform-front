@@ -56,7 +56,6 @@ export default {
         }
     },
     mounted() {
-        console.log('TouristPoem mounted with id:', this.id);
         if (this.id) {
             this.fetchPoemDetails(this.id);
         } else {
@@ -67,7 +66,6 @@ export default {
         id: {
             immediate: true,
             handler(newId) {
-                console.log('id changed to:', newId);
                 if (newId) {
                     this.fetchPoemDetails(newId);
                 } else {

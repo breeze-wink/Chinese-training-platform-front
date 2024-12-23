@@ -13,7 +13,7 @@
 
                 <!-- 查询框 -->
                 <div class="input-button-group">
-                    <el-input v-model="search" placeholder="搜索班级名称或描述" style="width: 300px;"></el-input>
+                    <el-input v-model="search" placeholder="搜索班级名称" style="width: 300px;"></el-input>
                     <el-input v-model="teacherSearch" placeholder="搜索老师姓名" style="width: 300px;"></el-input>
                 </div>
 

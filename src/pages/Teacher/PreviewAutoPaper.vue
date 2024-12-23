@@ -144,9 +144,8 @@ import Header from "@/components/Header.vue";
 import { computed, ref, watch, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter, useRoute } from 'vue-router';
-import { ElNotification, ElMessage } from "element-plus";
+import { ElNotification } from "element-plus";
 import axios from "axios";
-import {onBeforeUnmount} from "vue-demi";
 
 
 // 获取 Vuex Store 和 Router 实例
@@ -301,7 +300,6 @@ const generatePaper = async () => {
         })),
     };
 
-    console.log('paperDATA',paperData);
 
     try {
         // 发送 POST 请求
@@ -341,11 +339,9 @@ const regeneratePaper = async () => {
                 'Authorization': `Bearer ${token}`
             }
         });
-        console.log('后端返回',response.data);
 
         if (response.status === 200 && response.data) {
             const data = response.data;
-            console.log('后端返回',data);
 
             // 处理 bigQuestions
             const processedBigQuestions = await Promise.all(
@@ -439,8 +435,6 @@ const regeneratePaper = async () => {
             basketQuestions.forEach(question => {
                 store.dispatch('addQuestionToBasket', question);
             });
-            const ba = computed(() => store.getters.getBasket);
-            console.log('ba',ba.value);
 
             ElNotification.success({
                 title: '重新生成成功',

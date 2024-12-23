@@ -183,7 +183,6 @@ const getPapers = async () => {
                 papers.value = response.data.papers;
                 totalItems.value = papers.value.length;
                 filteredData.value = sortPapers(papers.value);  // 初始时，显示所有试卷
-                console.log(papers.value);
             } else {
                 // 如果返回的数据不是数组，抛出错误
 
@@ -257,7 +256,6 @@ const sortPapers = (papers) => {
 const handleSortChange = (sort) => {
     sortBy.value = sort.prop;  // 当前排序字段
     sortOrder.value = sort.order === 'ascending' ? 'ascending' : 'descending';  // 当前排序顺序
-    console.log( '排序:', sortBy.value, sortOrder.value);
     filteredData.value = sortPapers(papers.value);  // 重新排序
 };
 
@@ -321,7 +319,6 @@ const previewPaper = async (paper) => {
         const response = await axios.get('/api/teacher/paper', { params: { id: paper.id } });
         if (response.status === 200 && response.data.message === 'success') {
             const paperDetails = response.data;
-            console.log('试卷详情:', paperDetails)
 
             // 处理问题数据，确保每个问题都有唯一的 ID
             const formattedQuestions = await Promise.all(paperDetails.questions.map(async q => {
@@ -362,7 +359,6 @@ const previewPaper = async (paper) => {
                 }
             })
             );
-            console.log(formattedQuestions);
 
             // 将试卷题目信息加入 basket
             await store.dispatch('addQuestionsToBasket', formattedQuestions);
@@ -430,7 +426,6 @@ const showPublishDialog = (row) => {
     publishForm.value.selectedStudents = [];
 
     dialogVisible.value = true;  // 打开弹窗
-    console.log(dialogVisible.value);
 
 };
 
@@ -467,7 +462,6 @@ const validationRules = {
         validate: () => {
             const publishTime = new Date(publishForm.value.publishTime).getTime();
             const dueTime = new Date(publishForm.value.dueTime).getTime();
-            console.log('发布时间',publishTime ,'截止时间',dueTime);
             return dueTime > publishTime;
         },
         message: '截止时间必须晚于发布时间'
@@ -532,7 +526,6 @@ const publishHomework = async () => {
         publishTime: publishForm.value.publishTime,
         dueTime: publishForm.value.dueTime
     };
-    console.log(payload);
 
     try {
         const response = await axios.post(`/api/teacher/homework/publish`, payload);

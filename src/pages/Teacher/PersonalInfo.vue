@@ -51,7 +51,7 @@
                                 v-model="teacherInfo.name"
                                 size="small"
                                 class="edit-input"
-                                @blur="toggleEdit('name'); updateName()"/>
+                                @blur="updateName()"/>
                         <el-icon @click="toggleEdit('name')">
                             <Edit/>
                         </el-icon>
@@ -171,7 +171,7 @@ import { useRouter } from 'vue-router';
 //从全局中ID信息
 const store = useStore();
 const teacherId = computed(() => store.state.user.id);
-
+const originNickname = ref('');
 const teacherInfo = ref({
     name: '',
     username: '',
@@ -225,6 +225,7 @@ const getTeacherInfo = async () => {
             // 更新教师信息
             console.log(response.data.data)
             teacherInfo.value = response.data.data;
+            originNickname.value = teacherInfo.value.username;
         } else {
             errorMessage.value = '获取教师信息失败：' + response.data.message;
             console.error(errorMessage.value);
@@ -258,6 +259,8 @@ const openRealNameDialog = () => {
 };
 
 const updateUsername = async () => {
+    console.log('origin',originNickname.value);
+    console.log('new',teacherInfo.value.username);
     try {
         const url = `/api/teacher/${teacherId.value}/update-username`;
 

@@ -441,7 +441,6 @@ const login = async () => {
 
         // 检查响应状态码和消息
         if (response.status === 200) {
-            console.log("登录成功:", response.data.id);
             ElNotification.success({title: '成功', message: '登录成功'});
             //使用vuex更新用户信息
             await store.dispatch('login', {
@@ -452,8 +451,6 @@ const login = async () => {
             });
 
             const permission = response.data.permission;
-            console.log('token:', response.data.token);
-            console.log('permission:', permission);
             loginDialogVisible.value = false; // 登录成功后关闭对话框
 
             if (Identity.value === 'teacher') {
@@ -500,9 +497,6 @@ function handleRegisterKeydown(event) {
 const emit = defineEmits(['login', 'register']);
 const handleEnter = (event) => {
     if (event.key === "Enter") {
-        console.log(activeTab)
-        console.log(loginDialogVisible)
-        console.log(registerDialogVisible)
         if (loginDialogVisible.value) {
             login();
         }
@@ -548,7 +542,6 @@ const sendVerification = async () => {
         // 检查响应状态码和消息
         if (response.status === 200) {
             realVerifyCode.value = response.data.verificationCode;
-            console.log(realVerifyCode.value);
             // 这里可以添加更多的登录成功后的操作，比如保存用户信息等
         } else {
             // 处理非200状态码的情况
@@ -569,7 +562,6 @@ const verifyIdentity = async () => {
         });
         // 检查响应状态码和消息
         if (response.status === 200 && response.data.message === "success") {
-            console.log("登录成功:", response.data.id);
             loginDialogVisible.value = false; // 登录成功后关闭对话框
         } else {
             // 处理非200状态码的情况
@@ -636,8 +628,6 @@ async function sendVerificationCode(userType) {
             if (userType === 'teacher' && response.data.schoolId) {
                 registerForm.value.teacher.schoolId = response.data.schoolId;
             }
-            // console.log(verificationCode.value);
-            // alert(`验证码已发送: ${verificationCode.value}`);
         } else {
             const errorMessage = response.data.message || '验证码发送失败，请稍后再试';
             ElNotification.error({ title: '邮箱错误', message: '请输入正确的邮箱地址' });
@@ -671,7 +661,6 @@ const sendVerificationCodeFor = async () => {
         });
         if (response.data.message === 'success') {
             // 验证码发送成功后的逻辑
-            console.log('验证码已发送');
             ElNotification.success({ title: '验证码已发送', message: '验证码已发送，请注意查收' });
             resetCountdown(); // 发送失败时重置倒计时
         }
@@ -743,7 +732,6 @@ function startCountdown() {
         countdown.value = 60
     }
     timer = setInterval(() => {
-        console.log(`Countdown value: ${countdown.value}`);
         if (countdown.value > 0) {
             countdown.value--;
         } else {
@@ -770,15 +758,8 @@ watch(countdown, (newVal) => {
 
 async function submitForm(formName, userType) {
     if (!proxy.$refs[formName]) {
-        // ElNotification.error({ title: '表单未找到', message: '表单引用 ${formName} 未找到' });
         return;
     }
-    console.log()
-    console.log(loginDialogVisible)
-    console.log(registerDialogVisible)
-    // if () {
-    //     return;
-    // }
     proxy.$refs[formName].validate(async (valid) => {
         if (valid) {
             const form = activeTab.value === 'student' ? registerForm.value.student : registerForm.value.teacher;
@@ -805,7 +786,6 @@ async function submitForm(formName, userType) {
                     };
                 }
 
-                console.log('提交的数据:', payload); // 打印请求体数据
 
                 const response = await axios.post(url, payload, {
                     headers: {
@@ -814,7 +794,6 @@ async function submitForm(formName, userType) {
                 });
 
                 // 打印完整的响应对象
-                console.log('后端响应:', response);
 
                 // 检查响应状态码和消息
                 if (response.status === 200) {

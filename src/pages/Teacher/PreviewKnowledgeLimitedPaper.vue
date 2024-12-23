@@ -330,14 +330,12 @@ const confirmKnowledgePoints = async () => {
         number: selectedNumbers.value[category] || 1
     }));
 
-    console.log(types);
 
     try {
         const response = await axios.post('/api/teacher/generate-paper-with-types',  {types} );
 
         if (response.status === 200 && response.data.questions) {
             const data = response.data;
-            console.log('后端返回',data);
 
             // 处理 questions
             const processedQuestions = await Promise.all(
@@ -404,8 +402,6 @@ const confirmKnowledgePoints = async () => {
             basketQuestions.forEach(question => {
                 store.dispatch('addQuestionToBasket', question);
             });
-            const ba = store.getters.getBasket;
-            console.log('ba',ba);
 
             ElNotification.success({
                 title: '生成成功',
@@ -470,7 +466,6 @@ const regeneratePaper = async () => {
 
         if (response.status === 200 && response.data.questions) {
             const data = response.data;
-            console.log(data);
 
             // 处理 questions
             const processedQuestions = await Promise.all(
@@ -689,7 +684,6 @@ const generatePaper = async () => {
             });
         }
     });
-    console.log(payload);
 
     try {
         const response = await axios.post('/api/teacher/generate-paper', payload, {

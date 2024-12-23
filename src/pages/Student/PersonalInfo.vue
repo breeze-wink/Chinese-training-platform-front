@@ -191,7 +191,6 @@ function startCountdown() {
         countdown.value = 60
     }
     timer = setInterval(() => {
-        console.log(`Countdown value: ${countdown.value}`);
         if (countdown.value > 0) {
             countdown.value--;
         } else {
@@ -315,7 +314,6 @@ export default {
                 return;
             }
 
-            console.log('Fetching student info for account ID:', accountId); // 打印 accountId 以确认其值
 
             try {
                 const response = await axios.get(`/api/student/${accountId}`);

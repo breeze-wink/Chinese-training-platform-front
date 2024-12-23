@@ -68,7 +68,6 @@ const fetchKnowledgePoints = async () => {
             const responseData = response.data.knowledgePoints || {};
             knowledgePoints.value = responseData;
             categories.value = Object.keys(responseData); // 提取所有分类
-            console.log(knowledgePoints.value);
         } else {
             console.error('获取知识点失败：', response.data.message);
         }
@@ -102,7 +101,6 @@ watch(selectedPointId, updateSelectedPointName);
 // 监听知识点选择，更新名称并触发事件
 watch(selectedPointId, (newVal) => {
     if (newVal !== null) {
-        console.log('选择的知识点 ID:', newVal);
         // 通知父组件
         emit('point-selected', newVal);
     }

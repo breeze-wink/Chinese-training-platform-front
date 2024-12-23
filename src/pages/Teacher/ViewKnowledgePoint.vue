@@ -55,7 +55,6 @@ const fetchKnowledgePoint = async () => {
         // 检查响应状态并处理数据
         if (response.status === 200 && response.data) {
             knowledgePoints.value = response.data.knowledgePoints;
-            console.log(response);
         } else {
             console.error('无法获取知识点：', response);
         }

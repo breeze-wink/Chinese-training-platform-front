@@ -60,7 +60,6 @@ const getAllEssays = async () => {
     try {
         const response = await axios.get('/api/teacher/view-essays');
         if (response.status === 200 ) {
-            console.log('7');
             essays.value = response.data.infoData;
             ElMessage({ message: '作文列表获取成功', type: 'success' });
         } else {
@@ -148,7 +147,6 @@ const viewEssay = async (item) => {
 };
 
 onMounted(() => {
-    console.log(`Teacher ID: ${teacherId.value}`);
     getAllEssays();
 });
 </script>
