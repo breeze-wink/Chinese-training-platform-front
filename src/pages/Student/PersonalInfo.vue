@@ -112,29 +112,32 @@
             </div>
         </div>
 
-        <!-- 更换邮箱模态窗口 -->
-        <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="25%" align-center>
-            <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef" label-width="100px">
-                <el-form-item label="新邮箱" prop="newEmail">
-                    <el-input v-model="emailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 95%;"></el-input>
-                </el-form-item>
-                <el-form-item label="验证码" prop="verificationCode">
-                    <el-row :gutter="10">
-                        <el-col :span="10">
-                            <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="width: 95%;"></el-input>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-button @click="sendVerificationCode" class="verify-button" style="margin-left: -10px;">{{ codeButtonText }}</el-button>
-                        </el-col>
-                    </el-row>
-                </el-form-item>
-                <div class="form-buttons">
-                    <el-button type="primary" @click="handleChangeEmail" class="action-button">确认修改</el-button>
-                </div>
-            </el-form>
-            <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-            <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
-        </el-dialog>
+      <!-- 更换邮箱模态窗口 -->
+      <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="400px" align-center>
+        <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef" label-width="100px">
+          <el-form-item label="新邮箱" prop="newEmail">
+            <el-input v-model="emailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 95%;"></el-input>
+          </el-form-item>
+          <el-form-item label="验证码" prop="verificationCode">
+            <el-row :gutter="10">
+              <el-col :span="10">
+                <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="width: 100%;"></el-input>
+              </el-col>
+              <el-col :span="8">
+                <el-button @click="sendVerificationCode" class="verify-button" style="margin-left: 10px;">
+                  {{ codeButtonText }}
+                </el-button>
+
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <div class="form-buttons">
+            <el-button type="primary" @click="handleChangeEmail" class="action-button">确认修改</el-button>
+          </div>
+        </el-form>
+        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+        <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
+      </el-dialog>
 
         <!-- 修改密码的模态框 -->
         <el-dialog v-model="isChangePasswordModalVisible" title="修改密码" @close="resetPasswordForm" custom-class="square-modal" width="25%" align-center>
@@ -272,6 +275,8 @@ export default {
             inviteCode: '',
             joinClassResultMessage: '',
             isJoinedClass: false,
+            codeButtonText: '获取验证码',
+
 
             passwordRules: {
                 oldPassword: [

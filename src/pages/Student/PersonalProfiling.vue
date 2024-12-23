@@ -118,7 +118,9 @@
                         <div class="bar-chart">
                             <div v-for="(weakness, index) in weaknessScores" :key="index" class="bar-item">
                                 <div class="bar-labels">
-                                    <span>{{ weakness.weaknessName }}</span>
+                                    <span >{{ weakness.type }}</span>
+                                  <span v-if="weakness.type!==weakness.weaknessName">--{{ weakness.weaknessName }}</span>
+
                                 </div>
                                 <div class="bar-container">
                                     <div class="bar"
@@ -131,7 +133,7 @@
                                     ></div>
                                 </div>
                                 <!-- 具体参数信息 -->
-                                <p style="font-size: 10px; color: red;">{{ weakness.weaknessName }} - 正确率: {{ Math.max(weakness.weaknessScore * 100) }}%</p>
+                                <p style="font-size: 16px; color: red;"> 正确率: {{ Math.max(weakness.weaknessScore * 100) }}%</p>
                             </div>
                         </div>
                     </div>
@@ -567,23 +569,29 @@ h3 {
 }
 
 .bar-container {
-    position: relative;
-    flex: 1;
-    height: 30px;
-    border-radius: 5px;
-    background-color: #f2f2f2;
+  position: relative;
+  flex: 1;
+  height: 30px;
+  border-radius: 5px;
+  background-color: #f2f2f2;
+  display: flex; /* 添加 flex 布局 */
+  justify-content: flex-end; /* 将内容靠右对齐 */
+  align-items: center; /* 垂直居中对齐 */
 }
 
 .bar {
-    height: 100%;
-    border-radius: 5px;
-    transition: width 0.3s ease-in-out;
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease-in-out;
+
 }
 
 .bar-labels {
-    min-width: 120px;
+    height: 50px;
+    width: 300px;
     font-size: 16px;
     color: #555;
+  align-items: center;
 }
 
 .line-chart svg {
@@ -595,7 +603,14 @@ h3 {
     width: 600px;
     height: 600px;
 }
-
+.bar-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 如果需要标签和 bar 之间有间距 */
+  gap: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
 .score-trend svg {
     width: 100%;
     height: 600px; /* 与 data 中的 chartHeight 一致 */
