@@ -153,17 +153,11 @@ const teacherInfo = ref({
     schoolName: ''
 });
 
-// 实名认证表单
-const realNameForm = ref({
-    name: '',
-    idCard: ''
-});
 
 // 控制编辑状态
 const editNickname = ref(false);
 const editPhone = ref(false);
 const editName = ref(false);
-const realNameDialogVisible = ref(false);
 
 const isChangeEmailModalVisible = ref(false);
 const successMessage = ref('');
@@ -180,10 +174,6 @@ const emailRules = ref({
     newEmail: [
         {required: true, message: '请输入新的邮箱地址', trigger: 'blur'},
         {type: 'email', message: '请输入正确的邮箱格式', trigger: ['blur', 'change']}
-    ],
-    verificationCode: [
-        {required: true, message: '请输入验证码', trigger: 'blur'},
-        {len: 6, message: '验证码长度应为6位', trigger: 'blur'}
     ]
 });
 
@@ -318,10 +308,6 @@ function toggleEdit(field) {
     }
 }
 
-// 打开实名认证对话框
-const openRealNameDialog = () => {
-    realNameDialogVisible.value = true;
-};
 
 const updateUsername = async (field) => {
 
@@ -466,95 +452,57 @@ const sendVerificationCode = async () => {
     // 如果当前正在倒计时，则不允许再次发送验证码
     if (isCountingDown.value) return;
 
-    try {
-        startCountdown();
-        const response = await axios.get(`/api/teacher/send-email-code`, {
-            params: {
-                email: emailForm.value.newEmail
-            },
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+    // 手动验证邮箱格式
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailPattern.test(emailForm.value.newEmail)) {
+        errorMessage.value = '请输入正确的邮箱格式';
+        return;
+    }
 
-        if (response.status === 200) {
-            successMessage.value = '验证码已发送，请查收您的邮箱';
-        } else {
-            errorMessage.value = '验证码发送失败';
-            resetCountdown(); // 发送失败时重置倒计时
+
+    startCountdown();
+    const response = await axios.get(`/api/teacher/send-email-code`, {
+        params: {
+            email: emailForm.value.newEmail
+        },
+        headers: {
+            'Content-Type': 'application/json'
         }
-    } catch (error) {
-        errorMessage.value = '验证码发送失败，请稍后再试';
-        console.error('验证码发送失败:', error.response ? error.response.data : error.message);
+    });
+
+    if (response.status !== 200){
+        if (response.status !== 200){
+          ElNotification.error({title: '验证码发送失败', message: response.data.message});
+          resetCountdown(); // 发送失败时重置倒计时
+        }
         resetCountdown(); // 发送失败时重置倒计时
     }
+
 };
+
 
 // 处理邮箱更换
 const handleChangeEmail = async () => {
-    const formRef = emailFormRef.value; // 使用 emailFormRef 来访问 form 实例
-    formRef.validate(async (valid) => { // 使用正确的 refs 调用 validate
-        if (valid) {
-            try {
-                const response = await axios.get(`/api/teacher/change-email`, {
-                    params: {
-                        newEmail: emailForm.value.newEmail
-                    },
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+      const response = await axios.get(`/api/teacher/change-email`, {
+          params: {
+              newEmail: emailForm.value.newEmail,
+              code: emailForm.value.verificationCode
+          },
+          headers: {
+              'Content-Type': 'application/json'
+          }
+      });
 
-                if (response.status === 200) {
-                    successMessage.value = '邮箱更换成功';
-                    teacherInfo.value.email = emailForm.value.newEmail;
-                    hideChangeEmailModal();
-                } else {
-                    errorMessage.value = '邮箱更换失败';
-                }
-            } catch (error) {
-                errorMessage.value = '邮箱更换失败，请稍后再试';
-                console.error('邮箱更换失败:', error.response ? error.response.data : error.message);
-            }
-        } else {
-            console.log('表单验证失败');
-            return false;
-        }
-    });
-};
+      if (response.status === 200) {
+          ElMessage.success('邮箱更换成功');
+          teacherInfo.value.email = emailForm.value.newEmail;
+          hideChangeEmailModal();
+      } else {
+          ElMessage.error('邮箱更换失败' + response.data.message);
+      }
 
+}
 
-// 请求注销账号
-const requestAccountDeactivation = () => {
-    ElMessageBox.confirm(
-        '您确定要注销您的账号吗？这将永久删除您的账号信息。',
-        '警告',
-        {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning'
-        }
-    ).then(async () => {
-        try {
-            const response = await axios.delete(`/api/teacher/delete-account`, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            if (response.status === 200) {
-                accountDeactivationSuccessMessage.value = '账号注销成功';
-                accountDeactivationErrorMessage.value = ''; // 清除错误消息
-                navigateToHome();
-            } else {
-                accountDeactivationErrorMessage.value = '账号注销失败';
-            }
-        } catch (error) {
-            accountDeactivationErrorMessage.value = '账号注销失败，请检查网络连接或稍后再试';
-            console.error('账号注销失败:', error.response ? error.response.data : error.message);
-        }
-    }).catch(() => {
-        ElMessage.info('已取消注销账号');
-    });
-};
 
 const navigateToHome = () => {
     router.push({ name: 'Home' }); // 使用 router.push 来跳转到首页
@@ -567,6 +515,11 @@ const navigateToHome = () => {
     flex-direction: column;
     height: 100vh;
     background-color: #f0f0f0; /* 背景改为浅灰色 */
+}
+
+.form-buttons {
+  text-align: center;
+  margin-top: 20px;
 }
 
 .main-container {

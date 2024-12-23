@@ -22,7 +22,7 @@
                 size="small"
                 class="edit-input"
                 @blur="updateUsername('adminName')"/>
-            <el-icon @click="toggleEdit('adminName')">
+            <el-icon @click="toggleEdit('adminName')" class="edit-icon">
               <Edit/>
             </el-icon>
           </div>
@@ -39,7 +39,7 @@
                 size="small"
                 class="edit-input"
                 @blur="toggleEdit('name'); updateName()"/>
-            <el-icon @click="toggleEdit('name')">
+            <el-icon @click="toggleEdit('name')" class="edit-icon">
               <Edit/>
             </el-icon>
           </div>
@@ -55,7 +55,7 @@
          <div class="info-item">
           <label>密码：</label>
           <span>******</span>
-          <el-icon @click="showChangePasswordDialog = true">
+          <el-icon @click="showChangePasswordDialog = true" class="edit-icon">
             <Edit/>
           </el-icon>
         </div>
@@ -150,14 +150,13 @@
 </template>
 
 <script setup>
-import {ref, onMounted, computed, watch} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import {ElButton, ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElIcon, ElNotification} from 'element-plus';
+import {ElButton, ElDialog, ElForm, ElFormItem, ElIcon, ElInput, ElMessage, ElNotification} from 'element-plus';
 import axios from 'axios';
-import { useStore } from 'vuex';
+import {useStore} from 'vuex';
 import {Edit} from "@element-plus/icons-vue";
-import {useRouter} from "vue-router"; // 使用 Vuex 进行状态管理
 
 // 定义变量
 const adminName = ref('');
@@ -341,26 +340,30 @@ watch(countdown, (newVal) => {
 const sendVerificationCode = async () => {
   if (isSendingCode.value) return;
 
+  const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailPattern.test(bindEmailForm.value.email)) {
+    errorMessage.value = '请输入正确的邮箱格式';
+    return;
+  }
+
 // 如果当前正在倒计时，则不允许再次发送验证码
     if (countdown.value !== 60) return;
     startCountdown();
-  try {
-    const response = await axios.post(`/api/school-admin/${schoolAdminId.value}/send-verification-code`, {
-      email: bindEmailForm.value.email
-    });
+    try {
+      const response = await axios.get(`/api/school-admin/send-email-code`, {
+        params: {
+          email: bindEmailForm.value.newEmail
+        },
+      });
 
-    if (response.status === 200) {
-      const verificationCode = response.data.verificationCode;
-      correctCode.value = verificationCode; // 存储验证码
-      ElMessage({ message: '验证码已发送，请查收邮件', type: 'success' });
-    } else {
-      ElMessage({ message: '发送验证码失败', type: 'error' });
-        resetCountdown(); // 发送失败时重置倒计时
-    }
-  } catch (error) {
-    ElMessage({ message: '发送验证码失败', type: 'error' });
+      if (response.status !== 200) {
+        ElNotification.error({ title: '发送验证码失败', message: response.data.message });
+          resetCountdown(); // 发送失败时重置倒计时
+      }
+    } catch (error) {
+      ElNotification.error({ title: '发送验证码失败', message: '邮箱已注册' });
       resetCountdown(); // 发送失败时重置倒计时
-  }
+    }
 };
 
 const confirmBindEmail = async () => {
@@ -376,7 +379,10 @@ const confirmBindEmail = async () => {
 
   try {
     const response = await axios.post(`/api/school-admin/${schoolAdminId.value}/bind-email`, {
-      email: bindEmailForm.value.email,
+      params: {
+        newEmail: bindEmailForm.value.newEmail,
+        code: bindEmailForm.value.verificationCode
+      }
     });
 
     if (response.status === 200) {
@@ -489,12 +495,14 @@ const hideChangeEmailModal = () => {
     successMessage.value = '';
 };
 const sendVerificationCodeForChangeEmail = async () => {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bindEmailForm.value.newEmail)) {
-        ElMessage({ message: '请输入有效的邮箱地址', type: 'error' });
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailPattern.test(bindEmailForm.value.newEmail)) {
+        errorMessage.value = '请输入正确的邮箱格式';
         return;
     }
 
     try {
+        startCountdown();
         const response = await axios.get(`/api/school-admin/send-email-code`, {
             params: {
                 email: bindEmailForm.value.newEmail
@@ -508,11 +516,12 @@ const sendVerificationCodeForChangeEmail = async () => {
             successMessage.value = '验证码已发送，请查收您的邮箱';
             ElMessage({ message: '验证码已发送，请查收邮件', type: 'success' });
         } else {
-            errorMessage.value = '验证码发送失败';
+            ElNotification.error({title: '验证码发送失败', message: response.data.message});
+            resetCountdown();
         }
     } catch (error) {
-        errorMessage.value = '验证码发送失败，请稍后再试';
-        console.error('验证码发送失败:', error.response ? error.response.data : error.message);
+        ElNotification.error({title: '验证码发送失败', message: '邮箱已注册'});
+        resetCountdown();
     }
 };
 const handleChangeEmail = async () => {
@@ -540,7 +549,6 @@ const handleChangeEmail = async () => {
                 }
             } catch (error) {
                 errorMessage.value = '邮箱更换失败，请稍后再试';
-                console.error('邮箱更换失败:', error.response ? error.response.data : error.message);
             }
         } else {
             console.log('表单验证失败');
@@ -558,7 +566,9 @@ const handleChangeEmail = async () => {
   height: 100vh;
   background-color: #f0f0f0;
 }
-
+.edit-icon:hover {
+  color: #66b1ff;
+}
 .main-container {
   display: flex;
   flex: 1;

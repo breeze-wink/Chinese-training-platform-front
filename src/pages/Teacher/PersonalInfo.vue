@@ -85,18 +85,18 @@
             </div>
 
             <!-- 更换邮箱模态窗口 -->
-            <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="25%" align-center>
+            <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="400px" align-center>
                 <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef" label-width="100px">
-                <el-form-item label="新邮箱" prop="newEmail">
+                    <el-form-item label="新邮箱" prop="newEmail">
                         <el-input v-model="emailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 95%;"></el-input>
                     </el-form-item>
                     <el-form-item label="验证码" prop="verificationCode">
                         <el-row :gutter="10">
                             <el-col :span="10">
-                                <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="width: 95%;"></el-input>
+                                <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="width: 100%;"></el-input>
                             </el-col>
                             <el-col :span="8">
-                                <el-button @click="sendVerificationCode" class="verify-button" style="margin-left: -10px;">{{ codeButtonText }}</el-button>
+                                <el-button @click="sendVerificationCode"  class="verify-button" style="margin-left: 10px;">{{ codeButtonText }}</el-button>
                             </el-col>
                         </el-row>
                     </el-form-item>
@@ -107,7 +107,6 @@
                 <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
                 <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
             </el-dialog>
-
             <!-- 修改密码的模态框 -->
             <el-dialog v-model="isChangePasswordModalVisible" title="修改密码" @close="resetPasswordForm" custom-class="square-modal" width="25%" align-center>
                 <el-form ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-width="100px">
@@ -432,22 +431,21 @@ const codeButtonText = ref('获取验证码')
 let timer; // 用于存储定时器ID
 let isCountingDown = ref(false); // 标记是否正在倒计时
 function startCountdown() {
-    console.log('Starting countdown...');
-    clearInterval(timer); // 清除任何现有的定时器
-    isCountingDown.value = true;
-    if (codeButtonText.value === '重新获取验证码') {
-        countdown.value = 60
+
+  clearInterval(timer); // 清除任何现有的定时器
+  isCountingDown.value = true;
+  if (codeButtonText.value === '重新获取验证码') {
+    countdown.value = 60
+  }
+  timer = setInterval(() => {
+
+    if (countdown.value > 0) {
+      countdown.value--;
+    } else {
+      clearInterval(timer);
+      isCountingDown.value = false;
     }
-    timer = setInterval(() => {
-        console.log(`Countdown value: ${countdown.value}`);
-        if (countdown.value > 0) {
-            countdown.value--;
-        } else {
-            clearInterval(timer);
-            isCountingDown.value = false;
-            console.log('Countdown finished.');
-        }
-    }, 1000);
+  }, 1000);
 }
 function resetCountdown() {
     clearInterval(timer);
@@ -456,66 +454,55 @@ function resetCountdown() {
 }
 // 发送验证码
 const sendVerificationCode = async () => {
-    // 如果当前正在倒计时，则不允许再次发送验证码
-    if (countdown.value !== 60) return;
-    startCountdown();
-    try {
-        const response = await axios.get(`/api/teacher/send-email-code`, {
-            params: {
-                email: emailForm.value.newEmail
-            },
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+  // 如果当前正在倒计时，则不允许再次发送验证码
+  if (isCountingDown.value) return;
 
-        if (response.status === 200) {
-            successMessage.value = '验证码已发送，请查收您的邮箱';
-        } else {
-            errorMessage.value = '验证码发送失败';
-            resetCountdown(); // 发送失败时重置倒计时
-        }
-    } catch (error) {
-        errorMessage.value = '验证码发送失败，请稍后再试';
-        console.error('验证码发送失败:', error.response ? error.response.data : error.message);
-        resetCountdown(); // 发送失败时重置倒计时
+  // 手动验证邮箱格式
+  const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailPattern.test(emailForm.value.newEmail)) {
+    errorMessage.value = '请输入正确的邮箱格式';
+    return;
+  }
+
+
+  startCountdown();
+  const response = await axios.get(`/api/teacher/send-email-code`, {
+    params: {
+      email: emailForm.value.newEmail
+    },
+    headers: {
+      'Content-Type': 'application/json'
     }
+  });
+
+  if (response.status !== 200){
+    ElNotification.error({title: '验证码发送失败', message: response.data.message});
+    resetCountdown(); // 发送失败时重置倒计时
+  }
+
 };
 
 // 处理邮箱更换
 const handleChangeEmail = async () => {
-    const formRef = emailFormRef.value; // 使用 emailFormRef 来访问 form 实例
-    formRef.validate(async (valid) => { // 使用正确的 refs 调用 validate
-        if (valid) {
-            try {
-                const response = await axios.get(`/api/teacher/change-email`, {
-                    params: {
-                        newEmail: emailForm.value.newEmail,
-                        code: emailForm.value.verificationCode
-                    },
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+  const response = await axios.get(`/api/teacher/change-email`, {
+    params: {
+      newEmail: emailForm.value.newEmail,
+      code: emailForm.value.verificationCode
+    },
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
 
-                if (response.status === 200) {
-                    successMessage.value = '邮箱更换成功';
-                    teacherInfo.value.email = emailForm.value.newEmail;
-                    hideChangeEmailModal();
-                } else {
-                    errorMessage.value = '邮箱更换失败';
-                }
-            } catch (error) {
-                errorMessage.value = '邮箱更换失败，请稍后再试';
-                console.error('邮箱更换失败:', error.response ? error.response.data : error.message);
-            }
-        } else {
-            console.log('表单验证失败');
-            return false;
-        }
-    });
-};
+  if (response.status === 200) {
+    ElMessage.success('邮箱更换成功');
+    teacherInfo.value.email = emailForm.value.newEmail;
+    hideChangeEmailModal();
+  } else {
+    ElMessage.error('邮箱更换失败' + response.data.message);
+  }
 
+}
 
 // 请求注销账号
 
@@ -530,6 +517,11 @@ const navigateToHome = () => {
     flex-direction: column;
     height: 100vh;
     background-color: #f0f0f0; /* 背景改为浅灰色 */
+}
+
+.form-buttons {
+  text-align: center;
+  margin-top: 20px;
 }
 
 .main-container {

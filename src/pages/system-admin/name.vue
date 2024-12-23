@@ -57,28 +57,28 @@
 
       </div>
 
-        <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="25%" align-center>
-            <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef" label-width="100px">
-                <el-form-item label="新邮箱" prop="newEmail">
-                    <el-input v-model="emailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 95%;"></el-input>
-                </el-form-item>
-                <el-form-item label="验证码" prop="verificationCode">
-                    <el-row :gutter="10">
-                        <el-col :span="10">
-                            <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="width: 95%;"></el-input>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-button @click="sendVerificationCode" :disabled="countdown.value > 0" class="verify-button" style="margin-left: -10px;">{{ codeButtonText }}</el-button>
-                        </el-col>
-                    </el-row>
-                </el-form-item>
-                <div class="form-buttons">
-                    <el-button type="primary" @click="handleChangeEmail" class="action-button">确认修改</el-button>
-                </div>
-            </el-form>
-            <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-            <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
-        </el-dialog>
+      <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="400px" align-center>
+        <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef" label-width="100px">
+          <el-form-item label="新邮箱" prop="newEmail">
+            <el-input v-model="emailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 95%;"></el-input>
+          </el-form-item>
+          <el-form-item label="验证码" prop="verificationCode">
+            <el-row :gutter="10">
+              <el-col :span="10">
+                <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="width: 100%;"></el-input>
+              </el-col>
+              <el-col :span="8">
+                <el-button @click="sendVerificationCode"  class="verify-button" style="margin-left: 10px;">{{ codeButtonText }}</el-button>
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <div class="form-buttons">
+            <el-button type="primary" @click="handleChangeEmail" class="action-button">确认修改</el-button>
+          </div>
+        </el-form>
+        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+        <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
+      </el-dialog>
 
       <!-- 修改密码的模态框 -->
       <el-dialog v-model="isChangePasswordModalVisible" width="400px" align-center title="修改密码" @close="resetPasswordForm" custom-class="square-modal">
@@ -514,6 +514,11 @@ const hideChangeEmailModal = () => {
 const sendVerificationCode = async () => {
     // 如果当前正在倒计时，则不允许再次发送验证码
     if (countdown.value !== 60) return;
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailPattern.test(emailForm.value.newEmail)) {
+      errorMessage.value = '请输入正确的邮箱格式';
+      return;
+    }
     startCountdown();
     try {
         const response = await axios.get(`/api/system-admin/send-email-code`, {
@@ -525,15 +530,12 @@ const sendVerificationCode = async () => {
             }
         });
 
-        if (response.status === 200) {
-            successMessage.value = '验证码已发送，请查收您的邮箱';
-        } else {
-            errorMessage.value = '验证码发送失败';
+        if (response.status !== 200) {
+            ElNotification.error({title: '发送失败', message: response.data.message});
             resetCountdown(); // 发送失败时重置倒计时
         }
     } catch (error) {
-        errorMessage.value = '验证码发送失败，请稍后再试';
-        console.error('验证码发送失败:', error.response ? error.response.data : error.message);
+        ElNotification.error({title: '发送失败', message: '邮箱已注册'});
         resetCountdown(); // 发送失败时重置倒计时
     }
 };

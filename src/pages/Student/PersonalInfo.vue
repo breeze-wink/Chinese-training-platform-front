@@ -180,43 +180,8 @@ import axios from 'axios';
 import {ElMessageBox, ElMessage, ElForm, ElDialog, ElInput, ElFormItem, ElButton, ElNotification} from 'element-plus';
 import { Edit } from '@element-plus/icons-vue';
 import { mapGetters } from 'vuex';
-import {ref, watch} from "vue";
 
-const countdown = ref(60)
-const codeButtonText = ref('获取验证码')
-let timer; // 用于存储定时器ID
-let isCountingDown = ref(false); // 标记是否正在倒计时
-function startCountdown() {
-    console.log('Starting countdown...');
-    clearInterval(timer); // 清除任何现有的定时器
-    isCountingDown.value = true;
-    if (codeButtonText.value === '重新获取验证码') {
-        countdown.value = 60
-    }
-    timer = setInterval(() => {
-        if (countdown.value > 0) {
-            countdown.value--;
-        } else {
-            clearInterval(timer);
-            isCountingDown.value = false;
-            console.log('Countdown finished.');
-        }
-    }, 1000);
-}
-function resetCountdown() {
-    clearInterval(timer);
-    countdown.value = 60;
-    isCountingDown.value = false;
-}
 
-// 使用 watch 监听 countdown 的变化并更新按钮文本
-watch(countdown, (newVal) => {
-    if (newVal > 0 && newVal <= 60) {
-        codeButtonText.value = `${newVal}s 后重新获取`;
-    } else {
-        codeButtonText.value = '重新获取验证码';
-    }
-});
 
 export default {
     components: {
@@ -278,6 +243,10 @@ export default {
             codeButtonText: '获取验证码',
 
 
+            countdown: 60,
+            isCountingDown: false, // 标记是否正在倒计时
+
+
             passwordRules: {
                 oldPassword: [
                     {required: true, message: '请输入旧密码', trigger: 'blur'}
@@ -296,10 +265,6 @@ export default {
                 newEmail: [
                     {required: true, message: '请输入新的邮箱地址', trigger: 'blur'},
                     {type: 'email', message: '请输入正确的邮箱格式', trigger: ['blur', 'change']}
-                ],
-                verificationCode: [
-                    {required: true, message: '请输入验证码', trigger: 'blur'},
-                    {len: 6, message: '验证码长度应为6位', trigger: 'blur'}
                 ]
             }
         };
@@ -311,6 +276,28 @@ export default {
         },
     },
     methods: {
+        startCountdown() {
+          console.log('Starting countdown...');
+          clearInterval(this.timer); // 清除任何现有的定时器
+          this.isCountingDown = true;
+          if (this.codeButtonText === '重新获取验证码') {
+            this.countdown = 60;
+          }
+          this.timer = setInterval(() => {
+            if (this.countdown > 0) {
+              this.countdown--;
+            } else {
+              clearInterval(this.timer);
+              this.isCountingDown = false;
+              console.log('Countdown finished.');
+            }
+          }, 1000);
+        },
+        resetCountdown() {
+          clearInterval(this.timer);
+          this.countdown = 60;
+          this.isCountingDown = false;
+        },
         async fetchStudentInfo() {
             const accountId = this.accountId;
 
@@ -432,25 +419,35 @@ export default {
             this.successMessage = '';
         },
         async sendVerificationCode() {
-            // 如果当前正在倒计时，则不允许再次发送验证码
-            if (countdown.value !== 60) return;
-            startCountdown();
-            try {
+          // 如果当前正在倒计时，则不允许再次发送验证码
+          if (this.countdown !== 60) return;
+          this.$refs.emailFormRef.validate(async (valid) => {
+            if (valid) {
+              this.startCountdown();
+
+              try {
                 const response = await axios.post(`/api/student/${this.studentInfo.accountId}/change-email/send-code`, {
-                    email: this.emailForm.newEmail
+                  email: this.emailForm.newEmail
                 }, {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                  headers: {
+                    'Content-Type': 'application/json'
+                  }
                 });
-                if (response.status === 200) {
-                    this.successMessage = '验证码已发送，请查收您的邮箱';
+
+                if (response.status !== 200) {
+                  ElNotification({title: '验证码发送失败' , message: response.data.message});
+                  this.resetCountdown();
                 }
-            } catch (error) {
-                this.errorMessage = '验证码发送失败，请稍后再试';
-                console.error('验证码发送失败:', error.response ? error.response.data : error.message);
-                resetCountdown(); // 发送失败时重置倒计时
+              } catch (e) {
+                ElNotification.error({title: '验证码发送失败' , message: '邮箱已注册'});
+                this.resetCountdown();
+              }
+
+            } else {
+              console.log('表单验证失败');
+              return false;
             }
+          });
         },
         async handleChangeEmail() {
             this.$refs.emailFormRef.validate(async (valid) => {
@@ -466,21 +463,18 @@ export default {
                         });
 
                         if (response.status === 200) {
-                            this.successMessage = '邮箱更换成功';
+                            ElMessage.success('邮箱更换成功');
                             this.studentInfo.email = this.emailForm.newEmail;
                             this.hideChangeEmailModal();
                         } else {
-                            this.errorMessage = '邮箱更换失败，状态码: ' + response.status;
                             if (response.data && response.data.message) {
-                                this.errorMessage += ' - ' + response.data.message;
+                              ElMessage.error('邮箱更换失败: ' + response.data.message);
                             }
                         }
                     } catch (error) {
-                        this.errorMessage = '邮箱更换失败，请稍后再试';
                         if (error.response && error.response.data && error.response.data.message) {
-                            this.errorMessage += ' - ' + error.response.data.message;
+                           ElMessage.error('邮箱更换失败: ' + response.data.message);
                         }
-                        console.error('邮箱更换失败:', error.response ? error.response.data : error.message);
                     }
                 } else {
                     console.log('表单验证失败');
@@ -588,7 +582,6 @@ export default {
                     if (error.response && error.response.data && error.response.data.message) {
                         this.accountDeactivationErrorMessage += ' - ' + error.response.data.message;
                     } else if (error.response) {
-                        // 如果服务器返回了500错误或其他错误状态码
                         this.accountDeactivationErrorMessage += '账号注销失败，请稍后再试';
                     }
                     console.error('账号注销失败:', error.response ? error.response.data : error.message);
@@ -643,6 +636,15 @@ export default {
 
     created() {
         this.fetchStudentInfo(); // 在组件创建时获取学生信息
+
+        // 使用 watch 监听 countdown 的变化并更新按钮文本
+        this.$watch('countdown', (newVal) => {
+          if (newVal > 0 && newVal <= 60) {
+            this.codeButtonText = `${newVal}s 后重新获取`;
+          } else {
+            this.codeButtonText = '重新获取验证码';
+          }
+        });
     },
 }
 
