@@ -100,10 +100,6 @@ export default {
         }
 
         this.initialize();
-        console.log('Received parameters:', {
-            assignmentId: this.assignmentId,
-            assignmentName: this.assignmentName
-        });
 
         this.parsedQuestions.forEach((question) => {
             const questionId = question.submissionAnswerId || 'Unknown ID';
@@ -111,9 +107,6 @@ export default {
             const content = question.questionContent || 'No content available';
             const options = question.questionOptions || [];
 
-            console.log(`Question ID: ${question.submissionAnswerId}, Type: ${type}`);
-            console.log(`Content: ${content}`);
-            console.log(`Options: ${options}`);
         });
 
         this.logQuestionsInfo();
@@ -146,15 +139,13 @@ export default {
             tempDiv.innerHTML = htmlContent;
 
             const images = tempDiv.querySelectorAll('img');
-            console.log(`Found ${images.length} images to replace.`); // 查看找到的图片数量
             const replacePromises = Array.from(images).map(async (img) => {
                 const src = img.getAttribute('src');
-                console.log('Original image src:', src);  // 输出原始的 src
+
 
                 if (src && src.startsWith('/uploads/content/')) {
                     const imageName = src.replace('/uploads/content/', '');
                     const imageUrl = `/api/uploads/images/content/${imageName}`;
-                    console.log('Fetching image from:', imageUrl);  // 查看请求的 URL
 
                     const token = this.$store.getters.getToken; // 获取 token
 
@@ -173,7 +164,6 @@ export default {
 
                         if (response.status === 200) {
                             const blobUrl = URL.createObjectURL(response.data);
-                            console.log('Generated Blob URL:', blobUrl);  // 查看生成的 blob URL
                             img.setAttribute('src', blobUrl);
                         } else {
                             console.error(`Failed to fetch image: ${imageUrl}`);
@@ -190,22 +180,18 @@ export default {
         },
 
         async loadImagesForQuestions() {
-            console.log('开始加载问题中的图片');  // 添加调试日志
 
             const promises = this.parsedQuestions.map(async (question) => {
                 if (question.questionContent) {
-                    console.log(`正在处理问题内容: ${question.submissionAnswerId}`);  // 新增日志
                     question.questionContent = await this.replaceImageSrcUtil(question.questionContent);
                 }
                 if (question.questionBody) {
-                    console.log(`正在处理问题体: ${question.submissionAnswerId}`);  // 新增日志
+
                     question.body = await this.replaceImageSrcUtil(question.body);
                 }
             });
 
             await Promise.all(promises);
-
-            console.log('图片加载完成');  // 确认加载完成
         },
 
         initialize() {
@@ -213,10 +199,9 @@ export default {
             if (questionsFromQuery) {
                 try {
                     this.parsedQuestions = JSON.parse(decodeURIComponent(questionsFromQuery));
-                    console.log('Parsed Questions:', this.parsedQuestions);
 
                     this.parsedQuestions.forEach(question => {
-                        console.log(`Question ID: ${question.submissionAnswerId}, Content: ${question.questionContent}, Body: ${question.body}`);
+
                         this.studentAnswers[question.submissionAnswerId] = question.answerContent || '';
                     });
                 } catch (error) {
@@ -229,7 +214,6 @@ export default {
             }
         },
         async submitAnswers() {
-            console.log('开始提交答案');
 
             this.isSubmit = true;
             this.isProcessing = true;
@@ -264,7 +248,6 @@ export default {
                     const message = response.data.message || ''; // 确保 message 存在
                     if (message === 'success' || message === '练习提交成功') {
                         // 成功时跳转到 ManageTest 页面
-                        console.log('提交成功，跳转中...');
                         this.$router.push({ name: 'ManageTest' });
                     } else {
                         console.error('提交答案失败：未预期的响应信息', message);
@@ -324,7 +307,6 @@ export default {
         },
         logQuestionsInfo() {
             this.parsedQuestions.forEach((question, index) => {
-                console.log(`Question ${index + 1}:`, question);
             });
         },
         shouldShowQuestionBody(question) {
