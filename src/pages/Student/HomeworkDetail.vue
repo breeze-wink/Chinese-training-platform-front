@@ -18,7 +18,7 @@
                                 <div v-html="answer.body" class="question-content"></div>
                             </div>
                             <div class="question-sequence-content">
-                                <span class="sequence">{{ answer.sequence }}. </span>
+                                <span class="sequence" v-if="answer.questionType !== 'ESSAY'">{{ answer.sequence }}. </span>
                                 <span v-html="answer.questionContent" class="question-content"></span>
                             </div>
                             <ul v-if="answer.questionOptions" class="options-list">

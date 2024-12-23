@@ -414,7 +414,7 @@ const fetchKnowledgePoints = async () => {
         if (response.status === 200 && response.data) {
             const responseData = response.data.knowledgePoints || {};
             knowledgePoints.value = responseData;
-            categories.value = Object.keys(responseData); // 提取所有分类
+            categories.value = Object.keys(responseData).filter(category => category !== '作文'); // 提取所有分类并去掉'作文'
             console.log(knowledgePoints.value);
         } else {
             console.error('获取知识点失败：', response.data.message);

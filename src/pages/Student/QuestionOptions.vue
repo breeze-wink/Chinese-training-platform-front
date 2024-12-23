@@ -28,58 +28,59 @@
         <!-- 考点选择对话框 -->
         <el-dialog title="考点选择" v-model="dialogVisible" width="50%" :close-on-click-modal="false" :before-close="handleClose">
             <el-checkbox-group v-model="checkList">
-                <div v-for="(group, type) in groupedKnowledgePoints" :key="type" class="knowledge-group">
-                    <div class="knowledge-type">
-                        <el-checkbox
-                            :label="`${type}-all`"
-                            @change="selectAllType(type, $event)"
-                            class="type-checkbox"
-                        >
-                            {{ type }}
-                        </el-checkbox>
-                        <input
-                            v-if="checkList.includes(`${type}-all`)"
-                            type="number"
-                            min="1"
-                            max="10"
-                            v-model.number="typeQuestionNumbers[type]"
-                            class="type-question-number"
-                            @focus="validateQuestionNumber"
-                            @input="validateQuestionNumber"
-                        />
-                    </div>
-                    <div class="knowledge-points">
-                        <el-row :gutter="20">
-                            <el-col :span="8" v-for="item in group" :key="item.id">
-                                <div
-                                    class="checkbox-with-input"
-                                    :class="{ disabled: checkList.includes(`${type}-all`) }"
-                                >
-                                    <el-checkbox
-                                        :label="item.id"
-                                        @change="toggleQuestionInput(item.id)"
-                                        :disabled="checkList.includes(`${type}-all`)"
-                                    >
-                                        {{ item.name }}
-                                    </el-checkbox>
-                                    <transition name="fade">
-                                        <input
-                                            v-if="questionInputs[item.id]"
-                                            type="number"
-                                            min="1"
-                                            max="10"
-                                            v-model.number="questionInputs[item.id].num"
-                                            class="question-number"
-                                            :disabled="checkList.includes(`${type}-all`)"
-                                            @focus="validateQuestionNumber"
-                                            @input="validateQuestionNumber"
-                                        />
-                                    </transition>
-                                </div>
-                            </el-col>
-                        </el-row>
-                    </div>
+              <div v-for="(group, type) in groupedKnowledgePoints" :key="type" class="knowledge-group">
+                <div class="knowledge-type">
+                  <el-checkbox
+                      :label="`${type}-all`"
+                      @change="selectAllType(type, $event)"
+                      class="type-checkbox"
+                  >
+                    {{ type }}
+                  </el-checkbox>
+                  <input
+                      v-if="checkList.includes(`${type}-all`)"
+                      type="number"
+                      min="1"
+                      max="10"
+                      v-model.number="typeQuestionNumbers[type]"
+                      class="type-question-number"
+                      @focus="validateQuestionNumber"
+                      @input="validateQuestionNumber"
+                  />
                 </div>
+
+                <div class="knowledge-points" v-if="type !== '作文'">
+                  <el-row :gutter="20">
+                    <el-col :span="8" v-for="item in group" :key="item.id" >
+                      <div
+                          class="checkbox-with-input"
+                          :class="{ disabled: checkList.includes(`${type}-all`) }"
+                      >
+                        <el-checkbox
+                            :label="item.id"
+                            @change="toggleQuestionInput(item.id)"
+                            :disabled="checkList.includes(`${type}-all`)"
+                        >
+                          {{ item.name }}
+                        </el-checkbox>
+                        <transition name="fade">
+                          <input
+                              v-if="questionInputs[item.id]"
+                              type="number"
+                              min="1"
+                              max="10"
+                              v-model.number="questionInputs[item.id].num"
+                              class="question-number"
+                              :disabled="checkList.includes(`${type}-all`)"
+                              @focus="validateQuestionNumber"
+                              @input="validateQuestionNumber"
+                          />
+                        </transition>
+                      </div>
+                    </el-col>
+                  </el-row>
+                </div>
+              </div>
             </el-checkbox-group>
             <span slot="footer" class="dialog-footer">
                 <div class="button-container">
@@ -107,6 +108,7 @@ import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import axios from 'axios';
 import { mapGetters } from 'vuex';
+import {ElNotification} from "element-plus";
 
 export default {
     components: {
@@ -231,6 +233,8 @@ export default {
 
                 // 隐藏所有输入框
                 this.hideAllInputs();
+                // 取消选择时，移除该类型的题目数量
+                this.typeQuestionNumbers[type] = undefined; // 或者设为null
             }
         },
 
@@ -269,19 +273,30 @@ export default {
                 questionBodyTypes: [],
             };
 
+
             for (const [type, group] of Object.entries(this.groupedKnowledgePoints)) {
-                if (this.typeQuestionNumbers[type]) {
-                    requestBody.questionBodyTypes.push({ type, num: this.typeQuestionNumbers[type] });
+                // 只有在 typeQuestionNumbers 中有值时，才将其推送到 requestBody.questionBodyTypes
+                if (this.typeQuestionNumbers[type] !== undefined && this.typeQuestionNumbers[type] !== null) {
+                  requestBody.questionBodyTypes.push({ type, num: this.typeQuestionNumbers[type] });
+                  console.log(this.typeQuestionNumbers[type]);
                 } else {
-                    group.forEach((item) => {
-                        if (this.checkList.includes(item.id)) {
-                            requestBody.knowledgePoints.push({
-                                knowledgePointId: parseInt(item.id, 10),
-                                num: this.questionInputs[item.id]?.num || 1,
-                            });
-                        }
-                    });
+                  group.forEach((item) => {
+                    if (this.checkList.includes(item.id)) {
+                      requestBody.knowledgePoints.push({
+                        knowledgePointId: parseInt(item.id, 10),
+                        num: this.questionInputs[item.id]?.num || 1,
+                      });
+                      console.log(requestBody);
+                    }
+                  });
                 }
+            }
+            // 验证：如果 knowledgePoints 和 questionBodyTypes 都为空，阻止请求并显示错误信息
+            if (requestBody.knowledgePoints.length === 0 && requestBody.questionBodyTypes.length === 0) {
+              ElNotification.warning("请选择至少一个考点或类型");
+              this.isProcessing = false;
+              this.dialogVisible = true;
+              return; // 终止方法执行
             }
 
             try {
@@ -452,6 +467,15 @@ button:hover {
     text-align: center;
 }
 
+/* 深度选择器以覆盖 el-checkbox 内部的标签样式 */
+:deep(.type-checkbox .el-checkbox__label) {
+  font-size: 24px; /* 根据需要调整 */
+
+  color: #333; /* 可选：调整颜色 */
+}
+
+
+
 .button-container {
     display: flex;
     justify-content: center; /* 水平居中 */
@@ -460,10 +484,11 @@ button:hover {
 
 .knowledge-group {
     margin-bottom: 20px;
+    font-size: 26px; /* 设置整个知识组的字体大小 */
 }
 
 .knowledge-type {
-    font-size: 14px;
+    font-size: 24px;
     color: #888;
     margin-bottom: 5px;
     text-align: left;

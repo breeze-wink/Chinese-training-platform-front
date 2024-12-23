@@ -81,14 +81,6 @@
                             <Edit />
                         </el-icon>
                     </div>
-                    <div class="info-item">
-                        <label>账号注销：</label>
-                        <el-button type="danger" @click="requestAccountDeactivation" class="delete-button">申请注销账号</el-button>
-                        <!-- 显示错误和成功消息 -->
-                        <p v-if="accountDeactivationErrorMessage" class="error-message">{{ accountDeactivationErrorMessage }}</p>
-                        <p v-if="accountDeactivationSuccessMessage" class="success-message">{{ accountDeactivationSuccessMessage }}</p>
-                        <p v-if="deletionResultMessage" class="result-message">{{ deletionResultMessage }}</p>
-                    </div>
                 </el-card>
             </div>
 
@@ -114,25 +106,6 @@
                 </el-form>
                 <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
                 <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
-            </el-dialog>
-
-            <!-- 实名认证对话框 -->
-            <el-dialog title="实名认证" v-model="realNameDialogVisible" width="500px">
-                <el-form :model="realNameForm" label-width="100px" class="form-container">
-                    <el-form-item label="真实姓名" class="form-item-spacing">
-                        <el-input v-model="realNameForm.name" placeholder="请输入真实姓名"
-                                  class="input-limited"></el-input>
-                    </el-form-item>
-                    <el-form-item label="身份证号" class="form-item-spacing">
-                        <el-input v-model="realNameForm.idCard" placeholder="请输入身份证号"
-                                  class="input-limited"></el-input>
-                    </el-form-item>
-                </el-form>
-
-                <div slot="footer" class="dialog-footer">
-                    <el-button @click="realNameDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="submitRealNameVerification">确认</el-button>
-                </div>
             </el-dialog>
             <!-- 修改密码的模态框 -->
             <el-dialog v-model="isChangePasswordModalVisible" title="修改密码" @close="resetPasswordForm" custom-class="square-modal" width="25%" align-center>
@@ -196,9 +169,6 @@ const isChangeEmailModalVisible = ref(false);
 const successMessage = ref('');
 const errorMessage = ref('');
 
-const accountDeactivationErrorMessage = ref('');
-const accountDeactivationSuccessMessage = ref('');
-const deletionResultMessage = ref('');
 const router = useRouter();
 
 const emailFormRef = ref(null);
@@ -421,30 +391,6 @@ const updateName = async () => {
     }
 }
 
-// 提交实名认证
-const submitRealNameVerification = async () => {
-    try {
-        // 调用外部实名认证接口
-        const url = 'https://cloudauth.aliyuncs.com/id2MetaVerify';
-
-        const response = await axios.post(url, {
-            ParamType: 'normal',
-            IdentifyNum: realNameForm.value.idCard,
-            UserName: realNameForm.value.name
-
-        });
-
-        if (response.data.Code === '200') {
-            console.log('实名认证成功');
-            teacherInfo.value.name = realNameForm.value.name; // 更新教师信息中的实名
-            realNameDialogVisible.value = false; // 关闭对话框
-        } else {
-            console.error('实名认证失败:', response.data.Message);
-        }
-    } catch (error) {
-        console.error('实名认证请求失败:', error.message);
-    }
-};
 
 const showChangeEmailModal = () => {
     isChangeEmailModalVisible.value = true;
