@@ -406,8 +406,15 @@ const deletePaper = async (paper) => {
         const response = await axios.delete(`/api/teacher/delete-paper/${paper.id}`);
 
         if (response.status === 200) {
+            papers.value = papers.value.filter(p => p.id !== paper.id); // 从所有试卷中移除该试卷
+            filteredData.value = filteredData.value.filter(p => p.id !== paper.id); // 从筛选后的数据中移除该试卷
+
+            // 如果当前页只剩下了空的试卷，可以手动控制页码跳转，避免页面内容为空
+            if (paginatedData.value.length === 0 && currentPage.value > 1) {
+                currentPage.value -= 1; // 跳转到上一页
+            }
             ElMessage.success(`试卷 ${paper.name} 已删除`);
-            await getPapers();  // 刷新试卷列表
+
         } else {
             ElMessage.error(`删除试卷失败：${response.data.message}`);
         }
