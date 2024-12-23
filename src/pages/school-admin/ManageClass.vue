@@ -13,7 +13,7 @@
 
                 <!-- 查询框 -->
                 <div class="input-button-group">
-                    <el-input v-model="search" placeholder="搜索班级名称或描述" style="width: 300px;"></el-input>
+                    <el-input v-model="search" placeholder="搜索班级名称" style="width: 300px;"></el-input>
                     <el-input v-model="teacherSearch" placeholder="搜索老师姓名" style="width: 300px;"></el-input>
                 </div>
 
@@ -175,13 +175,12 @@ const viewClassDetails = async (item) => {
         const response = await axios.get(`/api/school-admin/${adminId.value}/query-class`, {
             params: { classId: item.classId },
         });
-        console.log(response.data);
+
         if (response.status === 200 && response.data.data) {
             classDetails.value = response.data.data;
-            console.log(classDetails.value)
-            console.log(classDetailsDialogVisible.value)
+
             classDetailsDialogVisible.value = true;  // 显示弹窗
-            console.log(classDetailsDialogVisible.value)
+
             ElMessage({ message: '班级详情获取成功', type: 'success' });
         } else {
             ElMessage({ message: '班级详情为空', type: 'warning' });
@@ -199,7 +198,7 @@ const scoreDetails = ref([]);  // 存储成绩数据
 // 查看成绩详情
 const viewScore = async (item) => {
     const token = store.getters.getToken;
-    console.log(item.classId)
+
     try {
         // 调用成绩详情 API
         const response = await axios.get('/api/school-admin/class/knowledge-point-status', {

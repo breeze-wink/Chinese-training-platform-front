@@ -43,7 +43,9 @@
                   </div>
 
                   <div class="score-input">
+                      <span>分数</span>
                     <el-input-number
+                            style="margin-left: 10px"
                         v-model="sub.markScore"
                         :min="0"
                         :max="sub.subScore"
@@ -187,7 +189,6 @@ const isSubmitAndGetNext = ref(false);
 const fetchSubmissionDetails = async () => {
 
   const currentIndex = computed(() => store.getters.getCurrentSubmissionIndex);
-  console.log('存起来的',currentIndex.value);
 
   const assignmentIdValue = assignmentId.value;
   const studentIdValue = studentId.value;
@@ -209,13 +210,11 @@ const fetchSubmissionDetails = async () => {
 
     if (response.status === 200 && response.data.message === 'success') {
       const submissionData = response.data;
-      console.log('获取作答详情成功', submissionData);
       totalScore.value= submissionData.totalScore;
 
 
 
       const unmarkedSubmissions = computed(() => store.getters.getUnmarkedSubmissions);
-      console.log('未批阅的成员数组:', unmarkedSubmissions.value);
 
 
         const student = unmarkedSubmissions.value.find((s, idx) => {
@@ -227,7 +226,6 @@ const fetchSubmissionDetails = async () => {
         });
 
       studentName.value = student ? student.studentName : '未知学生';
-      console.log('学生姓名:', studentName.value); // 调试日志
 
       // 替换 <img> 标签
       const processed = await replaceImageSrcInQuestions(submissionData.questions);
@@ -378,7 +376,6 @@ const handleMarkScoreChange = (question) => {
   if (question.type === 'CHOICE') {
     if (question.answer === question.studentAnswer) {
       question.markScore = question.score;
-      console.log(question.score);
     }else{
       question.markScore = 0;
     }
@@ -410,7 +407,6 @@ const markCompleted = async () => {
         feedback: feedback.value,
         data: markData,
     };
-    console.log('payload',payload);
 
   try {
     const response = await axios.post('/api/teacher/mark-submission', payload);
@@ -423,7 +419,6 @@ const markCompleted = async () => {
         // 从 unmarkedSubmissions 中移除已批阅的学生
         await store.dispatch('removeUnmarkedSubmission', Number(studentId.value));
         const t = computed(() => store.getters.getUnmarkedSubmissions);
-        console.log('批改后',t.value);
 
       // 导航到下一份批阅
       await nextSubmission();
@@ -443,7 +438,6 @@ const markCompleted = async () => {
 const nextSubmission = async () => {
   // 获取所有提交列表
     const unmarkedSubmissions = computed(() => store.getters.getUnmarkedSubmissions);
-    console.log('unmarkedSubmissions',unmarkedSubmissions.value);
     isSubmitAndGetNext.value = false;
 
     if (!unmarkedSubmissions || unmarkedSubmissions.value.length === 0) {

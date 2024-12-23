@@ -95,8 +95,6 @@ export default {
     created() {
         this.assignmentId = this.$route.params.assignmentId;
         this.assignmentName = this.$route.params.assignmentName;
-        console.log('从路由中获取的 assignmentId:', this.assignmentId); // 增加调试日志
-        console.log('从路由中获取的 assignmentName:', this.assignmentName); // 增加调试日
         if (!this.assignmentId) {
             console.error('assignmentId 未定义');
             this.$message.error('作业ID未定义，请重试。');
@@ -113,7 +111,6 @@ export default {
             return;
         }
 
-        console.log('AssignmentId:', this.assignmentId); // 增加日志以查看 assignmentId
 
         // 从路由参数中获取 score 和 assignmentName
         this.score = this.$route.query.score || null;
@@ -130,15 +127,11 @@ export default {
                     }
                 });
 
-                console.log('响应状态码:', response.status); // 增加日志以查看响应状态码
-                console.log('响应数据:', response.data); // 增加日志以查看响应内容
 
                 if (response.status === 200 && response.data.message === 'success') {
                     this.answers = response.data.data || [];
                     this.feedback = response.data.feedback;
                     this.totalScore = response.data.totalScore;
-
-                    console.log(this.answers)
 
                     // 处理 studentAnswer，只保留字母
                     this.answers.forEach(answer => {
@@ -233,15 +226,12 @@ export default {
             tempDiv.innerHTML = htmlContent;
 
             const images = tempDiv.querySelectorAll('img');
-            console.log(`Found ${images.length} images to replace.`);  // 查看找到的图片数量
             const replacePromises = Array.from(images).map(async (img) => {
                 const src = img.getAttribute('src');
-                console.log('Original image src:', src);  // 输出原始的 src
 
                 if (src && src.startsWith('/uploads/content/')) {
                     const imageName = src.replace('/uploads/content/', '');
                     const imageUrl = `/api/uploads/images/content/${imageName}`;
-                    console.log('Fetching image from:', imageUrl);  // 查看请求的 URL
 
                     const token = this.$store.getters.getToken; // 获取 token
 
@@ -260,7 +250,6 @@ export default {
 
                         if (response.status === 200) {
                             const blobUrl = URL.createObjectURL(response.data);
-                            console.log('Generated Blob URL:', blobUrl);  // 查看生成的 blob URL
                             img.setAttribute('src', blobUrl);
                         } else {
                             console.error(`Failed to fetch image: ${imageUrl}`);
@@ -344,7 +333,7 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
     background: linear-gradient(135deg, #ffffff, #f5f5f5); /* 内容区域的渐变背景 */
     margin-left: 300px;
-    //margin-right: 350px;
+
 }
 
 .sidebar-nav {
@@ -352,11 +341,9 @@ body {
     background-color: #f9f9f9;
     border-radius: 16px;
     padding: 20px;
-    /*margin-left: 20px;*/
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
     background: linear-gradient(135deg, #f9f9f9, #eaeaea); /* 侧边栏的渐变背景 */
     position: sticky;
-    //margin-left: 10px;
     top: 20px;
     height: calc(100vh - 40px);
 }

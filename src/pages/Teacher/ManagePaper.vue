@@ -141,6 +141,17 @@
                 </span>
             </el-form>
         </el-dialog>
+
+        <!-- 加载提示 -->
+        <div v-if="isLoading" class="loading-modal">
+            <div class="modal-content">
+                <p v-if="isLoading">正在加载试卷信息，请稍候...</p>
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- 遮罩层 -->
+        <div v-if="isLoading" class="overlay"></div>
     </div>
 </template>
 
@@ -156,7 +167,7 @@ import {useRouter} from "vue-router"; // 使用 Vuex 进行状态管理
 
 // 获取 Vuex 状态
 const store = useStore();
-
+const isLoading = ref(false);
 // 获取教师 ID
 const teacherId = computed(() => store.state.user.id);
 
@@ -183,7 +194,6 @@ const getPapers = async () => {
                 papers.value = response.data.papers;
                 totalItems.value = papers.value.length;
                 filteredData.value = sortPapers(papers.value);  // 初始时，显示所有试卷
-                console.log(papers.value);
             } else {
                 // 如果返回的数据不是数组，抛出错误
 
@@ -201,9 +211,15 @@ const getPapers = async () => {
 
 // 页面加载时获取试卷数据
 onMounted(() => {
-    getPapers(); // 加载试卷数据
-    fetchClasses();
-    fetchGroups();
+    isLoading.value=true;
+    Promise.all([getPapers(), fetchClasses(), fetchGroups()])
+            .then(() => {
+                isLoading.value = false;
+            })
+            .catch((error) => {
+                console.error('Error loading data:', error);
+                isLoading.value = false;
+            });
 });
 
 // 按照查询条件过滤试卷
@@ -257,7 +273,6 @@ const sortPapers = (papers) => {
 const handleSortChange = (sort) => {
     sortBy.value = sort.prop;  // 当前排序字段
     sortOrder.value = sort.order === 'ascending' ? 'ascending' : 'descending';  // 当前排序顺序
-    console.log( '排序:', sortBy.value, sortOrder.value);
     filteredData.value = sortPapers(papers.value);  // 重新排序
 };
 
@@ -321,7 +336,6 @@ const previewPaper = async (paper) => {
         const response = await axios.get('/api/teacher/paper', { params: { id: paper.id } });
         if (response.status === 200 && response.data.message === 'success') {
             const paperDetails = response.data;
-            console.log('试卷详情:', paperDetails)
 
             // 处理问题数据，确保每个问题都有唯一的 ID
             const formattedQuestions = await Promise.all(paperDetails.questions.map(async q => {
@@ -362,7 +376,6 @@ const previewPaper = async (paper) => {
                 }
             })
             );
-            console.log(formattedQuestions);
 
             // 将试卷题目信息加入 basket
             await store.dispatch('addQuestionsToBasket', formattedQuestions);
@@ -393,8 +406,15 @@ const deletePaper = async (paper) => {
         const response = await axios.delete(`/api/teacher/delete-paper/${paper.id}`);
 
         if (response.status === 200) {
+            papers.value = papers.value.filter(p => p.id !== paper.id); // 从所有试卷中移除该试卷
+            filteredData.value = filteredData.value.filter(p => p.id !== paper.id); // 从筛选后的数据中移除该试卷
+
+            // 如果当前页只剩下了空的试卷，可以手动控制页码跳转，避免页面内容为空
+            if (paginatedData.value.length === 0 && currentPage.value > 1) {
+                currentPage.value -= 1; // 跳转到上一页
+            }
             ElMessage.success(`试卷 ${paper.name} 已删除`);
-            await getPapers();  // 刷新试卷列表
+
         } else {
             ElMessage.error(`删除试卷失败：${response.data.message}`);
         }
@@ -430,7 +450,6 @@ const showPublishDialog = (row) => {
     publishForm.value.selectedStudents = [];
 
     dialogVisible.value = true;  // 打开弹窗
-    console.log(dialogVisible.value);
 
 };
 
@@ -449,14 +468,7 @@ const validationRules = {
         validate: (value) => !!value,
         message: '请选择发布时间'
     },
-    publishTimeAfterNow: {
-        validate: () => {
-            const publishTime = new Date(publishForm.value.publishTime).getTime();
 
-            return publishTime> new Date();
-        },
-        message: '发布时间必须不早于于现在'
-    },
 
     dueTime: {
         validate: (value) => !!value && new Date(value) > new Date(),
@@ -467,7 +479,6 @@ const validationRules = {
         validate: () => {
             const publishTime = new Date(publishForm.value.publishTime).getTime();
             const dueTime = new Date(publishForm.value.dueTime).getTime();
-            console.log('发布时间',publishTime ,'截止时间',dueTime);
             return dueTime > publishTime;
         },
         message: '截止时间必须晚于发布时间'
@@ -532,7 +543,6 @@ const publishHomework = async () => {
         publishTime: publishForm.value.publishTime,
         dueTime: publishForm.value.dueTime
     };
-    console.log(payload);
 
     try {
         const response = await axios.post(`/api/teacher/homework/publish`, payload);
@@ -631,6 +641,67 @@ const fetchStudents = async (classId) => {
     display: flex;
     justify-content: center;  /* 居中 */
     gap: 10px;  /* 按钮之间的间距 */
+}
+
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 300px;
+    width: 100%;
+}
+
+.modal-content p {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+.loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* 确保模态窗在遮罩层之上 */
+}
+
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+    z-index: 999; /* 确保遮罩层在最上层 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.2em;
 }
 
 

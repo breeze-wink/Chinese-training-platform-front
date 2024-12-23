@@ -100,15 +100,10 @@ export default {
         }
 
         this.initialize();
-        console.log('Received parameters:', {
-            practiceId: this.practiceId,
-            mode: this.mode,
-            practiceName: this.practiceName
-        });
+
 
         // 输出问题类型数据，确保问题数据格式正确
         this.parsedQuestions.forEach((question) => {
-            console.log(`Question ID: ${question.practiceQuestionId}, Type: ${question.type}`);
         });
 
         this.logQuestionsInfo();
@@ -148,15 +143,12 @@ export default {
             tempDiv.innerHTML = htmlContent;
 
             const images = tempDiv.querySelectorAll('img');
-            console.log(`Found ${images.length} images to replace.`); // 查看找到的图片数量
             const replacePromises = Array.from(images).map(async (img) => {
                 const src = img.getAttribute('src');
-                console.log('Original image src:', src);  // 输出原始的 src
 
                 if (src && src.startsWith('/uploads/content/')) {
                     const imageName = src.replace('/uploads/content/', '');
                     const imageUrl = `/api/uploads/images/content/${imageName}`;
-                    console.log('Fetching image from:', imageUrl);  // 查看请求的 URL
 
                     const token = this.$store.getters.getToken; // 获取 token
 
@@ -175,11 +167,9 @@ export default {
 
                         if (response.status === 200) {
                             const blobUrl = URL.createObjectURL(response.data);
-                            console.log('Generated Blob URL:', blobUrl);  // 查看生成的 blob URL
 
                             // 确保 setAttribute 之后能正确更新图片路径
                             img.setAttribute('src', blobUrl);
-                            console.log(`Updated image src: ${blobUrl}`);  // 查看更新后的 src
                             // 在图片显示后，清理 Blob URL
                             img.onload = () => {
                                 URL.revokeObjectURL(blobUrl);
@@ -199,22 +189,18 @@ export default {
         },
 
         async loadImagesForQuestions() {
-            console.log('开始加载问题中的图片');  // 添加调试日志
 
             const promises = this.parsedQuestions.map(async (question) => {
                 if (question.questionContent) {
-                    console.log(`正在处理问题内容: ${question.practiceQuestionId}`);  // 新增日志
                     question.questionContent = await this.replaceImageSrcUtil(question.questionContent);
                 }
                 if (question.questionBody) {
-                    console.log(`正在处理问题体: ${question.practiceQuestionId}`);  // 新增日志
                     question.questionBody = await this.replaceImageSrcUtil(question.questionBody);
                 }
             });
 
             await Promise.all(promises);
 
-            console.log('图片加载完成');  // 确认加载完成
         },
 
         initialize() {
@@ -222,7 +208,6 @@ export default {
             if (questionsFromQuery) {
                 try {
                     this.parsedQuestions = JSON.parse(decodeURIComponent(questionsFromQuery));
-                    console.log('Parsed Questions:', this.parsedQuestions);
                     this.parsedQuestions.forEach(question => {
                         this.studentAnswers[question.practiceQuestionId] = question.answerContent || '';
                     });
@@ -241,8 +226,6 @@ export default {
         },
         async submitAnswers() {
             this.toggleLoading(true);
-
-            console.log('开始提交答案');
 
             this.isSubmit = true;
             this.isProcessing = true;
@@ -282,7 +265,6 @@ export default {
                 this.toggleLoading(false); // 提交后隐藏加载提示框
             }, 2000);
 
-            console.log('即将发送的答案数据:', answers);
 
             try {
                 const response = await axios.post(`/api/student/${studentId}/practice/complete`, {
@@ -352,7 +334,6 @@ export default {
                 this.toggleLoading(false); // 保存后隐藏加载提示框
             }, 2000);
 
-            console.log('即将发送的答案数据:', answers);
 
             try {
                 const response = await axios.post(`/api/student/${studentId}/practice/save`, {
@@ -424,7 +405,6 @@ export default {
         },
         logQuestionsInfo() {
             this.parsedQuestions.forEach((question, index) => {
-                console.log(`Question ${index + 1}:`, question);
             });
         },
         shouldShowQuestionBody(question) {

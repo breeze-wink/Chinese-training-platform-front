@@ -34,7 +34,9 @@
           </el-table-column>
           <el-table-column label="操作" width="200">
             <template #default="{ row }">
-              <el-button size="small" type="primary" @click="viewCompletion(row)">查看完成情况</el-button>
+              <el-button size="small" type="primary"
+                         :disabled="row.status === '未截止'"
+                         @click="viewCompletion(row)">查看完成情况</el-button>
 
             </template>
           </el-table-column>
@@ -336,7 +338,6 @@ const reviewAssignment = (submission) => {
   // 将未批阅的学生列表存入 Vuex
   store.dispatch('setUnmarkedSubmissions', unmarkedSubmissions);
   const unmarked = computed(() => store.getters.getUnmarkedSubmissions);
-  console.log('存起来的',unmarked.value);
   // 找到当前批阅的学生索引
   const currentIndex = unmarkedSubmissions.findIndex(s => s.studentId === submission.studentId);
   if (currentIndex === -1) {

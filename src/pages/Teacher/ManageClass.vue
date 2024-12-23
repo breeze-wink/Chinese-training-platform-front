@@ -469,7 +469,6 @@ const fetchClassList = async () => {
 
         if (response.status === 200 ) {
             classList.value = response.data.data;
-            console.log('获取班级列表成功:', response.data);
         } else {
             console.error('获取班级列表失败:', response.data.message);
         }
@@ -509,12 +508,10 @@ watch(
 // 获取小组信息列表的函数
 const fetchGroupList = async () => {
     try {
-        console.log(teacherId);
         const response = await axios.get(`/api/teacher/${teacherId.value}/get-groups`);
 
         if (response.status === 200 ) {
             groupList.value = response.data.data;
-            console.log('获取小组列表成功:', response.data);
         } else {
             console.error('获取小组列表失败:', response.data.message);
         }
@@ -533,7 +530,6 @@ const createClass = async () => {
         });
 
         if (response.status === 200 ) {
-            console.log(response.data);
             // 创建成功后，获取新的班级码并添加到班级列表中
             const newClassId = response.data.classId; // 假设返回数据中包含新创建的班级详细信息
             const newClassCode = response.data.classCode; // 假设返回数据中包含新创建的班级详细信息
@@ -595,7 +591,6 @@ const viewMembers = async (classInfo) => {
 
         if (response.status === 200 ) {
             classMembers.value = response.data.data;
-            console.log(classMembers.value);
 
             membersDialogVisible.value = true;
         } else {
@@ -611,12 +606,9 @@ const viewGroupMembers = async (groupInfo) => {
         const response = await axios.get(`/api/teacher/${teacherId.value}/groups-members`, {
             params: { groupId: groupInfo.groupId}
         });
-        console.log(groupInfo.groupId);
         if (response.status === 200 ) {
             groupMembers.value = response.data.students;
-            console.log(groupMembers.value);
             selectedGroupId.value=groupInfo.groupId;
-            console.log(selectedGroupId.value);
 
             groupMembersDialogVisible.value = true;
         } else {
@@ -730,7 +722,6 @@ const disbandClass = async (classItem) => {
 //解散小组
 // 解散小组的函数
 const disbandGroup = async (group) => {
-    console.log(group);
     try {
         // 调用后端 API 删除小组
         const response = await axios.delete(`/api/teacher/${teacherId.value}/disband-group`, {
@@ -783,7 +774,6 @@ const fetchKnowledgePoints = async (classId) => {
 
         if (response.status === 200 ) {
             knowledgePoints.value = response.data.data;
-            console.log('获取知识点掌握情况成功:', response.data.data);
         } else {
             ElMessage.error(response.data.message || '获取知识点掌握情况失败');
         }

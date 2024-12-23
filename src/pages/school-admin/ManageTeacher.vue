@@ -92,7 +92,7 @@ const filteredData = ref([]);  // 用来存储筛选后的数据
 const getTeachers = async () => {
   try {
     const response = await axios.get(`/api/school-admin/${adminId.value}/query-all-teachers`);
-    console.log(response.data.data );
+
     if (response.status === 200) {
       teachers.value = response.data.data.sort((a, b) => b.permission - a.permission);
       totalItems.value = response.data.data.length;

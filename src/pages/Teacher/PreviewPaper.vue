@@ -288,7 +288,6 @@ const  generatePaper = async () => {
         })),
     };
 
-    console.log(paperData);
 
     try {
         // 发送 POST 请求

@@ -11,7 +11,7 @@
                 <!-- 个人信息卡片 -->
                 <el-card class="info-card">
                     <div class="info-item">
-                        <label>昵称：</label>
+                        <label>用户名：</label>
                         <span v-if="!editNickname">{{ studentInfo.username }}</span>
                         <el-input
                             v-else
@@ -191,7 +191,6 @@ function startCountdown() {
         countdown.value = 60
     }
     timer = setInterval(() => {
-        console.log(`Countdown value: ${countdown.value}`);
         if (countdown.value > 0) {
             countdown.value--;
         } else {
@@ -315,7 +314,6 @@ export default {
                 return;
             }
 
-            console.log('Fetching student info for account ID:', accountId); // 打印 accountId 以确认其值
 
             try {
                 const response = await axios.get(`/api/student/${accountId}`);
@@ -368,6 +366,18 @@ export default {
             requestBody.username = this.studentInfo.username;
             requestBody.name = this.studentInfo.name;
             requestBody.grade = this.studentInfo.grade;
+
+            // 校验 username 格式，只允许字母、数字和下划线
+            const usernameRegex = /^[a-zA-Z0-9_]+$/;
+            if (!usernameRegex.test(requestBody.username)) {
+                ElNotification.error({
+                    title: '用户名格式错误',
+                    message: '昵称只能包含字母、数字和下划线，请重新输入',
+                });
+                // location.reload();
+                this.fetchStudentInfo();
+                return; // 阻止后续操作
+            }
 
             // 如果没有任何字段被编辑，则不发送请求
             if (Object.keys(requestBody).length === 0) {
