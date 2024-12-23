@@ -279,9 +279,7 @@ import 'quill/dist/quill.bubble.css';
 
 import { watchEffect } from 'vue';
 
-// watchEffect(() => {
-//     console.log('Question content:', question.value.content);
-// });
+
 // 定义状态
 const route = useRoute();
 const store = useStore();
@@ -386,11 +384,9 @@ function onEditorReady(editor) {
 
 // 富文本编辑器内容变化时调整高度
 function onEditorInput() {
-    console.log('Input event, content:', question.value.content);
     adjustTextareaHeight({ target: document.querySelector(".ql-editor") });
 }
 watch(() => question.value.content, (newContent) => {
-    console.log('CHANGE', newContent);
     adjustTextareaHeight({ target: document.querySelector(".ql-editor") });
 });
 
@@ -442,15 +438,13 @@ const replaceImageSrcUtil = async (htmlContent) => {
     tempDiv.innerHTML = htmlContent;
 
     const images = tempDiv.querySelectorAll('img');
-    console.log(`Found ${images.length} images to replace.`);
+
     const replacePromises = Array.from(images).map(async (img) => {
         const src = img.getAttribute('src');
-        console.log('Original image src:', src);
 
         if (src && src.startsWith('/uploads/content/')) {
             const imageName = src.replace('/uploads/content/', '');
             const imageUrl = `/api/uploads/images/content/${imageName}`;
-            console.log('Fetching image from:', imageUrl);
 
             const token = store.getters.getToken;
 
@@ -469,7 +463,7 @@ const replaceImageSrcUtil = async (htmlContent) => {
 
                 if (response.status === 200) {
                     const blobUrl = URL.createObjectURL(response.data);
-                    console.log('Generated Blob URL:', blobUrl);
+
                     img.setAttribute('src', blobUrl);
                 } else {
                     console.error(`Failed to fetch image: ${imageUrl}`);
@@ -501,7 +495,6 @@ const deleteImage = async (type, imageName) => {
         });
 
         if (response.status === 200) {
-            console.log(`Image ${imageName} deleted successfully.`);
         } else {
             console.error(`Failed to delete image: ${imageName}`);
         }
@@ -532,7 +525,6 @@ const uploadImage = async (file) => {
 
         if (response.status === 200 && response.data && response.data.imageUrl) {
             const imageUrl = response.data.imageUrl;
-            console.log('图片上传成功，URL:', imageUrl);
             return imageUrl; // 返回图片 URL
         } else {
             console.error('图片上传失败，服务器未返回 imageUrl');
@@ -565,32 +557,28 @@ const processContentImages = async (content) => {
 
 // 加载题目中的图片
 async function loadImagesForQuestions() {
-    console.log('开始加载问题中的图片');
 
     const promises = question.value.subQuestions.map(async (subQuestion) => {
         if (subQuestion.content) {
-            console.log(`正在处理问题内容: ${subQuestion.practiceQuestionId}`);
+
             subQuestion.content = await replaceImageSrcUtil(subQuestion.content);
         }
         if (subQuestion.body) {
-            console.log(`正在处理问题体: ${subQuestion.practiceQuestionId}`);
+
             subQuestion.body = await replaceImageSrcUtil(subQuestion.body);
         }
     });
 
     // 处理主题的图片
     if (question.value.content) {
-        console.log(`正在处理主问题内容`);
         question.value.content = await replaceImageSrcUtil(question.value.content);
     }
     if (question.value.body) {
-        console.log(`正在处理主问题体`);
         question.value.body = await replaceImageSrcUtil(question.value.body);
     }
 
     await Promise.all(promises);
 
-    console.log('图片加载完成');
 }
 
 async function fetchQuestion() {
@@ -613,8 +601,6 @@ async function fetchQuestion() {
 
         if (response.status === 200) {
             const questionData = response.data;
-
-            console.log('Received question data:', response.data);
 
             // 验证返回的数据是否完整
             if (!questionData || (!questionData.content && !questionData.subQuestions)) {
@@ -751,7 +737,6 @@ async function approval() {
                 try {
                     let content = await processContentImages(question.value.content);
 
-                    console.log("Checking content:", content, "answer:", question.value.answer);
                     // 只有一个问题
                     payload.questions.push({
                         problem: content,
@@ -797,7 +782,6 @@ async function approval() {
             }
         }
 
-        console.log("Submitting question with id:", payload);
 
         try {
             const response = await axios.put('/api/teacher/modify-question', payload, {
@@ -875,9 +859,6 @@ async function approval() {
                     }
                 }
             }
-
-            console.log("Submitting question with id:", requestPayload);
-
             // 发送PUT请求到 approve-question
             const response = await axios.put('/api/teacher/approve-question', requestPayload, {
                 headers: {
@@ -918,8 +899,6 @@ function rejectQuestion() {
             id: route.query.id, // 获取题目ID
             comment: value // 驳回理由
         };
-
-        console.log("Submitting rejection with id:", requestPayload);
 
         axios.put('/api/teacher/deny-upload-question', requestPayload)
                 .then(response => {

@@ -168,7 +168,6 @@ export default {
                     this.questions = response.data.questions;
                     this.totalQuestions = this.questions.length;
                     this.updatePaginatedQuestions(); // 更新分页数据
-                    console.log('获取题目成功:', this.questions);
                 } else {
                     throw new Error('获取题目失败');
                 }
@@ -213,13 +212,10 @@ export default {
 
         async handleDelete(row) {
             const token = this.$store.getters.getToken;
-            console.log("Current token:", token); // 打印 token
             if (!token) {
                 ElMessage.error('Token 不存在，请登录');
                 return;
             }
-
-            console.log(row.questionId, row.type)
 
             // 提示用户是否确认删除
             ElMessageBox.confirm('确定要删除这道题目吗?', '删除题目', {
@@ -228,7 +224,6 @@ export default {
                 type: 'warning'
             }).then(async () => {
                 try {
-                    console.log(row.questionId, row.type)
                     // 发送 DELETE 请求，传递查询参数
                     const response = await axios.delete(`/api/teacher/delete-question`, {
                         params: {
@@ -267,7 +262,6 @@ export default {
         },
 
         viewQuestionDetail(questionId, type) {
-            console.log(questionId, type); // 验证转换是否正确
             this.$router.push({
                 name: 'SeeQuestion',
                 query: {
@@ -279,8 +273,7 @@ export default {
 
         // 审核操作
         handleAudit(row) {
-            console.log(row)
-            console.log(row.id)
+
             this.router.push({
                 name: 'AuditStrategy',
                 query: {

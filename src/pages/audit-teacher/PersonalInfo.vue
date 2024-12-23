@@ -247,7 +247,7 @@ const passwordRules = ref({
     ]
 });
 const resetPasswordForm = () => {
-    console.log('resetPasswordForm called');
+
     // 清空表单
     Object.assign(passwordForm.value, {
         oldPassword: '',
@@ -262,12 +262,12 @@ const resetPasswordForm = () => {
 };
 // 编辑密码的逻辑（可以弹出对话框等）
 const editPassword = () => {
-    console.log('showChangePasswordModal called');
+
     isChangePasswordModalVisible.value = true;
 };
 
 const hideChangePasswordModal = () => {
-    console.log('hideChangePasswordModal called');
+
     isChangePasswordModalVisible.value = false;
 };
 const handlePasswordChange = async () => {
@@ -277,10 +277,7 @@ const handlePasswordChange = async () => {
     await form.validate(async (valid) => {
         if (valid) {
             try {
-                console.log('Sending data:', {
-                    password: passwordForm.value.oldPassword,
-                    newPassword: passwordForm.value.newPassword,
-                });
+
                 const response = await axios.post(
                     `/api/teacher/${teacherId.value}/change-password`,
                     {
@@ -321,7 +318,6 @@ const getTeacherInfo = async () => {
         const response = await axios.get(`/api/teacher/${teacherId.value}`);
         if (response.status === 200 && response.data.message === 'success') {
             // 更新教师信息
-            console.log(response.data.data)
             teacherInfo.value = response.data.data;
         } else {
             errorMessage.value = '获取教师信息失败：' + response.data.message;
@@ -366,12 +362,10 @@ const updateUsername = async () => {
 
         // 处理响应
         if (response.status === 200) {
-            console.log(response.data.message);
-            ELMessage.success('修改成功');
-
+            ElMessage.success('修改成功');
         } else {
             console.error(response.data.message);
-            ELMessage.error('修改失败' + response.data.message);
+            ElMessage.error('修改失败' + response.data.message);
         }
     } catch (error) {
         // 处理错误
@@ -389,7 +383,6 @@ const updatePhoneNumber = async () => {
         });
 
         if (response.status === 200 ) {
-            console.log(response.data.message);
             ElMessage.success('修改成功');
         } else {
             console.error(response.data.message);
@@ -412,7 +405,6 @@ const updateName = async () => {
 
         if (response.status === 200 && response.data.message === '姓名修改成功') {
 
-            console.log(response.data.message);
         } else {
             console.error(response.data.message);
         }
@@ -435,7 +427,6 @@ const submitRealNameVerification = async () => {
         });
 
         if (response.data.Code === '200') {
-            console.log('实名认证成功');
             teacherInfo.value.name = realNameForm.value.name; // 更新教师信息中的实名
             realNameDialogVisible.value = false; // 关闭对话框
         } else {
@@ -463,20 +454,19 @@ const codeButtonText = ref('获取验证码')
 let timer; // 用于存储定时器ID
 let isCountingDown = ref(false); // 标记是否正在倒计时
 function startCountdown() {
-    console.log('Starting countdown...');
+
     clearInterval(timer); // 清除任何现有的定时器
     isCountingDown.value = true;
     if (codeButtonText.value === '重新获取验证码') {
         countdown.value = 60
     }
     timer = setInterval(() => {
-        console.log(`Countdown value: ${countdown.value}`);
+
         if (countdown.value > 0) {
             countdown.value--;
         } else {
             clearInterval(timer);
             isCountingDown.value = false;
-            console.log('Countdown finished.');
         }
     }, 1000);
 }

@@ -64,7 +64,7 @@
             <label>绑定邮箱：</label>
             <span :class="{'text-danger': !email}">{{ email ? email : '还未绑定' }}</span>
             <el-button text bg v-if="!email" type="primary" @click="showBindEmailDialog = true">绑定邮箱</el-button>
-              <el-icon @click="showChangeEmailModal" class="edit-icon">
+              <el-icon v-if="email" @click="showChangeEmailModal" class="edit-icon">
                   <Edit />
               </el-icon>
           </div>
@@ -89,7 +89,7 @@
       </div>
     </div>
       <!-- 绑定邮箱对话框 -->
-      <el-dialog title="绑定邮箱" v-model="showBindEmailDialog" width="25%" align-center>
+      <el-dialog title="绑定邮箱" v-model="showBindEmailDialog" width="450px" align-center>
           <el-form :model="bindEmailForm" label-width="100px">
               <el-form-item label="邮箱地址">
                   <el-input v-model="bindEmailForm.email" placeholder="请输入邮箱地址" style="width: 95%;"></el-input>
@@ -108,18 +108,18 @@
       </el-dialog>
 
       <!-- 更换邮箱模态窗口 -->
-      <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="25%" align-center>
+      <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="450px" align-center>
           <el-form :model="bindEmailForm" :rules="emailRules" ref="emailFormRef" label-width="100px">
               <el-form-item label="新邮箱" prop="newEmail">
-                  <el-input v-model="bindEmailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 95%;"></el-input>
+                  <el-input v-model="bindEmailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 300px;"></el-input>
               </el-form-item>
               <el-form-item label="验证码" prop="verificationCode">
                   <el-row :gutter="10">
                       <el-col :span="10">
-                          <el-input v-model="bindEmailForm.verificationCode" placeholder="请输入验证码" style="width: 95%;"></el-input>
+                          <el-input v-model="bindEmailForm.verificationCode" placeholder="请输入验证码" style="width: 180px;"></el-input>
                       </el-col>
                       <el-col :span="8">
-                          <el-button @click="sendVerificationCodeForChangeEmail" class="verify-button" style="margin-left: -10px;">{{ codeButtonText }}</el-button>
+                          <el-button @click="sendVerificationCodeForChangeEmail" class="verify-button" style="margin-left: 60px;">{{ codeButtonText }}</el-button>
                       </el-col>
                   </el-row>
               </el-form-item>
@@ -306,20 +306,20 @@ const codeButtonText = ref('获取验证码')
 let timer; // 用于存储定时器ID
 let isCountingDown = ref(false); // 标记是否正在倒计时
 function startCountdown() {
-    console.log('Starting countdown...');
+
     clearInterval(timer); // 清除任何现有的定时器
     isCountingDown.value = true;
     if (codeButtonText.value === '重新获取验证码') {
         countdown.value = 60
     }
     timer = setInterval(() => {
-        console.log(`Countdown value: ${countdown.value}`);
+
         if (countdown.value > 0) {
             countdown.value--;
         } else {
             clearInterval(timer);
             isCountingDown.value = false;
-            console.log('Countdown finished.');
+
         }
     }, 1000);
 }
@@ -397,7 +397,7 @@ const updateUsername = async () => {
     const url = `/api/school-admin/${schoolAdminId.value}/update-username`;
 
     // 发送 POST 请求
-    const response = await axios.post(url, {
+    const response = await axios.put(url, {
       username: adminName.value
     });
 
@@ -462,7 +462,7 @@ const sendVerificationCodeForChangeEmail = async () => {
         ElMessage({ message: '请输入有效的邮箱地址', type: 'error' });
         return;
     }
-console.log(bindEmailForm.value.newEmail)
+
     try {
         const response = await axios.get(`/api/school-admin/send-email-code`, {
             params: {

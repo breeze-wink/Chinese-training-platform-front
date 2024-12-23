@@ -43,7 +43,9 @@
                   </div>
 
                   <div class="score-input">
+                      <span>分数</span>
                     <el-input-number
+                            style="margin-left: 10px"
                         v-model="sub.markScore"
                         :min="0"
                         :max="sub.subScore"
