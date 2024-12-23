@@ -174,7 +174,7 @@ export default {
                 }
             } catch (err) {
                 this.error =
-                    err.response?.data?.message || err.message || '无法连接到服务器，请稍后再试';
+                    err.response?.data?.message || err.message || '获取题目列表失败，请稍后再试';
                 ElMessage.error(this.error);
             } finally {
                 if (this.questionType === 'access') {

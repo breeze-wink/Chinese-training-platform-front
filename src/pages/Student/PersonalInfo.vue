@@ -526,7 +526,7 @@ export default {
                             ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
                         }
                     } catch (error) {
-                        this.passwordErrorMessage = '密码更改失败，请检查网络连接或稍后再试';
+                        this.passwordErrorMessage = '密码更改失败，请稍后再试';
                         ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
                     }
                 } else {
@@ -574,7 +574,7 @@ export default {
                         this.accountDeactivationErrorMessage += ' - ' + error.response.data.message;
                     } else if (error.response) {
                         // 如果服务器返回了500错误或其他错误状态码
-                        this.accountDeactivationErrorMessage += ' - 服务器内部错误';
+                        this.accountDeactivationErrorMessage += '账号注销失败，请稍后再试';
                     }
                     console.error('账号注销失败:', error.response ? error.response.data : error.message);
                 }

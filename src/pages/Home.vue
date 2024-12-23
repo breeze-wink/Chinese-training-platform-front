@@ -644,7 +644,7 @@ async function sendVerificationCode(userType) {
             resetCountdown(); // 发送失败时重置倒计时
         }
     } catch (error) {
-        ElNotification.error({ title: '网络错误:', message: error.response ? error.response.data : error.message });
+        ElNotification.error({ title: '验证码发送失败:', message: error.response ? error.response.data : error.message });
         resetCountdown(); // 发送失败时重置倒计时
     } finally {
         sendingCode.value = false;
@@ -677,7 +677,7 @@ const sendVerificationCodeFor = async () => {
         }
     } catch (error) {
         console.error('Error occurred while sending verification code:', error);
-        ElNotification.error({ title: '验证码发送失败', message: '验证码发送失败，请检查网络连接或稍后再试' });
+        ElNotification.error({ title: '验证码发送失败', message: '验证码发送失败，请稍后再试' });
         resetCountdown(); // 发送失败时重置倒计时
     } finally {
         sendingCode.value = false;
@@ -714,7 +714,7 @@ const resetPassword = () => {
                 }
             } catch (error) {
                 console.error('Error occurred while resetting password:', error);
-                ElNotification.error({ title: '密码重置失败', message: '密码重置失败，请检查网络连接或稍后再试' });
+                ElNotification.error({ title: '密码重置失败', message: '密码重置失败，请稍后再试' });
             }
         } else {
             console.log('验证失败');

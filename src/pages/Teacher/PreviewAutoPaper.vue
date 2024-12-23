@@ -324,8 +324,8 @@ const generatePaper = async () => {
         }
     } catch (error) {
         ElNotification.error({
-            title: '请求失败',
-            message: '无法连接服务器，请稍后再试。',
+            title: '生成失败',
+            message: '试卷生成失败，请稍后再试。',
             duration: 2000,
         });
         console.error(error);
@@ -459,8 +459,8 @@ const regeneratePaper = async () => {
         }
     } catch (error) {
         ElNotification.error({
-            title: '请求失败',
-            message: '无法连接服务器，请稍后再试。',
+            title: '生成失败',
+            message: '试卷生成失败，请稍后再试。',
             duration: 2000,
         });
         console.error(error);
