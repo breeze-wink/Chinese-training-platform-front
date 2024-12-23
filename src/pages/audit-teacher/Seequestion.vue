@@ -400,10 +400,10 @@ async function fetchQuestion() {
             if (err.response.status === 403) {
                 errorMessage = '您没有权限访问该题目。请确认您的权限设置。';
             } else {
-                errorMessage = err.response?.data?.message || err.message || '无法连接到服务器，请稍后再试';
+                errorMessage = err.response?.data?.message || err.message || '获取题目失败，请稍后再试';
             }
         } else {
-            errorMessage = '无法连接到服务器，请稍后再试';
+            errorMessage = '获取题目失败，请稍后再试';
         }
         error.value = errorMessage;
         ElNotification.error({ title: '错误', message: errorMessage });

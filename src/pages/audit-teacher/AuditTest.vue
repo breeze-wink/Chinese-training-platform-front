@@ -634,10 +634,10 @@ async function fetchQuestion() {
             if (err.response.status === 403) {
                 errorMessage = '您没有权限访问该题目。请确认您的权限设置。';
             } else {
-                errorMessage = err.response?.data?.message || err.message || '无法连接到服务器，请稍后再试';
+                errorMessage = err.response?.data?.message || err.message || '获取题目失败，请稍后再试';
             }
         } else {
-            errorMessage = '无法连接到服务器，请稍后再试';
+            errorMessage = '获取题目失败，请稍后再试';
         }
         error.value = errorMessage;
         ElNotification.error({ title: '错误', message: errorMessage });
@@ -800,9 +800,9 @@ async function approval() {
             let errorMessage = '';
             if (error.response) {
                 console.error('Error details:', error.response);
-                errorMessage = error.response.data?.message || '请求失败';
+                errorMessage = error.response.data?.message || '提交失败';
             } else {
-                errorMessage = '无法连接到服务器，请稍后再试';
+                errorMessage = '提交失败，请稍后再试';
             }
             ElNotification.error({ title: '错误', message: errorMessage });
         }
@@ -877,9 +877,9 @@ async function approval() {
             let errorMessage = '';
             if (error.response) {
                 console.error('Error details:', error.response);
-                errorMessage = error.response.data?.message || '请求失败';
+                errorMessage = error.response.data?.message || '题目审核失败';
             } else {
-                errorMessage = '无法连接到服务器，请稍后再试';
+                errorMessage = '题目审核失败，请稍后再试';
             }
             ElNotification.error({ title: '错误', message: errorMessage });
         }
@@ -913,9 +913,9 @@ function rejectQuestion() {
                 .catch(error => {
                     let errorMessage = '';
                     if (error.response) {
-                        errorMessage = error.response.data?.message || '请求失败';
+                        errorMessage = error.response.data?.message || '题目驳回失败';
                     } else {
-                        errorMessage = '无法连接到服务器，请稍后再试';
+                        errorMessage = '题目驳回失败，请稍后再试';
                     }
                     ElNotification.error({ title: '错误', message: errorMessage });
                 });
