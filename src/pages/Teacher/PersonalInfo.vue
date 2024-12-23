@@ -426,7 +426,7 @@ const handlePasswordChange = async () => {
                     ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
                 }
             } catch (error) {
-                let errorMessage = '密码更改失败，请检查网络连接或稍后再试';
+                let errorMessage = '密码更改失败，请稍后再试';
                 ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
                 passwordErrorMessage.value = errorMessage;
             }
@@ -565,7 +565,7 @@ const requestAccountDeactivation = () => {
                 accountDeactivationErrorMessage.value = '账号注销失败';
             }
         } catch (error) {
-            accountDeactivationErrorMessage.value = '账号注销失败，请检查网络连接或稍后再试';
+            accountDeactivationErrorMessage.value = '账号注销失败，请稍后再试';
             console.error('账号注销失败:', error.response ? error.response.data : error.message);
         }
     }).catch(() => {

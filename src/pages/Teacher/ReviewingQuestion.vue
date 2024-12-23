@@ -103,7 +103,7 @@ export default {
             }
           })
           .catch(error => {
-            this.$message.error('网络错误');
+            this.$message.error('题目获取失败');
           });
     },
 
@@ -119,7 +119,7 @@ export default {
             }
           })
           .catch(error => {
-            this.$message.error('网络错误');
+            this.$message.error('题目获取失败');
           });
     },
 
@@ -135,7 +135,7 @@ export default {
             }
           })
           .catch(error => {
-            this.$message.error('网络错误');
+            this.$message.error('删除失败');
           });
     },
 
