@@ -369,6 +369,18 @@ export default {
             requestBody.name = this.studentInfo.name;
             requestBody.grade = this.studentInfo.grade;
 
+            // 校验 username 格式，只允许字母、数字和下划线
+            const usernameRegex = /^[a-zA-Z0-9_]+$/;
+            if (!usernameRegex.test(requestBody.username)) {
+                ElNotification.error({
+                    title: '用户名格式错误',
+                    message: '昵称只能包含字母、数字和下划线，请重新输入',
+                });
+                // location.reload();
+                this.fetchStudentInfo();
+                return; // 阻止后续操作
+            }
+
             // 如果没有任何字段被编辑，则不发送请求
             if (Object.keys(requestBody).length === 0) {
                 ElNotification.warning({ title: '学生信息未修改', message: "信息未更改，没有需要更新的信息" });
