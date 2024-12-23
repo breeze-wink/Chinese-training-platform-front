@@ -99,7 +99,7 @@ const items = ref([]);
 // 过滤搜索结果
 const filteredData = computed(() => {
   return items.value.filter(item =>
-      item.name.includes(search.value) || item.description.includes(search.value)
+      item.name.includes(search.value)
   );
 });
 

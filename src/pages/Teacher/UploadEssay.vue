@@ -138,9 +138,9 @@ const viewEssay = async (item) => {
         if (error.response && error.response.status === 404) {
             ElMessage({ message: '文件未找到，请检查ID是否正确', type: 'error' });
         } else if (error.message.includes('ERR_CONNECTION_REFUSED')) {
-            ElMessage({ message: '无法连接到服务器，请检查服务器是否启动并确保端口配置正确', type: 'error' });
+            ElMessage({ message: '文件未找到，请检查ID是否正确', type: 'error' });
         } else if (error.message.includes('CORS')) {
-            ElMessage({ message: '跨域请求被阻止，请确保服务器配置允许跨域访问', type: 'error' });
+            ElMessage({ message: '文件未找到，请检查ID是否正确', type: 'error' });
         } else {
             ElMessage({ message: '文件查看失败: ' + error.message, type: 'error' });
         }

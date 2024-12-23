@@ -164,7 +164,6 @@
                             <el-input v-model="formData.confirmPassword" placeholder="请重复输入密码" style="width: 250px" type="password"></el-input>
                         </el-form-item>
 
-                        <el-button type="primary" style="display: block; margin: 0 auto;" @click="resetPassword">重置密码</el-button>
                     </div>
 
                     <!-- Step3 -->
@@ -175,7 +174,7 @@
 
                 <div slot="footer" class="dialog-footer1">
                     <el-button v-if="active > 1 && active < 3" @click="front">上一步</el-button>
-                    <el-button v-if="active < 3" @click="nextStep">下一步</el-button>
+                    <el-button v-if="active > 0 && active < 3" @click="handleClick">下一步</el-button>
                     <el-button v-if="active === 3" @click="goToOwnPage" type="primary" class="custom-button">进入平台
                     </el-button>
                 </div>
@@ -447,7 +446,7 @@ const login = async () => {
             //使用vuex更新用户信息
             await store.dispatch('login', {
                 id: response.data.id,
-                role: Identity.value,
+                role: response.data.permission === 1 ? 'audit-teacher': Identity.value,
                 token: response.data.token,
                 permission: response.data.permission // 使用正确的字段名
         });
@@ -645,7 +644,7 @@ async function sendVerificationCode(userType) {
             resetCountdown(); // 发送失败时重置倒计时
         }
     } catch (error) {
-        ElNotification.error({ title: '网络错误:', message: error.response ? error.response.data : error.message });
+        ElNotification.error({ title: '验证码发送失败:', message: error.response ? error.response.data : error.message });
         resetCountdown(); // 发送失败时重置倒计时
     } finally {
         sendingCode.value = false;
@@ -678,7 +677,7 @@ const sendVerificationCodeFor = async () => {
         }
     } catch (error) {
         console.error('Error occurred while sending verification code:', error);
-        ElNotification.error({ title: '验证码发送失败', message: '验证码发送失败，请检查网络连接或稍后再试' });
+        ElNotification.error({ title: '验证码发送失败', message: '验证码发送失败，请稍后再试' });
         resetCountdown(); // 发送失败时重置倒计时
     } finally {
         sendingCode.value = false;
@@ -715,7 +714,7 @@ const resetPassword = () => {
                 }
             } catch (error) {
                 console.error('Error occurred while resetting password:', error);
-                ElNotification.error({ title: '密码重置失败', message: '密码重置失败，请检查网络连接或稍后再试' });
+                ElNotification.error({ title: '密码重置失败', message: '密码重置失败，请稍后再试' });
             }
         } else {
             console.log('验证失败');
@@ -723,7 +722,15 @@ const resetPassword = () => {
         }
     });
 };
+const handleClick = () => {
+    if (active.value < 3) {
+        nextStep();
+    }
+    if (active.value === 2) {
+        resetPassword(); // 当 active === 2 时额外调用 resetPassword
+    }
 
+};
 const countdown = ref(60)
 const codeButtonText = ref('获取验证码')
 let timer; // 用于存储定时器ID

@@ -162,7 +162,7 @@ import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import {computed, ref, onMounted, reactive, nextTick, watch} from 'vue';
 //图标引入
-import {ElIcon, ElCard, ElInput, ElMessageBox, ElMessage} from 'element-plus';
+import {ElIcon, ElCard, ElInput, ElMessageBox, ElMessage, ElNotification} from 'element-plus';
 import {Edit} from '@element-plus/icons-vue';
 import {useStore} from "vuex";
 import axios from "axios";
@@ -277,10 +277,14 @@ const handlePasswordChange = async () => {
     await form.validate(async (valid) => {
         if (valid) {
             try {
+                console.log('Sending data:', {
+                    password: passwordForm.value.oldPassword,
+                    newPassword: passwordForm.value.newPassword,
+                });
                 const response = await axios.post(
                     `/api/teacher/${teacherId.value}/change-password`,
                     {
-                        oldPassword: passwordForm.value.oldPassword,
+                        password: passwordForm.value.oldPassword,
                         newPassword: passwordForm.value.newPassword,
                     },
                     {
@@ -293,12 +297,15 @@ const handlePasswordChange = async () => {
                 if (response.status === 200) {
                     passwordSuccessMessage.value = '密码更改成功';
                     hideChangePasswordModal();
+                    ElNotification.success({ title: '密码更改成功', message: '密码更改成功' });
+
                 } else {
                     passwordErrorMessage.value = '密码更改失败，请稍后再试';
+                    ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
                 }
             } catch (error) {
-                passwordErrorMessage.value = '密码更改失败，请检查网络连接或稍后再试';
-                console.error('密码更改失败:', error.response ? error.response.data : error.message);
+                passwordErrorMessage.value = '密码更改失败';
+                ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
             }
         } else {
             console.log('表单验证失败');
@@ -611,23 +618,30 @@ const navigateToHome = () => {
     margin-left: 300px;
 }
 
+
 .info-card {
-    padding: 20px;
+    padding: 30px;
     background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.info-card:hover {
+    transform: scale(1.01);
 }
 
 .info-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: 12px;
+    margin-bottom: 20px;
 }
 
 .info-item label {
     font-weight: bold;
     width: 100px;
+    color: #555;
 }
 
 .info-item span {

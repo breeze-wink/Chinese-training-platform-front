@@ -150,7 +150,7 @@
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import {ref, reactive, onMounted, computed, watch} from 'vue';
-import { ElIcon, ElCard, ElInput, ElMessage, ElDialog, ElForm, ElFormItem } from 'element-plus';
+import {ElIcon, ElCard, ElInput, ElMessage, ElDialog, ElForm, ElFormItem, ElNotification} from 'element-plus';
 import { Edit } from '@element-plus/icons-vue';
 import { useStore } from "vuex";
 import axios from "axios";
@@ -322,13 +322,13 @@ const handlePasswordChange = async () => {
     });
 
     if (response.status === 200) {
-      ElMessage.success('密码修改成功');
+        ElNotification.success({ title: '密码更改成功', message: '密码更改成功' });
       hideChangePasswordModal();
     } else {
-      ElMessage.error(response.data.message || '密码修改失败');
+        ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
     }
   } catch (error) {
-    ElMessage.error(error.message || '密码修改失败');
+      ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
   }
 };
 
@@ -554,6 +554,8 @@ const handleChangeEmail = async () => {
 .main-container {
   display: flex;
   flex: 1;
+  background-color: #f0f0f0; /* 背景改为浅灰色 */
+  margin-bottom: 30px;
 }
 
 .sign-up-btn {
@@ -575,30 +577,34 @@ const handleChangeEmail = async () => {
 }
 
 
-
 .info-card {
-  padding: 20px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.info-card:hover {
+    transform: scale(1.01);
 }
 
 .info-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
 }
 
-.info-item label
-{
-  font-weight: bold;
-  width: 100px;
+.info-item label {
+    font-weight: bold;
+    width: 100px;
+    color: #555;
 }
 
 .info-item span {
-  font-size: 16px;
-  color: #333;
+    font-size: 16px;
+    color: #333;
 }
 /* 新增样式 */
 .action-button {

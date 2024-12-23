@@ -153,7 +153,7 @@
 import {ref, onMounted, computed, watch} from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import {ElButton, ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElIcon} from 'element-plus';
+import {ElButton, ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElIcon, ElNotification} from 'element-plus';
 import axios from 'axios';
 import { useStore } from 'vuex';
 import {Edit} from "@element-plus/icons-vue";
@@ -285,17 +285,17 @@ const submitChangePassword = async () => {
     });
 
     if (response.status === 200) {
-      ElMessage({ message: '密码修改成功', type: 'success' });
+        ElNotification.success({ title: '密码更改成功', message: '密码更改成功' });
       showChangePasswordDialog.value = false; // 关闭对话框
       changePasswordForm.value.password = '';
       changePasswordForm.value.newPassword = '';
     } else {
       console.error(response.data.message);
-      ElMessage({ message: '密码修改失败,' + response.data.message, type: 'error' });
+        ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
     }
 
   } catch (error) {
-    ElMessage({ message: '密码修改失败, '+ error.response.data.message, type: 'error' });
+      ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
     changePasswordForm.value.password = '';
     changePasswordForm.value.newPassword = '';
   }
@@ -534,19 +534,7 @@ const handleChangeEmail = async () => {
   background-color: #f0f0f0;
   margin-bottom: 50px;
 }
-.info-card {
-    padding: 20px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
 
-.info-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-}
 .content {
   max-width: 1000px;
   width: 100%;
@@ -556,14 +544,42 @@ const handleChangeEmail = async () => {
   margin-right: 50px;
     margin-left: 300px;
 }
-.edit-input {
-  width: 200px; /* 限制输入框的宽度，避免太长 */
+
+
+.info-card {
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.info-card:hover {
+    transform: scale(1.01);
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
 }
 
 .info-item label {
     font-weight: bold;
     width: 100px;
+    color: #555;
 }
+
+.info-item span {
+    font-size: 16px;
+    color: #333;
+}
+
+.edit-input {
+  width: 200px; /* 限制输入框的宽度，避免太长 */
+}
+
 .text-danger {
   color: red;
 }
