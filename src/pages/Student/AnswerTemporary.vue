@@ -25,7 +25,7 @@
                                     <span>{{ option.label }}. {{ option.text }}</span>
                                 </label>
                             </div>
-                            <div v-else-if="question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER'" class="answer-box">
+                            <div v-else-if="question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER' || question.questionType === 'ESSAY'" class="answer-box">
                                 <!-- 普通文本框替代富文本框 -->
                                 <textarea v-model="studentAnswers[question.practiceQuestionId]" class="answer-box-text" placeholder="请输入答案..."></textarea>
                             </div>

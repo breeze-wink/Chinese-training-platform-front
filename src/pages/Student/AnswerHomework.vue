@@ -25,7 +25,7 @@
                                 </label>
                             </div>
                             <!-- 将富文本框替换为普通文本框 -->
-                            <div v-else-if="question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER'" class="text-editor-container">
+                            <div v-else-if="question.questionType === 'FILL_IN_BLANK' || question.questionType === 'SHORT_ANSWER' || question.questionType === 'ESSAY'" class="text-editor-container">
                                 <textarea
                                     :id="'textarea-' + question.submissionAnswerId"
                                     v-model="studentAnswers[question.submissionAnswerId]"
