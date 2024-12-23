@@ -186,7 +186,7 @@ import {useStore} from "vuex";
 const editorStem = ref(null);
 const store = useStore();
 const teacherId = computed(() => store.state.user.id);
-const selectedQuestionType = ref(""); // 临时存储当前选中的题目类型
+const selectedQuestionType = ref("CHOICE"); // 临时存储当前选中的题目类型
 
 // 题干数据
 const stemForm = ref({

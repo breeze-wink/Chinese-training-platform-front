@@ -12,7 +12,7 @@
                 <h2>课标管理</h2>
                 <div class="input-button-group">
                     <el-input v-model="search" placeholder="搜索课标" style="width: 300px;"></el-input>
-                    <el-button type="primary" @click="uploadFile">添加课标</el-button>
+
                 </div>
 
                 <el-table :data="filteredCourseStandards" style="width: 100%; margin-top: 20px;">
