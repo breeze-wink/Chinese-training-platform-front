@@ -205,7 +205,7 @@
 <script setup>
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import {computed, nextTick, onMounted, ref} from 'vue';
+import {computed, nextTick, onMounted, ref, watch} from 'vue';
 import axios from "axios";
 import {useStore} from "vuex";
 import KnowledgePointSelector from '@/pages/Teacher/TeacherPublicComponent/KnowledgePointSelector.vue'; // 引入知识点选择组件
@@ -230,6 +230,14 @@ const editorEssay = ref(null);
 
 
 
+
+// 监听 activeTab 的变化，切换标签页时重置 KnowledgePointId
+watch(activeTab, (newTab) => {
+    if (newTab !== 'ESSAY') {
+        KnowledgePointId.value = null;
+    }
+});
+
 const onPointSelected = (pointId) => {
   KnowledgePointId.value = pointId;
 };
@@ -242,7 +250,7 @@ const questionForms = ref({
   CHOICE: {
     problem: null, // 问题描述
     options: ['', '', '', ''], // 选项
-    answer: null, // 正确答案
+    answer: 'A', // 正确答案
     explanation: '', // 解析
   },
   FILL_IN_BLANK: {
@@ -288,6 +296,7 @@ const handleEditorChange = (html, delta, source) => {
 };
 // 上传成功回调
 const handleUploadSuccess = (response, file) => {
+  console.log('范文上传成功:', response, file);
 };
 // 手动更新问题描述
 const updateProblem = (value) => {
@@ -336,6 +345,8 @@ const submitQuestion = async () => {
     // 更新问题描述
     currentForm.value.problem = processedContent;
 
+
+
     // 构造请求数据
     const submitTime = new Date().toISOString();  // ISO 格式的时间
     const requestData = {
@@ -359,7 +370,91 @@ const submitQuestion = async () => {
         ],
         submitTime:submitTime,
     };
+    console.log(requestData);
+    let errors = [];
+    if (activeTab.value === 'CHOICE') {
+        const question = requestData.questions[0];
+        // 检查问题是否为空
+        if (question.problem === "<p><br></p>") {
+            errors.push('问题不能为空。');
+        }
+        if (!question.choices || !Array.isArray(question.choices) || question.choices.length === 0) {
+            errors.push('所有选项不能为空。');
+        } else {
+            question.choices.forEach((choice, index) => {
+                if (!choice || choice.trim() === '') {
+                    errors.push(`选项 ${index + 1} 不能为空。`);
 
+                }
+            });
+        }
+        if (!question.analysis || question.analysis.trim() === '') {
+            errors.push('解析不能为空。');
+        }
+
+    } else if (activeTab.value === 'FILL_IN_BLANK') {
+
+        const question = requestData.questions[0];
+
+        // 检查问题是否为空
+        if (question.problem === "<p><br></p>") {
+            errors.push('问题不能为空。');
+        }
+
+        // 检查答案数组是否为空
+        if (!question.answer || !Array.isArray(question.answer) || question.answer.length === 0) {
+            errors.push('答案不能为空。');
+        } else {
+            question.answer.forEach((ans, index) => {
+                if (!ans || ans.trim() === '') {
+                    errors.push(`答案 ${index + 1} 不能为空。`);
+                }
+            });
+        }
+
+        // 检查解析是否为空
+        if (!question.analysis || question.analysis.trim() === '') {
+            errors.push('解析不能为空。');
+        }
+
+    } else if (activeTab.value === 'SHORT_ANSWER') {
+        const question = requestData.questions[0];
+
+        // 检查问题是否为空
+        if (question.problem === "<p><br></p>") {
+            errors.push('问题不能为空。');
+        }
+
+        // 检查答案是否为空
+        if (!question.answer || question.answer.length === 0 || (Array.isArray(question.answer) && question.answer.every(ans => ans.trim() === ''))) {
+            errors.push('答案不能为空。');
+        }
+
+        // 检查解析是否为空
+        if (!question.analysis || question.analysis.trim() === '') {
+            errors.push('解析不能为空。');
+        }
+
+
+    } else if (activeTab.value === 'ESSAY') {
+        const question = requestData.questions[0];
+
+        // 检查问题是否为空
+        if (question.problem === "<p><br></p>") {
+            errors.push('问题不能为空。');
+        }
+
+        // 检查解析是否为空
+        if (!question.analysis || question.analysis.trim() === '') {
+            errors.push('解析不能为空。');
+        }
+
+    }
+    if (errors.length > 0) {
+
+        ElMessage.error('请填写完整信息');
+
+    }else{
     try {
         const response = await axios.post(
             `/api/teacher/${teacherId.value}/upload-question`,
@@ -373,6 +468,7 @@ const submitQuestion = async () => {
     } catch (error) {
         console.error('上传失败:', error);
         ElMessage.error('上传失败，请稍后重试');
+    }
     }
 };
 // 从富文本内容中提取图片
@@ -417,6 +513,7 @@ const uploadImage = async (imageSrc) => {
     });
 
     if (response.status === 200) {
+      console.log(response.data.imageUrl);
       return response.data.imageUrl;
 
 
