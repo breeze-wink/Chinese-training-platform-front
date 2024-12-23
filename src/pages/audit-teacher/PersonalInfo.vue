@@ -14,14 +14,14 @@
                 <!-- 个人信息卡片 -->
                 <el-card class="info-card">
                     <div class="info-item">
-                        <label>昵称：</label>
+                        <label>用户名：</label>
                         <span v-if="!editNickname">{{ teacherInfo.username }}</span>
                         <el-input
                             v-else
                             v-model="teacherInfo.username"
                             size="small"
                             class="edit-input"
-                            @blur="toggleEdit('nickname'); updateUsername()"/>
+                            @blur="updateUsername('nickname')"/>
                         <el-icon @click="toggleEdit('nickname')">
                             <Edit/>
                         </el-icon>
@@ -319,6 +319,7 @@ const getTeacherInfo = async () => {
         if (response.status === 200 && response.data.message === 'success') {
             // 更新教师信息
             teacherInfo.value = response.data.data;
+            originNickname.value = teacherInfo.value.username;
         } else {
             errorMessage.value = '获取教师信息失败：' + response.data.message;
             console.error(errorMessage.value);
@@ -334,11 +335,12 @@ onMounted(() => {
     getTeacherInfo();
 });
 
-
+const originNickname = ref('');
 // 切换编辑状态
 function toggleEdit(field) {
     if (field === 'nickname') {
         editNickname.value = !editNickname.value;
+        originNickname.value = teacherInfo.value.username;
     } else if (field === 'phone') {
         editPhone.value = !editPhone.value;
     } else if (field === 'name') {
@@ -351,7 +353,32 @@ const openRealNameDialog = () => {
     realNameDialogVisible.value = true;
 };
 
-const updateUsername = async () => {
+const updateUsername = async (field) => {
+
+    if (!String(teacherInfo.value.username).trim()) {
+        ElMessage.error('用户名不能为空');
+        // 恢复原始昵称
+        teacherInfo.value.username = originNickname.value;
+        return; // 阻止后续操作
+    }
+    if (/\s/.test(teacherInfo.value.username)) { // 新增空格检查
+        ElMessage.error('用户名不能包含空格');
+        // 恢复原始昵称
+        teacherInfo.value.username = originNickname.value;
+        return; // 阻止后续操作
+    }
+    if (String(teacherInfo.value.username).includes('@')) {
+        ElMessage.error('用户名不能包含 "@" 符号');
+        // 恢复原始昵称
+        teacherInfo.value.username = originNickname.value;
+        return; // 阻止后续操作
+    }
+    if(teacherInfo.value.username === originNickname.value)
+    {
+        toggleEdit(field); // 验证通过后切换编辑状态
+        return;
+    }
+
     try {
         const url = `/api/teacher/${teacherId.value}/update-username`;
 
@@ -362,7 +389,9 @@ const updateUsername = async () => {
 
         // 处理响应
         if (response.status === 200) {
-            ElMessage.success('修改成功');
+            ElMessage.success('用户名修改成功');
+            toggleEdit(field); // 验证通过后切换编辑状态
+            originNickname.value = teacherInfo.value.username; // 更新原始昵称
         } else {
             console.error(response.data.message);
             ElMessage.error('修改失败' + response.data.message);
@@ -370,6 +399,7 @@ const updateUsername = async () => {
     } catch (error) {
         // 处理错误
         console.error('请求失败' + error.message);
+        toggleEdit(field); // 验证通过后切换编辑状态
     }
 };
 const updatePhoneNumber = async () => {

@@ -21,7 +21,7 @@
                 v-model="adminName"
                 size="small"
                 class="edit-input"
-                @blur="toggleEdit('adminName'); updateUsername()"/>
+                @blur="updateUsername('adminName')"/>
             <el-icon @click="toggleEdit('adminName')">
               <Edit/>
             </el-icon>
@@ -218,6 +218,7 @@ const getAdminInfo = async (id) => {
       email.value = response.data.data.email;
       authorizationCode.value = response.data.data.authorizationCode || ''; // 获取授权码
       createDate.value = response.data.data.createDate || '';
+        originNickname.value = adminName.value;
     } else {
       errorMessage.value = '获取管理员信息失败：' + response.data.message;
       console.error(errorMessage.value);
@@ -392,7 +393,32 @@ const confirmBindEmail = async () => {
 };
 
 // 更新用户名
-const updateUsername = async () => {
+const updateUsername = async (field) => {
+    if (!String(adminName.value).trim()) {
+        ElMessage.error('用户名不能为空');
+        // 恢复原始昵称
+        adminName.value = originNickname.value;
+        return; // 阻止后续操作
+    }
+    if (/\s/.test(adminName.value)) { // 新增空格检查
+        ElMessage.error('用户名不能包含空格');
+        // 恢复原始昵称
+        adminName.value = originNickname.value;
+        return; // 阻止后续操作
+    }
+    if (String(adminName.value).includes('@')) {
+        ElMessage.error('用户名不能包含 "@" 符号');
+        // 恢复原始昵称
+        adminName.value = originNickname.value;
+        return; // 阻止后续操作
+    }
+    if(adminName.value === originNickname.value)
+    {
+        toggleEdit(field); // 验证通过后切换编辑状态
+        return;
+    }
+
+
   try {
     const url = `/api/school-admin/${schoolAdminId.value}/update-username`;
 
@@ -404,12 +430,15 @@ const updateUsername = async () => {
     // 处理响应
     if (response.status === 200) {
       ElMessage({ message: '用户名更新成功', type: 'success' });
+        originNickname.value = adminName.value;
+        toggleEdit(field);
     } else {
       ElMessage({ message: '用户名更新失败', type: 'error' });
     }
   } catch (error) {
     // 处理错误
     ElMessage({ message: '请求失败' + error.message, type: 'error' });
+      toggleEdit(field);
   }
 };
 
@@ -434,11 +463,13 @@ const updateName = async () => {
     ElMessage({ message: '请求失败' + error.message, type: 'error' });
   }
 };
-
+const originNickname = ref('');
 // 切换编辑状态
 const toggleEdit = (field) => {
   if (field === 'adminName') {
     editNickname.value = !editNickname.value;
+      originNickname.value = adminName.value;
+
   } else if (field === 'name') {
     editName.value = !editName.value;
   }
