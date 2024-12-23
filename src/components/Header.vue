@@ -34,7 +34,6 @@ const store = useStore();
 // 处理下拉菜单的命令
 const handleCommand = (command) => {
     if (command === 'logout') {
-        console.log('退出登录');
 
         // 在这里添加退出登录的逻辑
         store.dispatch('logout');

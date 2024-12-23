@@ -26,9 +26,12 @@
                     </el-form-item>
                     <!-- 题干类型选择 -->
                     <el-form-item label="题干类型">
-                        <el-select v-model="stemForm.questionType" placeholder="请选择题干类型" style="width: 300px;">
+                        <el-select v-model="stemForm.questionType"
+                                   :disabled="hasSubQuestions"
+                                   @change="handleQuestionTypeChange"
+                                   placeholder="请选择题干类型" style="width: 300px;">
                             <el-option
-                                    v-for="(category, index) in categories"
+                                    v-for="(category, index) in categories.filter(item => item !== '作文')"
                                     :key="index"
                                     :label="category"
                                     :value="category"
@@ -182,11 +185,20 @@ import BlotFormatter from 'quill-blot-formatter/dist/BlotFormatter';
 import axios from "axios";
 import {QuillEditor} from "@vueup/vue-quill";
 import {useStore} from "vuex";
+import {ElMessage} from "element-plus";
+import {useRouter} from "vue-router";
 
 const editorStem = ref(null);
 const store = useStore();
 const teacherId = computed(() => store.state.user.id);
-const selectedQuestionType = ref(""); // 临时存储当前选中的题目类型
+const selectedQuestionType = ref("CHOICE"); // 临时存储当前选中的题目类型
+const categories = ref([]); // 所有分类
+
+
+// 计算属性：判断是否已经有小题
+const hasSubQuestions = computed(() => questionCards.value.length > 0);
+
+// 题干类型变化时，检查是否已有小题
 
 // 题干数据
 const stemForm = ref({
@@ -197,13 +209,12 @@ const stemForm = ref({
 const questionCards = ref([]); // 存储所有题目卡片
 const selectedPointId = ref(null); // 当前选择的知识点 ID
 const knowledgePoints = ref({}); // 知识点数据（分类为键，知识点数组为值）
-const categories = ref([]); // 所有分类
+
 // 添加函数（暂时为空）
 
 const test = () => {
     const quillInstance = editorStem.value.getQuill();
     const content = quillInstance.root.innerHTML; // 或者 quillInstance.getText(); 获取纯文本
-    console.log('Quill 编辑器的内容:', content);
 };
 // 初始化获取知识点数据
 onMounted(async () => {
@@ -211,7 +222,6 @@ onMounted(async () => {
     await nextTick(() => {
         if (editorStem.value) {
             const quill = editorStem.value.getQuill(); // 获取 Quill 实例
-            console.log(quill); // 输出 Quill 实例，验证是否成功获取
         }
     });
 
@@ -228,6 +238,10 @@ const updateInputs = (card) => {
 
 // 添加题目
 const addQuestion = () => {
+    if (!stemForm.value.questionType) {
+        ElMessage.error("请选择题目类型");
+        return;
+    }
     const newCard = {
         question: "",
         analysis: "",
@@ -251,8 +265,55 @@ const addQuestion = () => {
 
     questionCards.value.push(newCard);
 };
+const validateRequestData=(requestData) =>{
+    // 检查 questionType 和 body 是否为空
+    if (!requestData.questionType || requestData.body==="<p><br></p>") {
+        return '题干和题干类型不能为空';
+    }
+    if(requestData.questions.length===0)
+    {
+        return '还未添加小题';
+    }
 
+    // 遍历 questions 数组进行检查
+    for (let card of requestData.questions) {
+        const { type, problem, choices, answer, analysis } = card;
+
+        // 针对 CHOICE 类型的题目进行验证
+        if (type === 'CHOICE') {
+            if (!problem || !choices || choices.length === 0 || !answer || !analysis) {
+                return '题目信息填写不完整';
+            }
+            for (let choice of choices) {
+                if (!choice) {
+                    return '题目信息填写不完整';
+                }
+            }
+        }
+        // 针对 FILL_IN_BLANK 类型的题目进行验证
+        else if (type === 'FILL_IN_BLANK') {
+            if (!problem || !answer || answer.length === 0 || !analysis) {
+                return '题目信息填写不完整';
+            }
+            for (let ans of answer) {
+                if (!ans) {
+                    return '题目信息填写不完整';
+                }
+            }
+        }
+        // 针对 SHORT_ANSWER 类型的题目进行验证
+        else if (type === 'SHORT_ANSWER') {
+            if (!problem || !answer || !analysis) {
+                return '题目信息填写不完整';
+            }
+        }
+    }
+
+    // 如果所有校验通过
+    return '数据验证通过';
+}
 //上传组合式题目
+const router = useRouter();
 const uploadQuestions = async () => {
     // 获取编辑器的内容
     const content = editorStem.value ? editorStem.value.getHTML() || editorStem.value.container.firstChild.innerHTML : '';
@@ -290,23 +351,31 @@ const uploadQuestions = async () => {
             }),
         submitTime:submitTime,
     };
-    console.log(requestData);
-
-    // 上传请求
-    try {
-        const response = await axios.post(`/api/teacher/${teacherId.value}/upload-question`, requestData);
-        if (response.status === 200) {
-            // 上传成功，处理成功的操作，比如提示上传成功
-            console.log('题目上传成功');
-            // 你可以在此后清空表单或显示成功消息
-        } else {
-            console.error('上传失败', response.data.message);
-            // 处理上传失败的情况
+    const validationMessage = validateRequestData(requestData);
+    if (validationMessage !== '数据验证通过') {
+        ElMessage.error(validationMessage); // 输出错误信息
+    } else {
+        console.log('数据验证通过');
+        // 上传请求
+        try {
+            const response = await axios.post(`/api/teacher/${teacherId.value}/upload-question`, requestData);
+            if (response.status === 200) {
+                // 上传成功，处理成功的操作，比如提示上传成功
+                console.log('题目上传成功');
+                ElMessage({ message: '题目上传成功', type: 'success' });
+                window.location.reload(); // 刷新当前页面
+                // 你可以在此后清空表单或显示成功消息
+            } else {
+                console.error('上传失败', response.data.message);
+                // 处理上传失败的情况
+            }
+        } catch (error) {
+            console.error('上传过程中出现错误:', error);
+            // 处理错误
         }
-    } catch (error) {
-        console.error('上传过程中出现错误:', error);
-        // 处理错误
     }
+
+
 };
 
 // ***************************************************************************
@@ -375,7 +444,6 @@ const uploadImage = async (imageSrc) => {
         });
 
         if (response.status === 200) {
-            console.log(response.data.imageUrl);
             return response.data.imageUrl;
         } else {
             console.error('图片上传失败');
@@ -415,7 +483,6 @@ const fetchKnowledgePoints = async () => {
             const responseData = response.data.knowledgePoints || {};
             knowledgePoints.value = responseData;
             categories.value = Object.keys(responseData); // 提取所有分类
-            console.log(knowledgePoints.value);
         } else {
             console.error('获取知识点失败：', response.data.message);
         }
@@ -429,6 +496,7 @@ const filteredPoints = computed(() => {
 });
 // 题干类型变化时，更新可用的知识点
 const handleQuestionTypeChange = () => {
+
     selectedPointId.value = null; // 清空已选知识点
 };
 

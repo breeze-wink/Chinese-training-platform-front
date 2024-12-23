@@ -14,14 +14,14 @@
         <!-- 个人信息卡片 -->
         <el-card class="info-card">
           <div class="info-item">
-            <label>昵称：</label>
+            <label>用户名：</label>
             <span v-if="!editNickname">{{ SystemAdminInfo.username }}</span>
             <el-input
                 v-else
                 v-model="SystemAdminInfo.username"
                 size="small"
                 class="edit-input"
-                @blur="toggleEdit('nickname'); updateUsername()"/>
+                @blur="updateUsername('nickname')"/>
             <el-icon @click="toggleEdit('nickname')">
               <Edit/>
             </el-icon>
@@ -344,7 +344,6 @@ function startCountdown() {
         countdown.value = 60
     }
     timer = setInterval(() => {
-        console.log(`Countdown value: ${countdown.value}`);
         if (countdown.value > 0) {
             countdown.value--;
         } else {
@@ -374,6 +373,7 @@ const getSystemAdminInfo = async () => {
     const response = await axios.get(`/api/system-admin/${systemAdminId.value}`);
     if (response.status === 200 && response.data.message === 'success') {
       SystemAdminInfo.value = response.data.data;
+      originNickname.value= SystemAdminInfo.value.username;
     } else {
       errorMessage.value = '获取系统管理员信息失败:' + response.data.message;
       console.error(errorMessage.value);
@@ -388,14 +388,42 @@ onMounted(() => {
   getSystemAdminInfo();
 });
 
+const originNickname = ref('');
 // 切换编辑状态
 function toggleEdit(field) {
   if (field === 'nickname') {
     editNickname.value = !editNickname.value;
+    originNickname.value = SystemAdminInfo.value.username;
+
   }
 }
 
-const updateUsername = async () => {
+const updateUsername = async (field) => {
+
+
+    if (!String(SystemAdminInfo.value.username).trim()) {
+        ElMessage.error('用户名不能为空');
+        // 恢复原始昵称
+        SystemAdminInfo.value.username = originNickname.value;
+        return; // 阻止后续操作
+    }
+    if (/\s/.test(SystemAdminInfo.value.username)) { // 新增空格检查
+        ElMessage.error('用户名不能包含空格');
+        // 恢复原始昵称
+        SystemAdminInfo.value.username = originNickname.value;
+        return; // 阻止后续操作
+    }
+    if (String(SystemAdminInfo.value.username).includes('@')) {
+        ElMessage.error('用户名不能包含 "@" 符号');
+        // 恢复原始昵称
+        SystemAdminInfo.value.username = originNickname.value;
+        return; // 阻止后续操作
+    }
+    if(SystemAdminInfo.value.username === originNickname.value)
+    {
+        toggleEdit(field); // 验证通过后切换编辑状态
+        return;
+    }
   try {
     const url = `/api/system-admin/${systemAdminId.value}/update-username`;
 
@@ -407,14 +435,17 @@ const updateUsername = async () => {
     // 处理响应
     if (response.status === 200) {
       ElMessage.success('用户名修改成功');
-      console.log(response.data.message);
+        toggleEdit(field); // 验证通过后切换编辑状态
+        originNickname.value = SystemAdminInfo.value.username; // 更新原始昵称
     } else {
       console.error(response.data.message);
       ElMessage.error(response.data.message);
     }
   } catch (error) {
     // 处理错误
+     SystemAdminInfo.value.username = originNickname.value;
     console.error('请求失败' + error.message);
+      toggleEdit(field); // 验证通过后切换编辑状态
   }
 };
 

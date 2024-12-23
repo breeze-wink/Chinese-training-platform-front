@@ -97,7 +97,6 @@ export default {
                 if (response.data.message === 'success') {
                     this.questions = response.data.uploadedQuestions;
                     this.totalQuestions = this.questions.length; // 更新总题目数
-                    console.log(this.questions)
                 } else {
                     this.error = '获取题目失败';
                 }
@@ -116,7 +115,6 @@ export default {
 
         viewQuestionDetail(questionId, type) {
             const formattedType = type === '单题' ? 'small' : 'big';
-            console.log(questionId, formattedType); // 验证转换是否正确
             this.$router.push({
                 name: 'ViewQuestionDetail',
                 query: {

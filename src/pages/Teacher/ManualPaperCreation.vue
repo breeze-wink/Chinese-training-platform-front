@@ -315,7 +315,6 @@ const fetchKnowledgePoints = async () => {
     try {
         const response = await axios.get(`/api/teacher/${teacherId.value}/list-knowledge-point`);
         if (response.status === 200 && response.data) {
-            console.log(response.data);
             formatOptions(response.data.knowledgePoints);
 
         } else {
@@ -340,7 +339,6 @@ const formatOptions = (knowledgePoints) => {
 
 // 处理选择变化
 const handleChange = (value) => {
-    console.log('选中的值:', value);  // 打印选择的知识点
     fetchQuestions();
 };
 
@@ -366,7 +364,6 @@ const buttonOptions = {
 };
 
 const handleSearch = () => {
-    console.log('搜索:', searchQuery.value);
     // 在这里添加搜索逻辑
 };
 
@@ -381,7 +378,6 @@ const toggleSortOrder = () => {
 
 // 执行搜索
 const search = () => {
-    console.log(`搜索关键词: ${searchKeyword.value}`);
     // 执行搜索逻辑
 };
 
@@ -529,7 +525,6 @@ const formatDifficulty = (difficulty) => {
 
 const toggleDrawer = () => {
     drawerVisible.value = !drawerVisible.value;
-    console.log(drawerVisible.value);
 };
 
 const handleCloseDrawer = () => {
@@ -543,7 +538,6 @@ const clearQuestions = () => {
 const previewFullPaper = () => {
     // 预览全卷的逻辑
     router.push('/teacher/paper-preview');
-    console.log("预览全卷");
 };
 
 
@@ -626,11 +620,8 @@ const fetchQuestions = async () => {
 
   try {
     const response = await axios.post('/api/teacher/search-questions', requestData);
-    console.log('发送请求的数据:', requestData);
     if (response.status === 200) {
-      console.log('传回的题目数据');
       const data = response.data;
-      console.log(data);
 
       // 处理 bigQuestions
       const processedBigQuestions = await Promise.all(
@@ -659,14 +650,11 @@ const fetchQuestions = async () => {
       bigQuestions.value = processedBigQuestions;
       questions.value = processedQuestions;
 
-      console.log('questions:', questions.value);
-      console.log('big:', bigQuestions.value);
 
       currentPage.value = data.currentPage || 1;
       totalPages.value = data.totalPages || 1;
       totalCount.value = data.totalCount || 0;
 
-      console.log('totalPages', totalPages.value);
     } else {
       console.error('获取题目失败：', response.data.message);
     }

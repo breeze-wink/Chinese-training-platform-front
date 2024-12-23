@@ -110,8 +110,6 @@ export default {
             return;
         }
 
-        console.log('PracticeId:', this.practiceId); // 增加日志以查看 practiceId
-
         // 从路由参数中获取 score 和 practiceName
         this.score = this.$route.query.score;
         this.practiceName = this.$route.query.practiceName || this.practiceName;  // 初始化 practiceName
@@ -126,9 +124,6 @@ export default {
                         practiceId: this.practiceId
                     }
                 });
-
-                console.log('响应状态码:', response.status); // 增加日志以查看响应状态码
-                console.log('响应数据:', response.data); // 增加日志以查看响应内容
 
                 if (response.status === 200 && response.data.message === '答案获取成功') {
                     this.score = response.data.totalScore;  // 更新为 totalScore
@@ -209,15 +204,15 @@ export default {
             tempDiv.innerHTML = htmlContent;
 
             const images = tempDiv.querySelectorAll('img');
-            console.log(`Found ${images.length} images to replace.`); // 查看找到的图片数量
+
             const replacePromises = Array.from(images).map(async (img) => {
                 const src = img.getAttribute('src');
-                console.log('Original image src:', src);  // 输出原始的 src
+
 
                 if (src && src.startsWith('/uploads/content/')) {
                     const imageName = src.replace('/uploads/content/', '');
                     const imageUrl = `/api/uploads/images/content/${imageName}`;
-                    console.log('Fetching image from:', imageUrl);  // 查看请求的 URL
+
 
                     const token = this.$store.getters.getToken; // 获取 token
 
@@ -236,7 +231,7 @@ export default {
 
                         if (response.status === 200) {
                             const blobUrl = URL.createObjectURL(response.data);
-                            console.log('Generated Blob URL:', blobUrl);  // 查看生成的 blob URL
+
                             img.setAttribute('src', blobUrl);
                         } else {
                             console.error(`Failed to fetch image: ${imageUrl}`);
@@ -252,15 +247,14 @@ export default {
             return tempDiv.innerHTML;
         },
         async loadImagesForQuestions() {
-            console.log('开始加载问题中的图片');  // 添加调试日志
 
             const promises = this.answers.map(async (answer) => {
                 if (answer.questionContent) {
-                    console.log(`正在处理问题内容: ${answer.practiceQuestionId}`);  // 新增日志
+
                     answer.questionContent = await this.replaceImageSrcUtil(answer.questionContent);
                 }
                 if (answer.questionBody) {
-                    console.log(`正在处理问题体: ${answer.practiceQuestionId}`);  // 新增日志
+
                     answer.questionBody = await this.replaceImageSrcUtil(answer.questionBody);
                 }
             });
@@ -319,7 +313,7 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
     background: linear-gradient(135deg, #ffffff, #f5f5f5); /* 内容区域的渐变背景 */
     margin-left: 300px;
-    //margin-right: 350px;
+    margin-right: 350px;
 }
 
 .sidebar-nav {
@@ -327,11 +321,9 @@ body {
     background-color: #f9f9f9;
     border-radius: 16px;
     padding: 20px;
-    /*margin-left: 20px;*/
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
     background: linear-gradient(135deg, #f9f9f9, #eaeaea); /* 侧边栏的渐变背景 */
     position: sticky;
-    //margin-left: 10px;
     top: 20px;
     height: calc(100vh - 40px);
 }

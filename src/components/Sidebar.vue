@@ -69,11 +69,9 @@ watch(
 
 // 展开和关闭菜单项的事件处理函数
 const handleOpen = (key, keyPath) => {
-    console.log('Open:', key, keyPath);
 };
 
 const handleClose = (key, keyPath) => {
-    console.log('Close:', key, keyPath);
 };
 
 // 根据用户角色动态生成菜单项

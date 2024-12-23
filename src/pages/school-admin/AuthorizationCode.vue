@@ -21,7 +21,7 @@
                 v-model="adminName"
                 size="small"
                 class="edit-input"
-                @blur="toggleEdit('adminName'); updateUsername()"/>
+                @blur="updateUsername('adminName')"/>
             <el-icon @click="toggleEdit('adminName')">
               <Edit/>
             </el-icon>
@@ -64,7 +64,7 @@
             <label>绑定邮箱：</label>
             <span :class="{'text-danger': !email}">{{ email ? email : '还未绑定' }}</span>
             <el-button text bg v-if="!email" type="primary" @click="showBindEmailDialog = true">绑定邮箱</el-button>
-              <el-icon @click="showChangeEmailModal" class="edit-icon">
+              <el-icon v-if="email" @click="showChangeEmailModal" class="edit-icon">
                   <Edit />
               </el-icon>
           </div>
@@ -89,7 +89,7 @@
       </div>
     </div>
       <!-- 绑定邮箱对话框 -->
-      <el-dialog title="绑定邮箱" v-model="showBindEmailDialog" width="25%" align-center>
+      <el-dialog title="绑定邮箱" v-model="showBindEmailDialog" width="450px" align-center>
           <el-form :model="bindEmailForm" label-width="100px">
               <el-form-item label="邮箱地址">
                   <el-input v-model="bindEmailForm.email" placeholder="请输入邮箱地址" style="width: 95%;"></el-input>
@@ -108,18 +108,18 @@
       </el-dialog>
 
       <!-- 更换邮箱模态窗口 -->
-      <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="25%" align-center>
+      <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="450px" align-center>
           <el-form :model="bindEmailForm" :rules="emailRules" ref="emailFormRef" label-width="100px">
               <el-form-item label="新邮箱" prop="newEmail">
-                  <el-input v-model="bindEmailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 95%;"></el-input>
+                  <el-input v-model="bindEmailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 300px;"></el-input>
               </el-form-item>
               <el-form-item label="验证码" prop="verificationCode">
                   <el-row :gutter="10">
                       <el-col :span="10">
-                          <el-input v-model="bindEmailForm.verificationCode" placeholder="请输入验证码" style="width: 95%;"></el-input>
+                          <el-input v-model="bindEmailForm.verificationCode" placeholder="请输入验证码" style="width: 180px;"></el-input>
                       </el-col>
                       <el-col :span="8">
-                          <el-button @click="sendVerificationCodeForChangeEmail" class="verify-button" style="margin-left: -10px;">{{ codeButtonText }}</el-button>
+                          <el-button @click="sendVerificationCodeForChangeEmail" class="verify-button" style="margin-left: 60px;">{{ codeButtonText }}</el-button>
                       </el-col>
                   </el-row>
               </el-form-item>
@@ -218,6 +218,7 @@ const getAdminInfo = async (id) => {
       email.value = response.data.data.email;
       authorizationCode.value = response.data.data.authorizationCode || ''; // 获取授权码
       createDate.value = response.data.data.createDate || '';
+        originNickname.value = adminName.value;
     } else {
       errorMessage.value = '获取管理员信息失败：' + response.data.message;
       console.error(errorMessage.value);
@@ -306,20 +307,20 @@ const codeButtonText = ref('获取验证码')
 let timer; // 用于存储定时器ID
 let isCountingDown = ref(false); // 标记是否正在倒计时
 function startCountdown() {
-    console.log('Starting countdown...');
+
     clearInterval(timer); // 清除任何现有的定时器
     isCountingDown.value = true;
     if (codeButtonText.value === '重新获取验证码') {
         countdown.value = 60
     }
     timer = setInterval(() => {
-        console.log(`Countdown value: ${countdown.value}`);
+
         if (countdown.value > 0) {
             countdown.value--;
         } else {
             clearInterval(timer);
             isCountingDown.value = false;
-            console.log('Countdown finished.');
+
         }
     }, 1000);
 }
@@ -392,24 +393,52 @@ const confirmBindEmail = async () => {
 };
 
 // 更新用户名
-const updateUsername = async () => {
+const updateUsername = async (field) => {
+    if (!String(adminName.value).trim()) {
+        ElMessage.error('用户名不能为空');
+        // 恢复原始昵称
+        adminName.value = originNickname.value;
+        return; // 阻止后续操作
+    }
+    if (/\s/.test(adminName.value)) { // 新增空格检查
+        ElMessage.error('用户名不能包含空格');
+        // 恢复原始昵称
+        adminName.value = originNickname.value;
+        return; // 阻止后续操作
+    }
+    if (String(adminName.value).includes('@')) {
+        ElMessage.error('用户名不能包含 "@" 符号');
+        // 恢复原始昵称
+        adminName.value = originNickname.value;
+        return; // 阻止后续操作
+    }
+    if(adminName.value === originNickname.value)
+    {
+        toggleEdit(field); // 验证通过后切换编辑状态
+        return;
+    }
+
+
   try {
     const url = `/api/school-admin/${schoolAdminId.value}/update-username`;
 
     // 发送 POST 请求
-    const response = await axios.post(url, {
+    const response = await axios.put(url, {
       username: adminName.value
     });
 
     // 处理响应
     if (response.status === 200) {
       ElMessage({ message: '用户名更新成功', type: 'success' });
+        originNickname.value = adminName.value;
+        toggleEdit(field);
     } else {
       ElMessage({ message: '用户名更新失败', type: 'error' });
     }
   } catch (error) {
     // 处理错误
     ElMessage({ message: '请求失败' + error.message, type: 'error' });
+      toggleEdit(field);
   }
 };
 
@@ -434,11 +463,13 @@ const updateName = async () => {
     ElMessage({ message: '请求失败' + error.message, type: 'error' });
   }
 };
-
+const originNickname = ref('');
 // 切换编辑状态
 const toggleEdit = (field) => {
   if (field === 'adminName') {
     editNickname.value = !editNickname.value;
+      originNickname.value = adminName.value;
+
   } else if (field === 'name') {
     editName.value = !editName.value;
   }
@@ -462,7 +493,7 @@ const sendVerificationCodeForChangeEmail = async () => {
         ElMessage({ message: '请输入有效的邮箱地址', type: 'error' });
         return;
     }
-console.log(bindEmailForm.value.newEmail)
+
     try {
         const response = await axios.get(`/api/school-admin/send-email-code`, {
             params: {

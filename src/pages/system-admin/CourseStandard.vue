@@ -179,7 +179,6 @@ const deleteItem = async (item) => {
 };
 
 onMounted(() => {
-  console.log(teacherId.value);
   getAllCourseStandards();
 });
 </script>

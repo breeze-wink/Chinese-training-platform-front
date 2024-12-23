@@ -150,7 +150,6 @@ export default {
 
             try {
                 const response = await axios.get(`/api/student/${studentId}/view-essays`);
-                console.log('API Response:', response.data); // 打印 API 返回的数据
                 if (response.status === 200) {
                     this.essays = response.data.infoData; // 将 infoData 赋值给 essays
                     this.loading = false;

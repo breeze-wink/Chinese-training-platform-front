@@ -317,7 +317,6 @@ export default {
             return { x, y, date: item.date, score: item.score };
           });
         }
-        console.log('Generated dataPoints:', points);
         return points;
       },
       linePoints() {
@@ -355,7 +354,6 @@ export default {
                 if (response.status === 200) {
                     this.avgScore = response.data.data.averageHomeworkScore;
                     this.classRank = response.data.data.classRank;
-                    console.log(response.data);
                 }
             } catch (error) {
                 console.error('获取学生数据失败:', error);
@@ -368,7 +366,6 @@ export default {
                 const response = await axios.get(`/api/student/${this.getUserId}/get-multidimensional-scores`);
                 if (response.status === 200) {
                     const data = response.data.data;
-                    console.log('Fetched data:', data);
                     this.multidimensionalScores = data.map(item => ({
                         score: Number(item.score), // 确保 score 是数字类型
                         name: item.name || ''     // 确保有 name 值
@@ -390,13 +387,12 @@ export default {
                         // 将weaknessScore转换为小数
                         weaknessScore: parseFloat((item.weaknessScore / 100).toFixed(2)), // 转换并保留两位小数
                     }));
-                    console.log('Fetched weakness scores:', this.weaknessScores); // 添加日志输出
                 }
             } catch (error) {
                 console.error('获取短板得分率失败:', error);
             } finally {
                 this.loadingWeaknessScores = false;
-                this.$nextTick(() => {
+                await this.$nextTick(() => {
                     // 确保 DOM 更新完成后再执行其他操作
                 });
             }
@@ -406,7 +402,6 @@ export default {
                 const response = await axios.get(`/api/student/${this.getUserId}/score-fluctuations`);
                 if (response.status === 200) {
                     this.scoreFluctuations = response.data.data;
-                    console.log(response.data);
                 }
             } catch (error) {
                 console.error('获取历史分数波动数据失败:', error);
