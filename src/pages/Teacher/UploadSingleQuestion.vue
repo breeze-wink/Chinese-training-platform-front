@@ -462,6 +462,7 @@ const submitQuestion = async () => {
         );
         if (response.status === 200 && response.data.message === '上传成功') {
             ElMessage.success('题目上传成功！');
+            window.location.reload(); // 刷新当前页面
         } else {
             ElMessage.error(response.data.message || '题目上传失败');
         }

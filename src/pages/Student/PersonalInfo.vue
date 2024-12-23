@@ -11,7 +11,7 @@
                 <!-- 个人信息卡片 -->
                 <el-card class="info-card">
                     <div class="info-item">
-                        <label>昵称：</label>
+                        <label>用户名：</label>
                         <span v-if="!editNickname">{{ studentInfo.username }}</span>
                         <el-input
                             v-else
