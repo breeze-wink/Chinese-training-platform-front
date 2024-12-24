@@ -4,8 +4,9 @@
         <div class="main-container">
             <Sidebar />
             <div class="content">
+                <el-card class="info-card">
                 <section>
-                    <h2>待完成</h2>
+                    <h2>{{ headerText }}</h2>
                     <div>
                         <label>
                             <input type="radio" name="status" value="作业" v-model="selectedStatus">
@@ -16,6 +17,7 @@
                             练习
                         </label>
                     </div>
+
                     <table v-if="pendingItems[selectedStatus]?.length > 0">
                         <thead>
                         <tr>
@@ -44,8 +46,10 @@
                     <p v-else>暂无数据</p>
                 </section>
 
+
+
                 <section>
-                    <h2>已完成</h2>
+                    <h2>{{ headerTextFor }}</h2>
                     <div>
                         <label>
                             <input type="radio" name="completedStatus" value="作业" v-model="selectedCompletedStatus">
@@ -82,6 +86,7 @@
                     </table>
                     <p v-else>暂无数据</p>
                 </section>
+                </el-card>
             </div>
         </div>
 
@@ -114,6 +119,8 @@ export default {
     data() {
         return {
             selectedStatus: '作业',
+            headerText: '未截止',
+            headerTextFor: '已截止',
             selectedCompletedStatus: '作业',
             pendingItems: {
                 作业: [],
@@ -135,7 +142,13 @@ export default {
         };
     },
     computed: {
-        ...mapGetters(['getUserId'])
+        ...mapGetters(['getUserId']),
+        headerText() {
+            return this.selectedStatus === '作业' ? '未截止' : '待完成';
+        },
+        headerTextFor() {
+            return this.selectedCompletedStatus === '作业' ? '已截止' : '已完成';
+        }
     },
     methods: {
         async fetchPendingPractices() {
@@ -456,6 +469,8 @@ export default {
     flex: 1;
     padding: 20px;
     margin-left: 300px;
+    margin-right: 50px;
+    max-width: 1000px;
 }
 
 section {
@@ -470,6 +485,19 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 20px;
+}
+
+.info-card {
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+
+}
+
+.info-card:hover {
+    transform: scale(1.01);
 }
 
 th, td {
