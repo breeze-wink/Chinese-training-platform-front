@@ -55,6 +55,7 @@ import AnswerHomework from "@/pages/Student/AnswerHomework.vue";
 import HomeworkDetail from "@/pages/Student/HomeworkDetail.vue";
 
 import store from '@/store/user';
+import ViewCorrectedPaper from "@/pages/Teacher/viewCorrectedPaper.vue";
 
 const routes = [
     //首页
@@ -176,6 +177,13 @@ const routes = [
             difficulty: route.query.difficulty,
             totalScore: route.query.totalScore
         }),
+        meta: { requiresAuth: true }
+    },
+    //查看已批改试卷
+    {
+        path: '/teacher/paper-corrected-view',
+        name: 'ViewCorrectedPaper',
+        component:ViewCorrectedPaper,
         meta: { requiresAuth: true }
     },
     //管理试卷
