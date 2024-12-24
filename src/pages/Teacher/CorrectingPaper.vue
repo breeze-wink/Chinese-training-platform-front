@@ -131,16 +131,14 @@
           ></el-input>
         </div>
 
-        <div class="bottom-buttons">
           <el-button type="primary" @click="markCompleted">批阅完成</el-button>
-          <el-button type="success" @click="nextSubmission">下一份</el-button>
-        </div>
+
       </div>
     </div>
       <!-- 加载提示 -->
       <div v-if="isSubmitAndGetNext" class="loading-modal">
           <div class="modal-content">
-              <p v-if="isSubmitAndGetNext">正在提交并获取下一份，请稍候...</p>
+              <p v-if="isSubmitAndGetNext">正在加载，请稍候...</p>
               <div class="spinner"></div>
           </div>
       </div>
@@ -267,12 +265,12 @@ const fetchSubmissionDetails = async () => {
 
     } else {
       ElMessage.error('获取作答详情失败');
-      router.push('/teacher/homework-manage');
+      await router.push('/teacher/homework-manage');
     }
   } catch (error) {
     console.error(error);
     ElMessage.error('获取作答详情失败，请稍后再试');
-    router.push('/teacher/homework-manage');
+    await router.push('/teacher/homework-manage');
   }
 };
 
@@ -413,8 +411,6 @@ const markCompleted = async () => {
 
     if (response.status === 200 ) {
       ElMessage.success('批阅完成');
-
-
 
         // 从 unmarkedSubmissions 中移除已批阅的学生
         await store.dispatch('removeUnmarkedSubmission', Number(studentId.value));

@@ -15,7 +15,7 @@
             <el-option label="全部" value=""></el-option>
             <el-option label="未发布" value="未发布"></el-option>
             <el-option label="未截止" value="未截止"></el-option>
-            <el-option label="待批阅" value="待批阅"></el-option>
+            <el-option label="已截止" value="已截止"></el-option>
           </el-select>
           <el-button type="primary" @click="fetchAssignments">刷新</el-button>
         </div>
@@ -104,6 +104,7 @@
         <el-table-column label="操作" width="120">
           <template #default="{ row }">
             <el-button
+                    v-if="row.isMarked !== 2"
                 size="small"
                 type="primary"
                 :disabled="row.isMarked !== 0"
@@ -111,6 +112,17 @@
             >
               批阅
             </el-button>
+              <!-- 已批阅的学生显示“查看”按钮 -->
+              <el-button
+                      v-else-if="row.isMarked === 2"
+                      size="small"
+                      type="success"
+                      @click="viewGradedSubmission(row)"
+              >
+                  查看
+              </el-button>
+
+
           </template>
         </el-table-column>
       </el-table>
@@ -223,7 +235,7 @@ const determineStatus = (startTime, endTime) => {
   } else if (now >= start && now <= end) {
     return '未截止';
   } else {
-    return '待批阅';
+    return '已截止';
   }
 };
 // 删除作业的方法
@@ -288,7 +300,7 @@ const getStatusTagType = (status) => {
       return 'warning';
     case '未截止':
       return 'success';
-    case '待批阅':
+    case '已截止':
       return 'info';
     case '已批阅':
       return 'success';
@@ -390,6 +402,50 @@ const filterSubmissions = () => {
 
 // 批阅作业
 const routerInstance = useRouter();
+
+const  viewGradedSubmission = (submission) => {
+    // 获取所有已经批阅的学生
+    const unmarkedSubmissions = submissions.value
+            .filter(s => s.isMarked === 2)
+            .map(s => ({
+                studentId: s.studentId,
+                studentName: s.studentName
+            }));
+
+    if (unmarkedSubmissions.length === 0) {
+        ElMessage.warning('没有未批阅的学生');
+        return;
+    }
+
+
+    // 将未批阅的学生列表存入 Vuex
+    store.dispatch('setUnmarkedSubmissions', unmarkedSubmissions);
+    const unmarked = computed(() => store.getters.getUnmarkedSubmissions);
+    // 找到当前批阅的学生索引
+    const currentIndex = unmarkedSubmissions.findIndex(s => s.studentId === submission.studentId);
+    if (currentIndex === -1) {
+        ElMessage.error('未找到该学生的提交');
+        return;
+    }
+    store.dispatch('setCurrentSubmissionIndex', currentIndex);
+
+    // 设置当前学生信息
+    store.dispatch('setCurrentStudent', {
+        studentId: submission.studentId,
+        studentName: submission.studentName,
+        totalScore: submission.totalScore
+    });
+
+    // 跳转到批阅页面，并传递 assignmentId 作为查询参数
+    routerInstance.push({
+        path: '/teacher/paper-corrected-view',
+        query: {
+            assignmentId: selectedAssignmentId.value,
+            studentId: submission.studentId
+        }
+    });
+};
+
 const reviewAssignment = (submission) => {
   // 获取所有未批阅的学生
   const unmarkedSubmissions = submissions.value
@@ -403,8 +459,6 @@ const reviewAssignment = (submission) => {
     ElMessage.warning('没有未批阅的学生');
     return;
   }
-
-
   // 将未批阅的学生列表存入 Vuex
   store.dispatch('setUnmarkedSubmissions', unmarkedSubmissions);
   const unmarked = computed(() => store.getters.getUnmarkedSubmissions);
