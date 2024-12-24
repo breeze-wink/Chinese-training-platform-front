@@ -123,7 +123,7 @@
                         </el-input>
                     </el-form-item>
                     <el-form-item class="form-item">
-                        <el-checkbox>记住密码</el-checkbox>
+                        <el-checkbox v-model="rememberMe">记住密码</el-checkbox>
                         <a href="#" style="float: right;" @click="forgotPasswordDialogVisible = true">忘记密码</a>
                     </el-form-item>
                 </el-form>
@@ -149,7 +149,7 @@
 
                         <el-form-item prop="verifyCode" label="验证码" class="form-item">
                             <el-input v-model="formData.verifyCode" placeholder="请输入验证码" style="width: 150px"></el-input>
-                            <el-button @click="sendVerificationCodeFor" :disabled="sendingCode">{{ codeButtonText }}</el-button>
+                            <el-button @click="sendVerificationCodeFor" :disabled="countdownFor.value > 0">{{ codeButtonTextFor }}</el-button>
                         </el-form-item>
 <!--                        <el-button type="primary" @click="nextStep">下一步</el-button>-->
                     </div>
@@ -175,92 +175,93 @@
                 <div slot="footer" class="dialog-footer1">
                     <el-button v-if="active > 1 && active < 3" @click="front">上一步</el-button>
                     <el-button v-if="active > 0 && active < 3" @click="handleClick">下一步</el-button>
-                    <el-button v-if="active === 3" @click="goToOwnPage" type="primary" class="custom-button">进入平台
+                    <el-button v-if="active === 3" @click="goToOwnPage" type="primary" class="custom-button">确定
                     </el-button>
                 </div>
             </el-dialog>
 
-            <!-- 注册浮窗 -->
-            <el-dialog
-                    v-model="registerDialogVisible"
-                    title="注册"
-                    width="500px"
-                    align-center
-                    :close-on-click-modal="false">
+          <!-- 注册浮窗 -->
+          <el-dialog
+              v-model="registerDialogVisible"
+              title="注册"
+              width="500px"
+              align-center
+              @close="handleRegisterClose"
+              :close-on-click-modal="false">
 
-                <el-tabs v-model="activeTab">
-                    <el-tab-pane label="学生" name="student">
-                        <el-form :model="registerForm.student" :rules="rules" ref="registerFormStudent"
-                                 label-width="100px" style="margin-right: 30px">
-                            <el-form-item prop="email" label="邮箱">
-                                <el-input v-model="registerForm.student.email" placeholder="邮箱"
-                                          size="large"></el-input>
-                            </el-form-item>
-                            <div style="display: flex">
-                                <el-form-item prop="code" label="验证码" style="width: auto;">
-                                    <el-input v-model="registerForm.student.code" placeholder="验证码" size="large"
-                                              class="input-wid"></el-input>
-                                </el-form-item>
-                                <el-button :disabled="countdown.value > 0" style="height:40px;margin-left: 10px " @click="sendVerificationCode('student')">
-                                    {{ codeButtonText }}
-                                </el-button>
-                            </div>
-                            <el-form-item prop="username" label="用户名">
-                                <el-input v-model="registerForm.student.username" placeholder="用户名"
-                                          size="large"></el-input>
-                            </el-form-item>
-                            <el-form-item prop="password" label="密码">
-                                <el-input type="password" v-model="registerForm.student.password" placeholder="密码"
-                                          size="large"></el-input>
-                            </el-form-item>
-                            <el-form-item prop="checkPass" label="确认密码">
-                                <el-input type="password" v-model="registerForm.student.checkPass"
-                                          placeholder="再次输入密码" size="large"></el-input>
-                            </el-form-item>
-                            <div class="sign-up-btn">
-                                <el-button size="large" type="primary"
-                                           @click="submitForm('registerFormStudent', 'student')">注册
-                                </el-button>
-                            </div>
-                        </el-form>
-                    </el-tab-pane>
-                    <el-tab-pane label="教师" name="teacher">
-                        <el-form :model="registerForm.teacher" :rules="rules" ref="registerFormTeacher"
-                                 label-width="100px" style="margin-right: 30px">
-                            <el-form-item prop="AuthorizationCode" label="授权码">
-                                <el-input v-model="registerForm.teacher.AuthorizationCode" placeholder="授权码"
-                                          size="large"></el-input>
-                            </el-form-item>
-                            <el-form-item prop="email" label="邮箱">
-                                <el-input v-model="registerForm.teacher.email" placeholder="邮箱"
-                                          size="large"></el-input>
-                            </el-form-item>
-                            <div style="display: flex">
-                                <el-form-item prop="code" label="验证码" style="width: auto;">
-                                    <el-input v-model="registerForm.teacher.code" placeholder="验证码" size="large"
-                                              class="input-wid"></el-input>
-                                </el-form-item>
-                                <el-button :disabled="countdown.value > 0" style="height: 40px;margin-left: 10px" @click="sendVerificationCode('teacher')">
-                                    {{ codeButtonText }}
-                                </el-button>
-                            </div>
-                            <el-form-item prop="password" label="密码">
-                                <el-input type="password" v-model="registerForm.teacher.password" placeholder="密码"
-                                          size="large"></el-input>
-                            </el-form-item>
-                            <el-form-item prop="checkPass" label="确认密码">
-                                <el-input type="password" v-model="registerForm.teacher.checkPass"
-                                          placeholder="再次输入密码" size="large"></el-input>
-                            </el-form-item>
-                            <div class="sign-up-btn">
-                                <el-button size="large" type="primary"
-                                           @click="submitForm('registerFormTeacher', 'teacher')">注册
-                                </el-button>
-                            </div>
-                        </el-form>
-                    </el-tab-pane>
-                </el-tabs>
-            </el-dialog>
+            <el-tabs v-model="activeTab">
+              <el-tab-pane label="学生" name="student">
+                <el-form :model="registerForm.student" :rules="rules" ref="registerFormStudent"
+                         label-width="100px" style="margin-right: 30px">
+                  <el-form-item prop="email" label="邮箱">
+                    <el-input v-model="registerForm.student.email" placeholder="邮箱"
+                              size="large"></el-input>
+                  </el-form-item>
+                  <div style="display: flex">
+                    <el-form-item prop="code" label="验证码" style="width: auto;">
+                      <el-input v-model="registerForm.student.code" placeholder="验证码" size="large"
+                                class="input-wid"></el-input>
+                    </el-form-item>
+                    <el-button :disabled="countdown.value > 0" style="height:40px;margin-left: 10px " @click="sendVerificationCode('student')">
+                      {{ codeButtonText }}
+                    </el-button>
+                  </div>
+                  <el-form-item prop="username" label="用户名">
+                    <el-input v-model="registerForm.student.username" placeholder="用户名"
+                              size="large"></el-input>
+                  </el-form-item>
+                  <el-form-item prop="password" label="密码">
+                    <el-input type="password" v-model="registerForm.student.password" placeholder="密码"
+                              size="large"></el-input>
+                  </el-form-item>
+                  <el-form-item prop="checkPass" label="确认密码">
+                    <el-input type="password" v-model="registerForm.student.checkPass"
+                              placeholder="再次输入密码" size="large"></el-input>
+                  </el-form-item>
+                  <div class="sign-up-btn">
+                    <el-button size="large" type="primary"
+                               @click="submitForm('registerFormStudent', 'student')">注册
+                    </el-button>
+                  </div>
+                </el-form>
+              </el-tab-pane>
+              <el-tab-pane label="教师" name="teacher">
+                <el-form :model="registerForm.teacher" :rules="rules" ref="registerFormTeacher"
+                         label-width="100px" style="margin-right: 30px">
+                  <el-form-item prop="AuthorizationCode" label="授权码">
+                    <el-input v-model="registerForm.teacher.AuthorizationCode" placeholder="授权码"
+                              size="large"></el-input>
+                  </el-form-item>
+                  <el-form-item prop="email" label="邮箱">
+                    <el-input v-model="registerForm.teacher.email" placeholder="邮箱"
+                              size="large"></el-input>
+                  </el-form-item>
+                  <div style="display: flex">
+                    <el-form-item prop="code" label="验证码" style="width: auto;">
+                      <el-input v-model="registerForm.teacher.code" placeholder="验证码" size="large"
+                                class="input-wid"></el-input>
+                    </el-form-item>
+                    <el-button :disabled="countdown.value > 0" style="height: 40px;margin-left: 10px" @click="sendVerificationCode('teacher')">
+                      {{ codeButtonText  }}
+                    </el-button>
+                  </div>
+                  <el-form-item prop="password" label="密码">
+                    <el-input type="password" v-model="registerForm.teacher.password" placeholder="密码"
+                              size="large"></el-input>
+                  </el-form-item>
+                  <el-form-item prop="checkPass" label="确认密码">
+                    <el-input type="password" v-model="registerForm.teacher.checkPass"
+                              placeholder="再次输入密码" size="large"></el-input>
+                  </el-form-item>
+                  <div class="sign-up-btn">
+                    <el-button size="large" type="primary"
+                               @click="submitForm('registerFormTeacher', 'teacher')">注册
+                    </el-button>
+                  </div>
+                </el-form>
+              </el-tab-pane>
+            </el-tabs>
+          </el-dialog>
         </el-container>
     </div>
 </template>
@@ -414,7 +415,6 @@ const rules = ref({
 })
 
 const sendingCode = ref(false)
-const smsLoading = ref(false)
 const verificationCode = ref(''); // 用于存储后端返回的验证码
 
 const next = () => {
@@ -424,6 +424,7 @@ const front = () => {
     if (active.value-- < 1) active.value = 0
 }
 
+const rememberMe = ref(true);
 const login = async () => {
     const url = urls[Identity.value];
     if (account.value === "" || password.value === "") {
@@ -452,6 +453,13 @@ const login = async () => {
 
             const permission = response.data.permission;
             loginDialogVisible.value = false; // 登录成功后关闭对话框
+
+            if (rememberMe.value) {
+              // 存储凭证
+              localStorage.setItem('account', account.value);
+              localStorage.setItem('password', password.value);
+              localStorage.setItem('role', Identity.value);
+            }
 
             if (Identity.value === 'teacher') {
                 if (permission === 0) {
@@ -497,12 +505,12 @@ function handleRegisterKeydown(event) {
 const emit = defineEmits(['login', 'register']);
 const handleEnter = (event) => {
     if (event.key === "Enter") {
-        if (loginDialogVisible.value) {
+        if (loginDialogVisible.value && !forgotPasswordDialogVisible.value && !registerDialogVisible.value) {
             login();
         }
 
         // 注册窗口的 Enter 键逻辑
-        if (registerDialogVisible.value) {
+        if (registerDialogVisible.value && !loginDialogVisible.value && !forgotPasswordDialogVisible.value) {
             if (activeTab.value === "student") {
                 submitForm("registerFormStudent", "student");
             } else if (activeTab.value === "teacher") {
@@ -527,12 +535,17 @@ watch([loginDialogVisible, registerDialogVisible], ([loginVisible, registerVisib
     }
 });
 
-// onMounted(() => {
-//     window.addEventListener('keydown', handleKeydown);
-// });
+onMounted(() => {
+  const storedAccount = localStorage.getItem('account');
+  const storedPassword = localStorage.getItem('password');
+  const role = localStorage.getItem('role');
 
-onBeforeUnmount(() => {
-    window.removeEventListener('keydown', handleKeydown);
+  if (storedAccount && storedPassword) {
+    account.value = storedAccount;
+    password.value = storedPassword;
+    Identity.value = role;
+    rememberMe.value = true;
+  }
 });
 const sendVerification = async () => {
     try {
@@ -589,69 +602,130 @@ function validateEmail(email) {
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(String(email).toLowerCase());
 }
+const countdown = ref(60)
+const codeButtonText = ref('获取验证码')
+let timer; // 用于存储定时器ID
+let isCountingDown = ref(false); // 标记是否正在倒计时
+function startCountdown() {
+  clearInterval(timer); // 清除任何现有的定时器
+  isCountingDown.value = true;
+  timer = setInterval(() => {
+    if (countdown.value > 0) {
+      countdown.value--;
+    } else {
+      clearInterval(timer);
+      resetCountdown();
+    }
+  }, 1000);
+}
+function resetCountdown() {
+  clearInterval(timer);
+  countdown.value = 60;
+  isCountingDown.value = false;
+}
+
+
+// 使用 watch 监听 countdown 的变化并更新按钮文本
+watch(countdown, (newVal) => {
+  if (newVal > 0 && newVal < 60) {
+    codeButtonText.value = `${newVal}s 后重新获取`;
+  } else {
+    codeButtonText.value = registerDialogVisible.value ? '重新获取验证码' : '获取验证码';
+    resetCountdown();
+  }
+});
 
 async function sendVerificationCode(userType) {
-    if (sendingCode.value) return;
-    sendingCode.value = true;
-    smsLoading.value = true;
-    countdown.value = 60;
+  if (isCountingDown.value) return;
 
-    const form = activeTab.value === 'student' ? registerForm.value.student : registerForm.value.teacher
+  const form = activeTab.value === 'student' ? registerForm.value.student : registerForm.value.teacher
 
-    if (!validateEmail(form.email)) {
-        ElNotification.error({ title: '邮箱错误', message: '请输入正确的邮箱地址' });
-        sendingCode.value = false;
-        smsLoading.value = false;
-        return;
+  if (!validateEmail(form.email)) {
+    ElNotification.error({ title: '邮箱错误', message: '请输入正确的邮箱地址' });
+    return;
+  }
+
+  startCountdown();
+
+  try {
+    let url = '/api/student/send-verification';
+    let payload = {email: form.email};
+
+    if (userType === 'teacher') {
+      url = '/api/teacher/send-verification';
+      payload = {authorizationCode: form.AuthorizationCode, email: form.email};
     }
-// 如果当前正在倒计时，则不允许再次发送验证码
-    if (countdown.value !== 60) return;
-    startCountdown();
 
-    try {
-        let url = '/api/student/send-verification';
-        let payload = {email: form.email};
+    const response = await axios.post(url, payload, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
 
-        if (userType === 'teacher') {
-            url = '/api/teacher/send-verification';
-            payload = {authorizationCode: form.AuthorizationCode, email: form.email};
-        }
+    if (response.status === 200) {
 
-        const response = await axios.post(url, payload, {
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+      if (userType === 'teacher' && response.data.schoolId) {
+        registerForm.value.teacher.schoolId = response.data.schoolId;
+      }
 
-        if (response.status === 200) {
-
-            if (userType === 'teacher' && response.data.schoolId) {
-                registerForm.value.teacher.schoolId = response.data.schoolId;
-            }
-        } else {
-            const errorMessage = response.data.message || '验证码发送失败，请稍后再试';
-            ElNotification.error({ title: '邮箱错误', message: '请输入正确的邮箱地址' });
-            resetCountdown(); // 发送失败时重置倒计时
-        }
-    } catch (error) {
-        ElNotification.error({ title: '验证码发送失败:', message: error.response ? error.response.data : error.message });
-        resetCountdown(); // 发送失败时重置倒计时
-    } finally {
-        sendingCode.value = false;
-        smsLoading.value = false;
+    } else {
+      const errorMessage = response.data.message || '验证码发送失败，请稍后再试';
+      ElNotification.error({ title: '邮箱错误', message: errorMessage });
+      resetCountdown();
     }
+  } catch (error) {
+    ElNotification.error({ title: '验证码发送失败:', message: error.response ? error.response.data.message : error.message });
+    resetCountdown();
+
+  }
+}
+
+//forget password
+const countdownFor = ref(60)
+const codeButtonTextFor = ref('获取验证码')
+let timerFor; // 用于存储定时器ID
+let isCountingDownFor = ref(false); // 标记是否正在倒计时
+function startCountdownFor() {
+  clearInterval(timerFor); // 清除任何现有的定时器
+  isCountingDownFor.value = true;
+  timerFor = setInterval(() => {
+    if (countdownFor.value > 0) {
+      countdownFor.value--;
+    } else {
+      clearInterval(timerFor);
+      resetCountdownFor();
+    }
+  }, 1000);
+}
+function resetCountdownFor() {
+  clearInterval(timerFor);
+  countdownFor.value = 60;
+  isCountingDownFor.value = false;
+}
+
+
+// 使用 watch 监听 countdown 的变化并更新按钮文本
+watch(countdownFor, (newVal) => {
+  if (newVal > 0 && newVal < 60) {
+    codeButtonTextFor.value = `${newVal}s 后重新获取`;
+  } else {
+    codeButtonTextFor.value = forgotPasswordDialogVisible.value ? '重新获取验证码' : '获取验证码';
+    resetCountdownFor();
+  }
+});
+
+const handleRegisterClose = () => {
+  registerDialogVisible.value = false;
 }
 
 // 找回密码发送验证码
 const sendVerificationCodeFor = async () => {
+    if (isCountingDownFor.value) return;
     if (!formData.email || !/^\S+@\S+\.\S+$/.test(formData.email)) {
-        ElNotification.error({ title: '邮箱错误', message: '请输入正确的邮箱地址' });
-        return;
+      ElNotification.error({ title: '邮箱错误', message: '请输入正确的邮箱地址' });
+      return;
     }
-
-// 如果当前正在倒计时，则不允许再次发送验证码
-    if (countdown.value !== 60) return;
-    startCountdown();
+    startCountdownFor();
 
     try {
         sendingCode.value = true;
@@ -662,14 +736,11 @@ const sendVerificationCodeFor = async () => {
         if (response.data.message === 'success') {
             // 验证码发送成功后的逻辑
             ElNotification.success({ title: '验证码已发送', message: '验证码已发送，请注意查收' });
-            resetCountdown(); // 发送失败时重置倒计时
         }
     } catch (error) {
         console.error('Error occurred while sending verification code:', error);
         ElNotification.error({ title: '验证码发送失败', message: '验证码发送失败，请稍后再试' });
-        resetCountdown(); // 发送失败时重置倒计时
-    } finally {
-        sendingCode.value = false;
+        resetCountdownFor(); // 发送失败时重置倒计时
     }
 };
 const nextStep = () => {
@@ -720,41 +791,6 @@ const handleClick = () => {
     }
 
 };
-const countdown = ref(60)
-const codeButtonText = ref('获取验证码')
-let timer; // 用于存储定时器ID
-let isCountingDown = ref(false); // 标记是否正在倒计时
-function startCountdown() {
-    console.log('Starting countdown...');
-    clearInterval(timer); // 清除任何现有的定时器
-    isCountingDown.value = true;
-    if (codeButtonText.value === '重新获取验证码') {
-        countdown.value = 60
-    }
-    timer = setInterval(() => {
-        if (countdown.value > 0) {
-            countdown.value--;
-        } else {
-            clearInterval(timer);
-            isCountingDown.value = false;
-            console.log('Countdown finished.');
-        }
-    }, 1000);
-}
-function resetCountdown() {
-    clearInterval(timer);
-    countdown.value = 60;
-    isCountingDown.value = false;
-}
-
-// 使用 watch 监听 countdown 的变化并更新按钮文本
-watch(countdown, (newVal) => {
-    if (newVal > 0 && newVal <= 60) {
-        codeButtonText.value = `${newVal}s 后重新获取`;
-    } else {
-        codeButtonText.value = '重新获取验证码';
-    }
-});
 
 async function submitForm(formName, userType) {
     if (!proxy.$refs[formName]) {
@@ -810,7 +846,7 @@ async function submitForm(formName, userType) {
                     ElNotification.error({ title: '未知错误', message: '未知错误，请稍后再试' });
                 }
             } catch (error) {
-                // ElNotification.error({ title: '注册请求失败', message: error.response ? error.response.data : error.message });
+                ElNotification.error({ title: '注册请求失败', message: error.response ? error.response.data.message : error.message });
             }
         } else {
             console.log('error submit!!');

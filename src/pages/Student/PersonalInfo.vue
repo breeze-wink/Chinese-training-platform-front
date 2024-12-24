@@ -190,7 +190,8 @@ export default {
         Header,
         Sidebar
     },
-    data() {
+
+  data() {
         return {
             studentInfo: {
                 name: '',  // 姓名
@@ -242,7 +243,6 @@ export default {
             isJoinedClass: false,
             codeButtonText: '获取验证码',
 
-
             countdown: 60,
             isCountingDown: false, // 标记是否正在倒计时
 
@@ -277,19 +277,14 @@ export default {
     },
     methods: {
         startCountdown() {
-          console.log('Starting countdown...');
           clearInterval(this.timer); // 清除任何现有的定时器
           this.isCountingDown = true;
-          if (this.codeButtonText === '重新获取验证码') {
-            this.countdown = 60;
-          }
           this.timer = setInterval(() => {
             if (this.countdown > 0) {
               this.countdown--;
             } else {
               clearInterval(this.timer);
-              this.isCountingDown = false;
-              console.log('Countdown finished.');
+              this.resetCountdown();
             }
           }, 1000);
         },
@@ -420,34 +415,31 @@ export default {
         },
         async sendVerificationCode() {
           // 如果当前正在倒计时，则不允许再次发送验证码
-          if (this.countdown !== 60) return;
-          this.$refs.emailFormRef.validate(async (valid) => {
-            if (valid) {
-              this.startCountdown();
+          if (this.isCountingDown) return;
+          const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+          if (!emailPattern.test(this.emailForm.newEmail)) {
+            this.errorMessage= '请输入正确的邮箱格式';
+            return;
+          }
+          this.startCountdown();
 
-              try {
-                const response = await axios.post(`/api/student/${this.studentInfo.accountId}/change-email/send-code`, {
-                  email: this.emailForm.newEmail
-                }, {
-                  headers: {
-                    'Content-Type': 'application/json'
-                  }
-                });
-
-                if (response.status !== 200) {
-                  ElNotification({title: '验证码发送失败' , message: response.data.message});
-                  this.resetCountdown();
-                }
-              } catch (e) {
-                ElNotification.error({title: '验证码发送失败' , message: '邮箱已注册'});
-                this.resetCountdown();
+          try {
+            const response = await axios.post(`/api/student/${this.studentInfo.accountId}/change-email/send-code`, {
+              email: this.emailForm.newEmail
+            }, {
+              headers: {
+                'Content-Type': 'application/json'
               }
+            });
 
-            } else {
-              console.log('表单验证失败');
-              return false;
+            if (response.status !== 200) {
+              ElNotification({title: '验证码发送失败' , message: response.data.message});
+              this.resetCountdown();
             }
-          });
+          } catch (e) {
+            ElNotification.error({title: '验证码发送失败' , message: '邮箱已注册'});
+            this.resetCountdown();
+          }
         },
         async handleChangeEmail() {
             this.$refs.emailFormRef.validate(async (valid) => {
@@ -639,10 +631,11 @@ export default {
 
         // 使用 watch 监听 countdown 的变化并更新按钮文本
         this.$watch('countdown', (newVal) => {
-          if (newVal > 0 && newVal <= 60) {
+          if (newVal > 0 && newVal < 60) {
             this.codeButtonText = `${newVal}s 后重新获取`;
           } else {
-            this.codeButtonText = '重新获取验证码';
+            this.codeButtonText = this.isChangeEmailModalVisible ? '重新获取验证码' : '获取验证码';
+            this.resetCountdown();
           }
         });
     },
