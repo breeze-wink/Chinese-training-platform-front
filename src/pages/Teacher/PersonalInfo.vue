@@ -288,9 +288,9 @@ const updatePhoneNumber = async () => {
         });
 
         if (response.status === 200 ) {
-            console.log(response.data.message);
+          ElMessage.success('手机号修改成功');
         } else {
-            console.error(response.data.message);
+          ElMessage.error('手机号修改失败');
         }
     } catch (error) {
         console.error('请求失败' + error.message);
@@ -309,9 +309,11 @@ const updateName = async () => {
 
         if (response.status === 200 && response.data.message === '姓名修改成功') {
 
-            console.log(response.data.message);
+           ElMessage.success('姓名修改成功');
+
         } else {
-            console.error(response.data.message);
+            ElMessage.error('姓名修改失败');
+
         }
     } catch (error) {
         console.error('请求失败' + error.message);
