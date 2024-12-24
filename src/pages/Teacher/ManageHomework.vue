@@ -36,9 +36,21 @@
             <template #default="{ row }">
               <el-button size="small" type="primary"
                          :disabled="row.status === '未截止'"
-                         @click="viewCompletion(row)">查看完成情况</el-button>
+                         @click="viewCompletion(row)">查看完成情况
+              </el-button>
+                <el-button
+                        size="small"
+                        type="danger"
+                        style="margin-left: 10px;"
+                        @click="confirmDeleteAssignment(row)"
+                >
+                    删除
+                </el-button>
 
             </template>
+
+
+
           </el-table-column>
         </el-table>
 
@@ -134,7 +146,17 @@
 import {ref, computed, onMounted, nextTick} from 'vue';
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import { ElButton, ElSelect, ElTable, ElTableColumn, ElTag, ElMessage, ElPagination, ElDialog } from 'element-plus';
+import {
+    ElButton,
+    ElSelect,
+    ElTable,
+    ElTableColumn,
+    ElTag,
+    ElMessage,
+    ElPagination,
+    ElDialog,
+    ElMessageBox
+} from 'element-plus';
 import axios from 'axios';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
@@ -203,6 +225,54 @@ const determineStatus = (startTime, endTime) => {
   } else {
     return '待批阅';
   }
+};
+// 删除作业的方法
+const confirmDeleteAssignment = (assignment) => {
+    ElMessageBox.confirm(
+            `确定要删除作业 "${assignment.assignmentTitle}" 吗？
+            <br>删除后学生将丢失此作业。`,
+            '提示',
+            {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning',
+                dangerouslyUseHTMLString: true
+            }
+    )
+            .then(() => {
+                deleteAssignment(assignment.assignmentId);
+            })
+            .catch(() => {
+                // 用户取消删除
+            });
+};
+
+// 调用API删除作业
+const deleteAssignment = async (assignmentId) => {
+    try {
+        const response = await axios.delete('/api/teacher/delete-assignment', {
+            params: { assignmentId },
+        });
+        if (response.status === 200 ) {
+            ElMessage.success('作业删除成功');
+            // 直接从 assignments 中移除已删除的作业
+            assignments.value = assignments.value.filter(assignment => assignment.assignmentId !== assignmentId);
+
+            // 同步更新 filteredAssignments
+            filteredAssignments.value = filteredAssignments.value.filter(assignment => assignment.assignmentId !== assignmentId);
+
+            // 如果当前页的数据已减少，可能需要调整 currentPage
+            const totalPages = Math.ceil(filteredAssignments.value.length / pageSize.value);
+            if (currentPage.value > totalPages) {
+                currentPage.value = totalPages || 1;
+            }
+        } else {
+            ElMessage.error(response.data.message || '删除作业失败');
+        }
+    } catch (error) {
+        console.error(error);
+        ElMessage.error('删除作业失败，请稍后再试');
+    }
 };
 
 // 格式化日期
