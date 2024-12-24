@@ -216,22 +216,24 @@ function validatePassword(rule, value, callback){
 }
 
 const sendCodeForRegister = async () => {
+  if (isCountingDown.value) {
+    return;
+  }
   try {
+    startCountdown();
     const response = await axios.get(`/api/system-admin/send-email-code`, {
       params: {
         email: registerForm.value.email
       }
     });
 
-    if (response.status === 200) {
-      ElMessage.success('验证码已发送，请查收您的邮箱');
-
-    } else {
+    if (response.status !== 200){
       ElMessage.error('验证码发送失败' + response.data.message);
+      resetCountdown();
     }
   } catch (error) {
-    errorMessage.value = '验证码发送失败，请稍后再试';
-    console.error('验证码发送失败:', error.response ? error.response.data : error.message);
+    ElNotification.error({title: '验证码发送失败' , message: '邮箱已注册'});
+    resetCountdown();
   }
 };
 
@@ -257,7 +259,7 @@ const submitRegister = async () => {
       ElMessage.error(response.data.message || '注册失败');
     }
   } catch (error) {
-    ElMessage.error(error.response?.data?.message || '注册失败，请稍后再试');
+    ElNotification.error(error.response?.data?.message || '注册失败，请稍后再试');
     console.error('注册失败:', error);
   }
 };
@@ -356,15 +358,16 @@ function startCountdown() {
 function resetCountdown() {
     clearInterval(timer);
     countdown.value = 60;
+    codeButtonText.value = '获取验证码';
     isCountingDown.value = false;
 }
 
 // 使用 watch 监听 countdown 的变化并更新按钮文本
 watch(countdown, (newVal) => {
-    if (newVal > 0 && newVal <= 60) {
+    if (newVal > 0 && newVal < 60) {
         codeButtonText.value = `${newVal}s 后重新获取`;
     } else {
-        codeButtonText.value = '重新获取验证码';
+        resetCountdown();
     }
 });
 // 获取信息
@@ -438,7 +441,6 @@ const updateUsername = async (field) => {
         toggleEdit(field); // 验证通过后切换编辑状态
         originNickname.value = SystemAdminInfo.value.username; // 更新原始昵称
     } else {
-      console.error(response.data.message);
       ElMessage.error(response.data.message);
     }
   } catch (error) {

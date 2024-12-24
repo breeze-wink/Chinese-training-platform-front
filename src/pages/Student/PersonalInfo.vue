@@ -193,7 +193,7 @@ export default {
     data() {
         return {
             studentInfo: {
-                name: '',  // 实名
+                name: '',  // 姓名
                 username: '', // 昵称
                 schoolName: '',
                 grade: '',

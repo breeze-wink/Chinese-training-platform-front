@@ -44,7 +44,7 @@
                         </el-icon>
                     </div>
                     <div class="info-item">
-                        <label>实名：</label>
+                        <label>姓名：</label>
                         <span v-if="!editName">{{ teacherInfo.name }}</span>
                         <el-input
                                 v-else
@@ -133,7 +133,7 @@
 //公共组件引入
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import {computed, ref, onMounted} from 'vue';
+import {computed, ref, onMounted, watch} from 'vue';
 //图标引入
 import {ElIcon, ElCard, ElInput, ElMessageBox, ElMessage, ElNotification} from 'element-plus';
 import {Edit} from '@element-plus/icons-vue';
@@ -434,9 +434,7 @@ function startCountdown() {
 
   clearInterval(timer); // 清除任何现有的定时器
   isCountingDown.value = true;
-  if (codeButtonText.value === '重新获取验证码') {
-    countdown.value = 60
-  }
+  countdown.value = 60;
   timer = setInterval(() => {
 
     if (countdown.value > 0) {
@@ -451,7 +449,17 @@ function resetCountdown() {
     clearInterval(timer);
     countdown.value = 60;
     isCountingDown.value = false;
+    codeButtonText.value = '获取验证码';
 }
+
+watch(countdown, (newVal) => {
+  if (newVal > 0 && newVal < 60) {
+    codeButtonText.value = `${newVal}s 后重新获取`;
+  } else {
+    resetCountdown();
+  }
+});
+
 // 发送验证码
 const sendVerificationCode = async () => {
   // 如果当前正在倒计时，则不允许再次发送验证码
@@ -463,20 +471,22 @@ const sendVerificationCode = async () => {
     errorMessage.value = '请输入正确的邮箱格式';
     return;
   }
-
-
   startCountdown();
-  const response = await axios.get(`/api/teacher/send-email-code`, {
-    params: {
-      email: emailForm.value.newEmail
-    },
-    headers: {
-      'Content-Type': 'application/json'
+  try {
+    const response = await axios.get(`/api/teacher/send-email-code`, {
+      params: {
+        email: emailForm.value.newEmail
+      },
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (response.status !== 200){
+      ElNotification.error({title: '验证码发送失败', message: response.data.message});
+      resetCountdown(); // 发送失败时重置倒计时
     }
-  });
-
-  if (response.status !== 200){
-    ElNotification.error({title: '验证码发送失败', message: response.data.message});
+  } catch (error){
+    ElNotification.error({title: '验证码发送失败', message: error.response.data.message});
     resetCountdown(); // 发送失败时重置倒计时
   }
 
@@ -495,7 +505,7 @@ const handleChangeEmail = async () => {
   });
 
   if (response.status === 200) {
-    ElMessage.success('邮箱更换成功');
+    ElNotification.success('邮箱更换成功');
     teacherInfo.value.email = emailForm.value.newEmail;
     hideChangeEmailModal();
   } else {

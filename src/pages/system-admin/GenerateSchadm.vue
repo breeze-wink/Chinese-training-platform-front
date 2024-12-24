@@ -147,7 +147,7 @@ const generateAdmin = async () => {
       ElMessage({ message: response.data.message || '账号生成失败', type: 'error' });
     }
   } catch (error) {
-    ElMessage({ message: '账号生成失败', type: 'error' });
+    ElMessage.error({ message: error.response.data.message ? error.response.data.message : "创建失败" });
   }
 };
 </script>

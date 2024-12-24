@@ -96,8 +96,8 @@
               </el-form-item>
               <el-form-item label="验证码">
                   <el-input v-model="bindEmailForm.verificationCode" placeholder="请输入验证码" style="width: 60%;"></el-input>
-                  <el-button type="primary" @click="sendVerificationCode" :disabled="isSendingCode" style="margin-left: 10px;">
-                      {{ isSendingCode ? `${countdown}s` : '获取验证码' }}
+                  <el-button type="primary" @click="sendVerificationCode" :disabled="isCountingDown" style="margin-left: 10px;">
+                      {{ isCountingDown ? `${countdown}s` : '获取验证码' }}
                   </el-button>
               </el-form-item>
           </el-form>
@@ -111,7 +111,7 @@
       <el-dialog v-model="isChangeEmailModalVisible" title="更换绑定邮箱" @close="hideChangeEmailModal" custom-class="square-modal" width="450px" align-center>
           <el-form :model="bindEmailForm" :rules="emailRules" ref="emailFormRef" label-width="100px">
               <el-form-item label="新邮箱" prop="newEmail">
-                  <el-input v-model="bindEmailForm.newEmail" placeholder="请输入新邮箱地址" style="width: 300px;"></el-input>
+                  <el-input v-model="bindEmailForm.email" placeholder="请输入新邮箱地址" style="width: 300px;"></el-input>
               </el-form-item>
               <el-form-item label="验证码" prop="verificationCode">
                   <el-row :gutter="10">
@@ -187,7 +187,7 @@ const successMessage = ref('');
 const emailFormRef = ref(null);
 
 const emailRules = ref({
-    newEmail: [
+    email: [
         {required: true, message: '请输入新的邮箱地址', trigger: 'blur'},
         {type: 'email', message: '请输入正确的邮箱格式', trigger: ['blur', 'change']}
     ],
@@ -309,9 +309,7 @@ function startCountdown() {
 
     clearInterval(timer); // 清除任何现有的定时器
     isCountingDown.value = true;
-    if (codeButtonText.value === '重新获取验证码') {
-        countdown.value = 60
-    }
+    countdown.value = 60
     timer = setInterval(() => {
 
         if (countdown.value > 0) {
@@ -319,7 +317,7 @@ function startCountdown() {
         } else {
             clearInterval(timer);
             isCountingDown.value = false;
-
+            codeButtonText.value = '获取验证码';
         }
     }, 1000);
 }
@@ -331,14 +329,14 @@ function resetCountdown() {
 
 // 使用 watch 监听 countdown 的变化并更新按钮文本
 watch(countdown, (newVal) => {
-    if (newVal > 0 && newVal <= 60) {
+    if (newVal > 0 && newVal < 60) {
         codeButtonText.value = `${newVal}s 后重新获取`;
     } else {
-        codeButtonText.value = '重新获取验证码';
+        codeButtonText.value = '获取验证码';
     }
 });
 const sendVerificationCode = async () => {
-  if (isSendingCode.value) return;
+  if (isCountingDown.value) return;
 
   const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailPattern.test(bindEmailForm.value.email)) {
@@ -346,24 +344,22 @@ const sendVerificationCode = async () => {
     return;
   }
 
-// 如果当前正在倒计时，则不允许再次发送验证码
-    if (countdown.value !== 60) return;
-    startCountdown();
-    try {
-      const response = await axios.get(`/api/school-admin/send-email-code`, {
-        params: {
-          email: bindEmailForm.value.newEmail
-        },
-      });
+  startCountdown();
+  try {
+    const response = await axios.get(`/api/school-admin/send-email-code`, {
+      params: {
+        email: bindEmailForm.value.email
+      },
+    });
 
-      if (response.status !== 200) {
-        ElNotification.error({ title: '发送验证码失败', message: response.data.message });
-          resetCountdown(); // 发送失败时重置倒计时
-      }
-    } catch (error) {
-      ElNotification.error({ title: '发送验证码失败', message: '邮箱已注册' });
-      resetCountdown(); // 发送失败时重置倒计时
+    if (response.status !== 200) {
+      ElNotification.error({ title: '发送验证码失败', message: response.data.message });
+        resetCountdown(); // 发送失败时重置倒计时
     }
+  } catch (error) {
+    ElNotification.error({ title: '发送验证码失败', message: error.response.data.message });
+    resetCountdown(); // 发送失败时重置倒计时
+  }
 };
 
 const confirmBindEmail = async () => {
@@ -372,29 +368,23 @@ const confirmBindEmail = async () => {
     return;
   }
 
-  if (correctCode.value !== bindEmailForm.value.verificationCode) {
-    ElMessage({ message: '验证码错误', type: 'error' });
-    return;
-  }
-
   try {
-    const response = await axios.post(`/api/school-admin/${schoolAdminId.value}/bind-email`, {
+    const response = await axios.get(`/api/school-admin/${schoolAdminId.value}/bind-email`, {
       params: {
-        newEmail: bindEmailForm.value.newEmail,
+        newEmail: bindEmailForm.value.email,
         code: bindEmailForm.value.verificationCode
       }
     });
 
     if (response.status === 200) {
       email.value = bindEmailForm.value.email; // 更新邮箱
-
-      ElMessage({ message: '绑定邮箱成功', type: 'success' });
+      ElNotification.success({ message: '绑定邮箱成功' });
       showBindEmailDialog.value = false; // 关闭对话框
     } else {
-      ElMessage({ message: '绑定邮箱失败', type: 'error' });
+      ElNotification.error({ title: '绑定邮箱失败', message: response.data.message });
     }
   } catch (error) {
-    ElMessage({ message: '绑定邮箱失败', type: 'error' });
+    ElNotification.error({ title: '绑定邮箱失败', message: error.response.data.message });
   }
 };
 
@@ -495,8 +485,9 @@ const hideChangeEmailModal = () => {
     successMessage.value = '';
 };
 const sendVerificationCodeForChangeEmail = async () => {
+    if (isCountingDown.value) return;
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailPattern.test(bindEmailForm.value.newEmail)) {
+    if (!emailPattern.test(bindEmailForm.value.email)) {
         errorMessage.value = '请输入正确的邮箱格式';
         return;
     }
@@ -505,22 +496,19 @@ const sendVerificationCodeForChangeEmail = async () => {
         startCountdown();
         const response = await axios.get(`/api/school-admin/send-email-code`, {
             params: {
-                email: bindEmailForm.value.newEmail
+                email: bindEmailForm.value.email
             },
             headers: {
                 'Content-Type': 'application/json'
             }
         });
 
-        if (response.status === 200) {
-            successMessage.value = '验证码已发送，请查收您的邮箱';
-            ElMessage({ message: '验证码已发送，请查收邮件', type: 'success' });
-        } else {
+         if(response.status !== 200) {
             ElNotification.error({title: '验证码发送失败', message: response.data.message});
             resetCountdown();
         }
     } catch (error) {
-        ElNotification.error({title: '验证码发送失败', message: '邮箱已注册'});
+        ElNotification.error({title: '验证码发送失败', message: error.response.data.message});
         resetCountdown();
     }
 };
@@ -531,7 +519,7 @@ const handleChangeEmail = async () => {
             try {
                 const response = await axios.get(`/api/school-admin/change-email`, {
                     params: {
-                        newEmail: bindEmailForm.value.newEmail,
+                        newEmail: bindEmailForm.value.email,
                         code: bindEmailForm.value.verificationCode
                     },
                     headers: {
@@ -541,7 +529,7 @@ const handleChangeEmail = async () => {
 
                 if (response.status === 200) {
                     successMessage.value = '邮箱更换成功';
-                    email.value = bindEmailForm.value.newEmail;
+                    email.value = bindEmailForm.value.email;
                     hideChangeEmailModal();
                     ElMessage({ message: '邮箱已成功更换', type: 'success' });
                 } else {
@@ -566,7 +554,7 @@ const handleChangeEmail = async () => {
   height: 100vh;
   background-color: #f0f0f0;
 }
-.edit-icon:hover {
+.edit-icon {
   color: #66b1ff;
 }
 .main-container {
