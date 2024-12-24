@@ -36,6 +36,10 @@
                 </el-menu-item>
             </template>
         </el-menu>
+        <!-- 退出按钮 -->
+        <el-button class="logout-btn" @click="logout" type="text" icon="Back">
+            退出登录
+        </el-button>
     </div>
 </template>
 
@@ -43,7 +47,7 @@
 import { computed, ref, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter, useRoute } from 'vue-router';
-import { Document, Setting, User, Management, Upload, EditPen, Avatar, Edit, Opportunity } from '@element-plus/icons-vue';
+import { Document, Setting, User, Management, Upload, EditPen, Avatar, Edit, Opportunity,Back } from '@element-plus/icons-vue';
 
 // 获取路由和当前路由信息
 const router = useRouter();
@@ -66,6 +70,11 @@ watch(
         activeMenuIndex.value = newPath;
     }
 );
+
+// 退出登录函数
+const logout = () => {
+    store.dispatch('logout');
+};
 
 // 展开和关闭菜单项的事件处理函数
 const handleOpen = (key, keyPath) => {
@@ -234,4 +243,15 @@ const menuItems = computed(() => {
     padding-left: 60px; /* 子目录向右偏移 */
     font-size: 14px; /* 子目录的字体比主目录小 */
 }
+
+/* 退出按钮样式 */
+.logout-btn {
+    position: absolute;
+    bottom: 10px;
+    left: 20px;
+    font-size: 14px;
+    font-weight: bold; /* 文字加粗 */
+    color: #e33c3c;
+}
+
 </style>
