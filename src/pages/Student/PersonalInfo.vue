@@ -366,6 +366,18 @@ export default {
                 return; // 阻止后续操作
             }
 
+            const nameRegex = /^[a-zA-Z\u4e00-\u9fa5·]+$/;
+
+            if (!nameRegex.test(requestBody.name)) {
+                ElNotification.error({
+                    title: '姓名格式错误',
+                    message: '姓名只能包含中英文、数字、下划线和点，请重新输入',
+                });
+                // location.reload(); // 如果需要刷新页面，可以取消注释
+                this.fetchStudentInfo(); // 刷新学生信息
+                return; // 阻止后续操作
+            }
+
             // 如果没有任何字段被编辑，则不发送请求
             if (Object.keys(requestBody).length === 0) {
                 ElNotification.warning({ title: '学生信息未修改', message: "信息未更改，没有需要更新的信息" });

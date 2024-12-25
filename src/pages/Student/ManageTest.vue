@@ -85,6 +85,7 @@
                                 <button @click="selectedCompletedStatus === '作业' ? showSystemConfirmViewHomeworkAnswers(item) : showSystemConfirmViewAnswers(item)" :disabled="isProcessing">
                                     {{ selectedCompletedStatus === '作业' ? '答案查询' : '答案查询' }}
                                 </button>
+                                <button v-if="selectedCompletedStatus === '练习'" :disabled="isDeleting || isProcessing" @click= "showSystemConfirmDelete(item)">删除练习</button>
                             </td>
                         </tr>
                         </tbody>

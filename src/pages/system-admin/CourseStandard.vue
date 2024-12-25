@@ -44,7 +44,7 @@
 import { ref, computed, onMounted } from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import { ElButton, ElInput, ElTable, ElTableColumn, ElMessage } from 'element-plus';
+import {ElButton, ElInput, ElTable, ElTableColumn, ElMessage, ElMessageBox, ElNotification} from 'element-plus';
 import axios from 'axios';
 import {useStore} from "vuex";
 
@@ -167,15 +167,27 @@ const viewFile = async (item) => {
 
 // 删除课标
 const deleteItem = async (item) => {
-  try {
-    const response = await axios.delete(`/api/system-admin/delete-course-standard/${item.id}`);
-    if (response.status === 200) {
-      courseStandards.value = courseStandards.value.filter(i => i.id !== item.id);
-      ElMessage({ message: '删除成功', type: 'success' });
-    }
-  } catch (error) {
-    ElMessage({ message: '删除失败', type: 'error' });
-  }
+    ElMessageBox.confirm(
+            '您确定要删除该课标吗？',
+            '警告',
+            {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }
+    ).then(async () => {
+        try {
+            const response = await axios.delete(`/api/system-admin/delete-course-standard/${item.id}`);
+            if (response.status === 200) {
+                courseStandards.value = courseStandards.value.filter(i => i.id !== item.id);
+                ElNotification.success({ message: response.data.message });
+            }
+        } catch (error) {
+          ElNotification.error({ title: '删除失败', message: error.response.data.message });
+        }
+    }).catch(() => {
+        ElMessage({ message: '删除操作已取消', type: 'info' });
+    });
 };
 
 onMounted(() => {

@@ -69,7 +69,7 @@ import {
     ElTableColumn,
     ElMessage,
     ElPagination,
-    ElMessageBox
+    ElMessageBox, ElNotification
 } from 'element-plus';
 import axios from 'axios';
 import { useStore } from 'vuex'; // 引入 Vuex
@@ -230,13 +230,13 @@ const deleteTeacher = async (teacher) => {
       teachers.value = teachers.value.filter(t => t.id !== teacher.id);
       filteredData.value = filteredData.value.filter(t => t.id !== teacher.id); // 更新筛选后的数据
       totalItems.value -= 1;  // 更新总条目数
-      ElMessage({ message: '教师删除成功', type: 'success' });
+      ElNotification.success({ message:  '教师删除成功' });
     } else {
-      ElMessage({ message: '删除失败：' + response.data.message, type: 'error' });
+      ElNotification.error({title: '删除失败：',message: response.data.message });
     }
   } catch (error) {
     console.error(error);
-    ElMessage({ message: '删除教师失败，请稍后再试', type: 'error' });
+      ElNotification.error({title: '删除失败：',message: error.response.data.message });
   }
 };
 

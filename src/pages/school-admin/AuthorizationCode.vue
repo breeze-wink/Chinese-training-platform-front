@@ -291,11 +291,11 @@ const submitChangePassword = async () => {
       changePasswordForm.value.newPassword = '';
     } else {
       console.error(response.data.message);
-        ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
+        ElNotification.error({ title: '密码更改失败', message: response.data.message });
     }
 
   } catch (error) {
-      ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
+      ElNotification.error({ title: '密码更改失败', message: error.response.data.message });
     changePasswordForm.value.password = '';
     changePasswordForm.value.newPassword = '';
   }
