@@ -133,7 +133,7 @@
                                     ></div>
                                 </div>
                                 <!-- 具体参数信息 -->
-                                <p style="font-size: 16px; color: red;"> 正确率: {{ Math.max(weakness.weaknessScore * 100) }}%</p>
+                                <p style="font-size: 16px; color: red;"> 正确率: {{ weakness.weakScoreStr  }}%</p>
                             </div>
                         </div>
                     </div>
@@ -386,6 +386,7 @@ export default {
                     this.weaknessScores = response.data.data.map(item => ({
                         type: item.type,
                         weaknessName: item.weaknessName,
+                        weakScoreStr: item.weaknessScore,
                         // 将weaknessScore转换为小数
                         weaknessScore: parseFloat((item.weaknessScore / 100).toFixed(2)), // 转换并保留两位小数
                     }));
