@@ -140,7 +140,7 @@ const deleteAdmin = async (id) => {
         }
     }).catch(() => {
         // 用户点击取消时显示提示
-        ElMessage({ message: '删除操作已取消', type: 'info' });
+
     });
 };
 

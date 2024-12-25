@@ -185,7 +185,7 @@ const deleteItem = async (item) => {
           ElNotification.error({ title: '删除失败', message: error.response.data.message });
         }
     }).catch(() => {
-        ElMessage({ message: '删除操作已取消', type: 'info' });
+
     });
 };
 

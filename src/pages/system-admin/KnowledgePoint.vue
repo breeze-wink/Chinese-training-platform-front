@@ -158,6 +158,7 @@ const saveItem = async () => {
   try {
     const response = await axios[method](url, requestData);
     if (response.status === 200) {
+      ElNotification.success({title: '成功', message: response.data.message});
       await fetchKnowledgePoints();  // Refresh the list
       cancelAdd();  // Close the form after saving
       cancelEdit();
@@ -208,11 +209,9 @@ const deleteItem = async (item) => {
             ElNotification.error({ title: '删除失败', message: error.response.data.message });
         }
     }).catch(() => {
-        // 用户取消删除，什么也不做
-        ElMessage({ message: '删除操作已取消', type: 'info' });
+
     });
 };
-
 const viewKnowledgePoint = async (item) => {
   try {
     const response = await axios.get(`/api/system-admin/query-knowledge-point/${item.id}`)

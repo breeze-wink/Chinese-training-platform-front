@@ -406,7 +406,7 @@ import axios from 'axios';
 import { useStore } from 'vuex';
 import { computed } from 'vue';
 import {CirclePlusFilled} from "@element-plus/icons-vue";
-import {ElMessage} from "element-plus";
+import {ElMessage, ElNotification} from "element-plus";
 import * as echarts from 'echarts';
 import {onBeforeUnmount} from "vue-demi";
 
@@ -523,6 +523,17 @@ const fetchGroupList = async () => {
 
 // 创建新班级的函数
 const createClass = async () => {
+
+  if(newClassForm.value.className==='' )
+  {
+    ElNotification.error({ title: '提示', message: '班级名称不能为空' });
+    return;
+  }
+  if(newClassForm.value.classDescription==='')
+  {
+    ElNotification.error({ title: '提示', message: '班级描述不能为空' });
+    return;
+  }
     try {
         const response = await axios.post(`/api/teacher/${teacherId.value}/create-class`, {
             className: newClassForm.value.className,
@@ -556,6 +567,29 @@ const createClass = async () => {
 
 // 创建新小组的函数
 const createGroup = async () => {
+
+
+  if(newGroupForm.value.groupName==='' )
+  {
+    ElNotification.error({ title: '提示', message: '小组名称不能为空' });
+    return;
+  }
+  if(newGroupForm.value.groupDescription==='')
+  {
+    ElNotification.error({ title: '提示', message: '小组描述不能为空' });
+    return;
+  }
+  if(newGroupForm.value.classId==='' )
+  {
+    ElNotification.error({ title: '提示', message: '请选择班级' });
+    return;
+  }
+  if(newGroupForm.value.selectedStudents.length===0 )
+  {
+    ElNotification.error({ title: '提示', message: '请选择学生' });
+    return;
+  }
+
     try {
         const response = await axios.post(`/api/teacher/${teacherId.value}/create-group`, {
             groupName: newGroupForm.value.groupName,

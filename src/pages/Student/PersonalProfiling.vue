@@ -505,6 +505,8 @@ export default {
     border-radius: 15px;
     transition: transform 0.3s;
     margin-left: 300px;
+  max-width: 1000px;
+  margin-right: 50px;
 }
 
 .learning-stats:hover {

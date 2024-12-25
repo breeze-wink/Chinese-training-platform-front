@@ -135,7 +135,7 @@ const handleSwitchChange = (row, newVal) => {
     }).catch(() => {
         // 用户取消，恢复滑块状态
         row.permission = newPermission === 1 ? 0 : 1;
-        ElMessage({ message: '已取消操作', type: 'info' });
+        //ElMessage({ message: '已取消操作', type: 'info' });
     });
 };
 
@@ -219,7 +219,7 @@ const confirmDeleteTeacher = (teacher) => {
     ).then(() => {
         deleteTeacher(teacher);
     }).catch(() => {
-        ElMessage({ message: '已取消删除', type: 'info' });
+        //ElMessage({ message: '已取消删除', type: 'info' });
     });
 };
 const deleteTeacher = async (teacher) => {

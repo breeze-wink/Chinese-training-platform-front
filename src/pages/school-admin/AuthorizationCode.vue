@@ -31,7 +31,7 @@
             <span>{{ schoolName }}</span>
           </div>
           <div class="info-item">
-            <label>负责人：</label>
+            <label>姓名：</label>
             <span :class="{'text-danger': !name}" v-if="!editName">{{ name ? name: '还未设定' }}</span>
             <el-input
                 v-else

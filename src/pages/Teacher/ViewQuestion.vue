@@ -47,6 +47,7 @@
                     </el-table>
 
                     <!-- 分页组件 -->
+                  <div style="display: flex; justify-content: center; margin-top: 20px;">
                     <el-pagination
                             :current-page="currentPage"
                             :page-size="pageSize"
@@ -54,6 +55,7 @@
                             @current-change="handlePageChange"
                             layout="prev, pager, next, jumper">
                     </el-pagination>
+                  </div>
                 </div>
             </div>
         </div>

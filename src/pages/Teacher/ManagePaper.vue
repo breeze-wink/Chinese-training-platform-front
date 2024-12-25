@@ -61,14 +61,16 @@
                 </el-table>
 
                 <!-- 分页 -->
+              <div style="display: flex; justify-content: center; margin-top: 20px;">
                 <el-pagination
                         style="margin-top: 20px;"
                         @current-change="handlePageChange"
                         :current-page="currentPage"
                         :page-size="pageSize"
-                        layout="prev, pager, next"
+                        layout="prev, pager, next,jumper"
                         :total="filteredData.length"
                 />
+              </div>
             </div>
         </div>
         <!-- 发布试卷弹窗 -->
