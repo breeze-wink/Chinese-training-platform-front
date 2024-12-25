@@ -23,8 +23,9 @@
                         <tr>
                             <th>序号</th>
                             <th>试卷名称</th>
-                            <th>开始时间</th>
-                            <th>截止时间</th>
+                            <th v-if="selectedStatus === '作业'">试卷分数</th>
+                            <th v-if="selectedStatus === '作业'">开始时间</th>
+                            <th v-if="selectedStatus === '作业'">截止时间</th>
                             <th>操作</th>
                         </tr>
                         </thead>
@@ -32,8 +33,10 @@
                         <tr v-for="(item, index) in pendingItems[selectedStatus]" :key="index">
                             <td>{{ index + 1 }}</td>
                             <td>{{ item.title || item.practiceName }}</td>
-                            <td>{{ item.startTime || item.dueTime }}</td>
-                            <td>{{ item.endTime || item.dueTime }}</td>
+                            <td v-if="selectedStatus === '作业'">{{ item.score }}</td>
+                            <td v-if="selectedStatus === '作业'">{{ item.startTime || item.dueTime }}</td>
+                            <td v-if="selectedStatus === '作业'">{{ item.endTime || item.dueTime }}</td>
+
                             <td>
                                 <button :disabled="isDeleting || isProcessing" @click="selectedStatus === '作业' ? continueHomework(item) : performContinueTraining(item)">
                                     {{ selectedStatus === '作业' ? '继续作业' : '继续练习' }}
@@ -66,7 +69,8 @@
                             <th>序号</th>
                             <th>试卷名称</th>
                             <th>提交时间</th>
-                            <th>分数</th>
+                            <th v-if="selectedCompletedStatus === '作业'">试卷分数</th>
+                            <th>得分</th>
                             <th>操作</th>
                         </tr>
                         </thead>
@@ -75,6 +79,7 @@
                             <td>{{ index + 1 }}</td>
                             <td>{{ item.title || item.practiceName }}</td>
                             <td>{{ item.endTime || item.practiceTime }}</td>
+                            <td v-if="selectedCompletedStatus === '作业'">{{ item.score }}</td>
                             <td>{{ item.totalScore }}</td>
                             <td>
                                 <button @click="selectedCompletedStatus === '作业' ? showSystemConfirmViewHomeworkAnswers(item) : showSystemConfirmViewAnswers(item)" :disabled="isProcessing">
@@ -184,7 +189,8 @@ export default {
                         title: item.title,
                         description: item.description,
                         startTime: item.startTime,
-                        endTime: item.endTime
+                        endTime: item.endTime,
+                        score: item.score
                     }));
                 } else {
                     console.error('获取未完成作业列表失败', response.data.message);
@@ -228,6 +234,7 @@ export default {
                         description: item.description,
                         startTime: item.startTime,
                         endTime: item.endTime,
+                        score: item.score,
                         totalScore: item.totalScore
                     }));
                 } else {

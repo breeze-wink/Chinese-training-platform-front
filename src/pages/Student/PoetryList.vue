@@ -75,24 +75,23 @@
                 <section class="poetry-list">
                     <div class="poetry-section">
                         <h1>优秀范文</h1>
-                        <table class="essay-table">
-                            <thead>
-                            <tr>
-                                <th>标题</th>
-                                <th>点评</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr v-for="essay in essays" :key="essay.id">
-                                <td>
-                                    <router-link :to="{ name: 'EssayDetail', params: { id: essay.id } }">
-                                        {{ essay.title }}
-                                    </router-link>
-                                </td>
-                                <td>{{ essay.annotation }}</td>
-                            </tr>
-                            </tbody>
-                        </table>
+                        <div class="essay-container">
+                            <div v-for="essay in essays" :key="essay.id" class="essay-item">
+                                <!-- 每个范文前加点符号 -->
+                                <span class="dot">•</span>
+                                <!-- 如果 pdfUrl 不存在，则显示 essay.title -->
+                                <a href="#" @click.prevent="fetchEssayPdf(essay.id)" v-if="!pdfUrl[essay.id]" class="essay-title">
+                                    {{ essay.title }}
+                                </a>
+
+                                <!-- 如果 pdfUrl 存在，则显示 PDF 链接 -->
+                                <a v-if="pdfUrl[essay.id]" :href="pdfUrl[essay.id]" target="_blank" class="essay-title">
+                                    {{ essay.title }}
+                                </a>
+
+                                <p class="essay-annotation">{{ essay.annotation }}</p>
+                            </div>
+                        </div>
                         <div v-if="error" class="error">{{ error }}</div>
                     </div>
                 </section>
@@ -103,6 +102,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import { reactive } from 'vue';  // 确保导入 reactive
 import axios from 'axios';
 import Sidebar from "@/components/Sidebar.vue";
 import Header from "@/components/Header.vue";
@@ -130,7 +130,8 @@ export default {
             poems_nine_lower: poems_nine_lower,
             essays: [], // 初始化为空数组
             loading: true,
-            error: null
+            error: null,
+            pdfUrl: reactive({}),  // 使用 reactive 创建响应式对象
         };
     },
     computed: {
@@ -159,6 +160,25 @@ export default {
             } catch (error) {
                 console.error('请求失败:', error.response ? error.response.data : error.message);
                 this.error = error.response ? error.response.data.message : '请求失败';
+                this.loading = false;
+            }
+        },
+        async fetchEssayPdf(essayId) {
+            const studentId = this.getUserId; // 从 Vuex store 获取学生 ID
+            try {
+                // 获取作文的 PDF 内容
+                const response = await axios.get(`/api/student/${studentId}/essay/get-info/${essayId}`, {
+                    responseType: 'blob'  // 设置响应类型为 blob
+                });
+
+                // 创建一个 URL 对象
+                const url = window.URL.createObjectURL(response.data);
+                // 直接更新 pdfUrl 的属性
+                this.pdfUrl[essayId] = url;  // 在响应式对象上直接赋值
+
+                this.loading = false;
+            } catch (err) {
+                this.error = err;
                 this.loading = false;
             }
         }
@@ -204,14 +224,62 @@ export default {
     padding: 1rem;
 }
 
-/* 表格样式 */
-.essay-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'kaiti', sans-serif;
+/* 作文列表布局 */
+.essay-container {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.essay-item {
+    display: flex;
+    align-items: center;
     font-size: 16px;
+    width: 45%; /* 每行显示两列 */
+    margin-bottom: 10px;
+}
+
+.dot {
+    font-size: 24px;
+    margin-right: 10px;
     color: #333;
-    line-height: 1.5;
+}
+
+.essay-title {
+    height: 34px;
+    line-height: 34px;
+    font-family: "kaiti", serif; /* 使用更美观的字体 */
+    font-size: 18px; /* 增大字体 */
+    font-weight: bold; /* 加粗字体 */
+    color: #0066cc; /* 设置字体颜色 */
+    text-decoration: none; /* 去掉下划线 */
+    transition: color 0.3s; /* 添加平滑过渡效果 */
+}
+
+/* 鼠标悬停时改变颜色 */
+.essay-title:hover {
+    color: #66b1ff; /* 设置悬停时的颜色 */
+}
+
+/* 对象的PDF链接样式 */
+.essay-title a {
+    text-decoration: none; /* 去掉下划线 */
+}
+
+/* 用于未加载PDF时显示的链接 */
+.essay-title a:hover {
+    color: #0066cc; /* 设置悬停时的颜色 */
+}
+
+.essay-title span {
+    font-size: 16px; /* 设置字号 */
+    font-weight: 600; /* 设置字体粗细 */
+    color: #555; /* 设置默认颜色 */
+}
+
+.essay-annotation {
+    font-size: 14px;
+    color: #666;
 }
 
 .essay-table th,
@@ -269,4 +337,5 @@ p {
     color: red;
     margin-top: 1rem;
 }
+
 </style>

@@ -528,7 +528,7 @@ export default {
                         }
                     } catch (error) {
                         this.passwordErrorMessage = '密码更改失败，请稍后再试';
-                        ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
+                        ElNotification.error({ title: '密码更改失败', message: error.response.data.message });
                     }
                 } else {
                     console.log('表单验证失败');
