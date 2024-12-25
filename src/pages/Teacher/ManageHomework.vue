@@ -15,7 +15,7 @@
             <el-option label="全部" value=""></el-option>
             <el-option label="未发布" value="未发布"></el-option>
             <el-option label="未截止" value="未截止"></el-option>
-            <el-option label="待批阅" value="待批阅"></el-option>
+            <el-option label="已截止" value="已截止"></el-option>
           </el-select>
           <el-button type="primary" @click="fetchAssignments">刷新</el-button>
         </div>
@@ -36,9 +36,21 @@
             <template #default="{ row }">
               <el-button size="small" type="primary"
                          :disabled="row.status === '未截止'"
-                         @click="viewCompletion(row)">查看完成情况</el-button>
+                         @click="viewCompletion(row)">查看完成情况
+              </el-button>
+                <el-button
+                        size="small"
+                        type="danger"
+                        style="margin-left: 10px;"
+                        @click="confirmDeleteAssignment(row)"
+                >
+                    删除
+                </el-button>
 
             </template>
+
+
+
           </el-table-column>
         </el-table>
 
@@ -92,6 +104,7 @@
         <el-table-column label="操作" width="120">
           <template #default="{ row }">
             <el-button
+                    v-if="row.isMarked !== 2"
                 size="small"
                 type="primary"
                 :disabled="row.isMarked !== 0"
@@ -99,6 +112,17 @@
             >
               批阅
             </el-button>
+              <!-- 已批阅的学生显示“查看”按钮 -->
+              <el-button
+                      v-else-if="row.isMarked === 2"
+                      size="small"
+                      type="success"
+                      @click="viewGradedSubmission(row)"
+              >
+                  查看
+              </el-button>
+
+
           </template>
         </el-table-column>
       </el-table>
@@ -134,7 +158,17 @@
 import {ref, computed, onMounted, nextTick} from 'vue';
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import { ElButton, ElSelect, ElTable, ElTableColumn, ElTag, ElMessage, ElPagination, ElDialog } from 'element-plus';
+import {
+    ElButton,
+    ElSelect,
+    ElTable,
+    ElTableColumn,
+    ElTag,
+    ElMessage,
+    ElPagination,
+    ElDialog,
+    ElMessageBox
+} from 'element-plus';
 import axios from 'axios';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
@@ -201,8 +235,56 @@ const determineStatus = (startTime, endTime) => {
   } else if (now >= start && now <= end) {
     return '未截止';
   } else {
-    return '待批阅';
+    return '已截止';
   }
+};
+// 删除作业的方法
+const confirmDeleteAssignment = (assignment) => {
+    ElMessageBox.confirm(
+            `确定要删除作业 "${assignment.assignmentTitle}" 吗？
+            <br>删除后学生将丢失此作业。`,
+            '提示',
+            {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning',
+                dangerouslyUseHTMLString: true
+            }
+    )
+            .then(() => {
+                deleteAssignment(assignment.assignmentId);
+            })
+            .catch(() => {
+                // 用户取消删除
+            });
+};
+
+// 调用API删除作业
+const deleteAssignment = async (assignmentId) => {
+    try {
+        const response = await axios.delete('/api/teacher/delete-assignment', {
+            params: { assignmentId },
+        });
+        if (response.status === 200 ) {
+            ElMessage.success('作业删除成功');
+            // 直接从 assignments 中移除已删除的作业
+            assignments.value = assignments.value.filter(assignment => assignment.assignmentId !== assignmentId);
+
+            // 同步更新 filteredAssignments
+            filteredAssignments.value = filteredAssignments.value.filter(assignment => assignment.assignmentId !== assignmentId);
+
+            // 如果当前页的数据已减少，可能需要调整 currentPage
+            const totalPages = Math.ceil(filteredAssignments.value.length / pageSize.value);
+            if (currentPage.value > totalPages) {
+                currentPage.value = totalPages || 1;
+            }
+        } else {
+            ElMessage.error(response.data.message || '删除作业失败');
+        }
+    } catch (error) {
+        console.error(error);
+        ElMessage.error('删除作业失败，请稍后再试');
+    }
 };
 
 // 格式化日期
@@ -218,7 +300,7 @@ const getStatusTagType = (status) => {
       return 'warning';
     case '未截止':
       return 'success';
-    case '待批阅':
+    case '已截止':
       return 'info';
     case '已批阅':
       return 'success';
@@ -320,6 +402,50 @@ const filterSubmissions = () => {
 
 // 批阅作业
 const routerInstance = useRouter();
+
+const  viewGradedSubmission = (submission) => {
+    // 获取所有已经批阅的学生
+    const unmarkedSubmissions = submissions.value
+            .filter(s => s.isMarked === 2)
+            .map(s => ({
+                studentId: s.studentId,
+                studentName: s.studentName
+            }));
+
+    if (unmarkedSubmissions.length === 0) {
+        ElMessage.warning('没有未批阅的学生');
+        return;
+    }
+
+
+    // 将未批阅的学生列表存入 Vuex
+    store.dispatch('setUnmarkedSubmissions', unmarkedSubmissions);
+    const unmarked = computed(() => store.getters.getUnmarkedSubmissions);
+    // 找到当前批阅的学生索引
+    const currentIndex = unmarkedSubmissions.findIndex(s => s.studentId === submission.studentId);
+    if (currentIndex === -1) {
+        ElMessage.error('未找到该学生的提交');
+        return;
+    }
+    store.dispatch('setCurrentSubmissionIndex', currentIndex);
+
+    // 设置当前学生信息
+    store.dispatch('setCurrentStudent', {
+        studentId: submission.studentId,
+        studentName: submission.studentName,
+        totalScore: submission.totalScore
+    });
+
+    // 跳转到批阅页面，并传递 assignmentId 作为查询参数
+    routerInstance.push({
+        path: '/teacher/paper-corrected-view',
+        query: {
+            assignmentId: selectedAssignmentId.value,
+            studentId: submission.studentId
+        }
+    });
+};
+
 const reviewAssignment = (submission) => {
   // 获取所有未批阅的学生
   const unmarkedSubmissions = submissions.value
@@ -333,8 +459,6 @@ const reviewAssignment = (submission) => {
     ElMessage.warning('没有未批阅的学生');
     return;
   }
-
-
   // 将未批阅的学生列表存入 Vuex
   store.dispatch('setUnmarkedSubmissions', unmarkedSubmissions);
   const unmarked = computed(() => store.getters.getUnmarkedSubmissions);
