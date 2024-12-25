@@ -1278,7 +1278,7 @@ onBeforeUnmount(() => {
 
 .custom-button {
     border-radius: 12px;
-    padding: 8px 16px;
+    padding: 4px 10px;
     font-weight: bold;
 }
 .button-text {
