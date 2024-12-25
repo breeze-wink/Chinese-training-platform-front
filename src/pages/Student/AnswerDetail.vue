@@ -48,12 +48,13 @@
                 </div>
                 <div class="sidebar-nav">
                     <h3>题目导航</h3>
-                    <div class="questions-list">
-                        <a v-for="(answer, index) in answers" :key="index" :href="'#question-' + answer.sequence" class="question-number">{{ answer.sequence }}</a>
-                    </div>
                     <div v-if="!isLoading" class="return-button-container">
                         <button @click="goBack" class="styled-button">返回</button>
                     </div>
+                    <div class="questions-list">
+                        <a v-for="(answer, index) in answers" :key="index" :href="'#question-' + answer.sequence" class="question-number">{{ answer.sequence }}</a>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -288,6 +289,7 @@ body {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+    background: linear-gradient(135deg, #e0eafc, #cfdef3); /* 渐变背景 */
     height: 100vh;
 }
 
@@ -298,6 +300,7 @@ body {
     border-radius: 16px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
     position: relative;
+    justify-content: space-between;
 }
 
 .content-and-nav {
@@ -313,7 +316,7 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
     background: linear-gradient(135deg, #ffffff, #f5f5f5); /* 内容区域的渐变背景 */
     margin-left: 300px;
-    margin-right: 350px;
+    margin-right: 20px;
 }
 
 .sidebar-nav {
@@ -339,6 +342,7 @@ body {
     display: flex;
     flex-wrap: wrap; /* 自动换行 */
     gap: 15px; /* 增加间距 */
+    margin-top: 10px;
 }
 
 .questions-list a {
@@ -468,8 +472,7 @@ h4 {
 }
 
 .return-button-container {
-    text-align: center; /* 水平居中按钮 */
-    margin-top: 400px;   /* 根据需要调整上下间距 */
+    text-align: left; /* 水平居中按钮 */
 }
 
 .return-button-container button {

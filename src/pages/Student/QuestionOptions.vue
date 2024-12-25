@@ -267,6 +267,8 @@ export default {
             this.isProcessing = true;
             this.dialogVisible = false;
 
+            if (this.practiceName === null || this.practiceName === '' )
+                this.practiceName = 'Custom Practice';
             const requestBody = {
                 name: this.practiceName,
                 knowledgePoints: [],

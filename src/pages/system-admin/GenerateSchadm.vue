@@ -65,7 +65,17 @@
 import {ref, onMounted, computed} from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import { ElButton, ElInput, ElForm, ElFormItem, ElMessage, ElTable, ElTableColumn } from 'element-plus';
+import {
+    ElButton,
+    ElInput,
+    ElForm,
+    ElFormItem,
+    ElMessage,
+    ElTable,
+    ElTableColumn,
+    ElNotification,
+    ElMessageBox
+} from 'element-plus';
 import axios from 'axios';
 
 // 定义变量
@@ -104,18 +114,34 @@ const fetchAdmins = async () => {
 
 // 删除管理员账号
 const deleteAdmin = async (id) => {
-  try {
-    const response = await axios.delete(`/api/system-admin/delete-school-admin-account/${id}`);
-    if (response.data && response.data.message === '删除成功') {
-      ElMessage({ message: '账号删除成功', type: 'success' });
-      // 刷新管理员列表
-      await fetchAdmins();
-    } else {
-      ElMessage({ message: '删除失败', type: 'error' });
-    }
-  } catch (error) {
-    ElMessage({ message: '删除失败', type: 'error' });
-  }
+    // 显示确认框
+    ElMessageBox.confirm(
+            '您确定要删除该学校管理员吗？',
+            '警告',
+            {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }
+    ).then(async () => {
+        try {
+            // 发送删除请求
+            const response = await axios.delete(`/api/system-admin/delete-school-admin-account/${id}`);
+            if (response.data && response.data.message === '删除成功') {
+                ElNotification.success({ message: '账号删除成功' });
+                // 刷新管理员列表
+                await fetchAdmins();
+            } else {
+                ElNotification.error({ title: '删除失败', message: response.data.message  });
+            }
+        } catch (error) {
+            // 捕获请求失败的错误
+            ElNotification.error({ title: '删除失败', message: error.response.data.message });
+        }
+    }).catch(() => {
+        // 用户点击取消时显示提示
+        ElMessage({ message: '删除操作已取消', type: 'info' });
+    });
 };
 
 // 打开浮动框
@@ -129,6 +155,19 @@ const generateAdmin = async () => {
     ElMessage({ message: '用户名、密码和学校ID不能为空', type: 'warning' });
     return;
   }
+
+    if (!String(newAdmin.value.name).trim()) {
+        ElMessage.error('用户名不能为空');
+        return;
+    }
+    if (/\s/.test(newAdmin.value.name)) { // 新增空格检查
+        ElMessage.error('用户名不能包含空格');
+        return;
+    }
+    if (String(newAdmin.value.name).includes('@')) {
+        ElMessage.error('用户名不能包含 "@" 符号');
+        return;
+    }
 
   try {
     // 将学校管理员账号数据发送到后端

@@ -6,7 +6,7 @@
             <Sidebar />
 
             <div class="poem-detail">
-                <button class="back-button" @click="goBack">返回</button>
+
                 <div v-if="poem.title" class="poem-content">
                     <h1 class="poem-title">{{ poem.title }}</h1>
                     <p class="poem-author">{{ poem.author }} | {{ poem.dynasty }}</p>
@@ -16,6 +16,7 @@
                     </div>
                     <div class="navigation-buttons">
                         <button class="nav-button" v-if="hasPrev" @click="goToPrev">上一篇</button>
+                        <button class="nav-button" @click="goBack">返回</button>
                         <button class="nav-button" v-if="hasNext" @click="goToNext">下一篇</button>
                     </div>
                 </div>

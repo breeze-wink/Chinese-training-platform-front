@@ -85,7 +85,17 @@
 import {ref, computed, onMounted} from 'vue';
 import Header from '../../components/Header.vue';
 import Sidebar from '../../components/Sidebar.vue';
-import { ElButton, ElInput, ElTable, ElTableColumn, ElForm, ElFormItem, ElMessage } from 'element-plus';
+import {
+    ElButton,
+    ElInput,
+    ElTable,
+    ElTableColumn,
+    ElForm,
+    ElFormItem,
+    ElMessage,
+    ElNotification,
+    ElMessageBox
+} from 'element-plus';
 import axios from 'axios';
 
 // 定义变量
@@ -153,7 +163,7 @@ const saveItem = async () => {
       cancelEdit();
     }
   } catch (error) {
-    ElMessage({ message: '保存失败', type: 'error' });
+    ElNotification.error({ title: '保存失败', message: error.response.data.message });
   }
 };
 
@@ -177,16 +187,32 @@ const closeView = () => {
 
 // 删除知识点
 const deleteItem = async (item) => {
-  try {
-    const response = await axios.delete(`/api/system-admin/delete-knowledge-point/${item.id}`);
-    if (response.status === 200) {
-      ElMessage({ message: response.data.message, type: 'success' });
-      await fetchKnowledgePoints();  // Refresh the list after deletion
-    }
-  } catch (error) {
-    ElMessage({ message: '删除失败', type: 'error' });
-  }
+    // 显示确认框
+    ElMessageBox.confirm(
+            '您确定要删除该知识点吗？',
+            '警告',
+            {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }
+    ).then(async () => {
+        try {
+            // 用户确认删除后执行删除请求
+            const response = await axios.delete(`/api/system-admin/delete-knowledge-point/${item.id}`);
+            if (response.status === 200) {
+                ElNotification.success({ message: response.data.message });
+                await fetchKnowledgePoints();  // 刷新知识点列表
+            }
+        } catch (error) {
+            ElNotification.error({ title: '删除失败', message: error.response.data.message });
+        }
+    }).catch(() => {
+        // 用户取消删除，什么也不做
+        ElMessage({ message: '删除操作已取消', type: 'info' });
+    });
 };
+
 const viewKnowledgePoint = async (item) => {
   try {
     const response = await axios.get(`/api/system-admin/query-knowledge-point/${item.id}`)

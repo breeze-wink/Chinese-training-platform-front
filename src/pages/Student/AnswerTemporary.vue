@@ -13,7 +13,8 @@
                             </div>
                             <!-- 显示问题序号和内容 -->
                             <div class="question-sequence-content">
-                                <span class="sequence" v-if="question.questionType !== 'ESSAY'">{{ question.sequence }}. </span>
+<!--                                <span class="sequence" v-if="question.questionType !== 'ESSAY'">{{ question.sequence }}. </span>-->
+                                <span class="sequence">{{ question.sequence }}. </span>
                                 <span v-html="question.questionContent" class="question-content"></span>
                             </div>
                             <div v-if="question.questionType === 'CHOICE'" class="options">

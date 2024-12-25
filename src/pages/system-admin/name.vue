@@ -327,10 +327,10 @@ const handlePasswordChange = async () => {
         ElNotification.success({ title: '密码更改成功', message: '密码更改成功' });
       hideChangePasswordModal();
     } else {
-        ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
+        ElNotification.error({ title: '密码更改失败', message: response.data.message });
     }
   } catch (error) {
-      ElNotification.error({ title: '密码更改失败', message: '密码更改失败，请重试' });
+      ElNotification.error({ title: '密码更改失败', message: error.response.data.message });
   }
 };
 
