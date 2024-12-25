@@ -66,7 +66,7 @@
                       v-model="questionForms.CHOICE.explanation"
                       type="textarea"
                       placeholder="请输入解析"
-                      :rows="5"
+                      :autosize="{ minRows: 4, maxRows: 10 }"
                   ></el-input>
                 </el-form-item>
               </el-form>
@@ -114,6 +114,7 @@
                         v-model="questionForms.FILL_IN_BLANK.explanation"
                         type="textarea"
                         placeholder="请输入解析"
+                        :autosize="{ minRows: 4, maxRows: 10 }"
                     ></el-input>
                   </el-form-item>
 

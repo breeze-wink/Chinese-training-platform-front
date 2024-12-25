@@ -48,7 +48,7 @@
                         <div class="card" v-if="question.answer">
                             <h3 class="card-title">答案</h3>
                             <div v-text="question.answer" v-if="!editMode.answer"></div>
-                            <hr class="section-divider" /> <!-- 分割线 -->
+                            <hr class="section-divider" />
                         </div>
 
                         <!-- 知识点部分 -->
