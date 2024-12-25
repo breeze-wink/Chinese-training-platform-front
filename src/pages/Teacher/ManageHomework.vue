@@ -21,10 +21,10 @@
         </div>
 
         <!-- 表格显示数据 -->
-        <el-table :data="paginatedData" style="width: 100%; margin-top: 20px;">
+        <el-table :data="paginatedData" style="width: 100%; margin-top: 20px;" @sort-change="handleSortChange">
           <el-table-column prop="assignmentTitle" label="作业标题" width="200"></el-table-column>
-          <el-table-column prop="startTime" label="开始时间" width="180" :formatter="formatDate"></el-table-column>
-          <el-table-column prop="endTime" label="结束时间" width="180" :formatter="formatDate"></el-table-column>
+          <el-table-column prop="startTime" label="开始时间" width="180" :formatter="formatDate" sortable="custom"></el-table-column>
+          <el-table-column prop="endTime" label="结束时间" width="180" :formatter="formatDate" sortable="custom"></el-table-column>
           <el-table-column label="状态" width="120">
             <template #default="{ row }">
               <el-tag :type="getStatusTagType(row.status)">
@@ -179,6 +179,49 @@ const store = useStore();
 //加载
 const isLoadSubmit = ref(false);
 
+// sort
+const sortProp = ref('uploadTime'); // 默认排序字段
+const sortOrder = ref('descending'); // 默认排序顺序
+const paginatedData = computed(() => {
+  // 创建 filteredAssignments 的副本以避免直接修改原数组
+  let sorted = [...filteredAssignments.value];
+
+  if (sortProp.value) {
+    sorted.sort((a, b) => {
+      let result = 0;
+      if (sortProp.value === 'startTime' || sortProp.value === 'endTime') {
+        // 将时间字符串转换为 Date 对象进行比较
+        const dateA = new Date(a[sortProp.value]);
+        const dateB = new Date(b[sortProp.value]);
+        result = dateA - dateB;
+      } else {
+        // 通用字符串或数值排序
+        if (a[sortProp.value] > b[sortProp.value]) result = 1;
+        if (a[sortProp.value] < b[sortProp.value]) result = -1;
+      }
+      return sortOrder.value === 'ascending' ? result : -result;
+    });
+  }
+
+  // 计算当前页的数据
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return sorted.slice(start, end);
+});
+
+const handleSortChange = ({ prop, order }) => {
+  if (order === 'ascending' || order === 'descending') {
+    sortProp.value = prop;
+    sortOrder.value = order;
+  } else {
+    // 如果没有排序，则恢复默认排序
+    sortProp.value = 'uploadTime';
+    sortOrder.value = 'descending';
+  }
+  currentPage.value = 1; // 重置到第一页
+};
+
+
 // 获取教师 ID
 const teacherId = computed(() => store.state.user.id);
 
@@ -323,12 +366,6 @@ const filterByStatus = () => {
   currentPage.value = 1; // 重置到第一页
 };
 
-// 获取分页数据
-const paginatedData = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return filteredAssignments.value.slice(start, end);
-});
 
 // 页码变更时触发
 const handlePageChange = (page) => {

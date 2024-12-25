@@ -14,14 +14,18 @@
                     <div v-if="error" class="error">{{ error }}</div>
 
                     <!-- 显示题目列表 -->
-                    <el-table :data="paginatedQuestions" style="width: 100%">
-<!--                        <el-table-column prop="questionId" label="ID" width="90"></el-table-column>-->
+                  <el-table
+                      :data="paginatedQuestions"
+                      style="width: 100%"
+                      @sort-change="handleSortChange"
+                  >
+                  <!--                        <el-table-column prop="questionId" label="ID" width="90"></el-table-column>-->
                         <el-table-column prop="type" label="类型" width="130">
                             <template #default="scope">
                                 <span>{{ scope.row.type }}</span>
                             </template>
                         </el-table-column>
-                        <el-table-column prop="uploadTime" label="上传时间" width="200" ></el-table-column>
+                        <el-table-column prop="uploadTime" label="上传时间" width="200" sortable="custom"></el-table-column>
                         <el-table-column prop="executeTeacher" label="审核教师"></el-table-column>
                         <el-table-column label="状态" width="180">
                             <template #default="scope">
@@ -78,15 +82,38 @@ export default {
             currentPage: 1,
             pageSize: 10,
             totalQuestions: 0,
+            sortProp: 'uploadTime',     // 默认排序字段
+            sortOrder: 'descending',    // 默认排序顺序
         };
     },
     computed: {
-        // 分页后的题目列表
+        // 分页后的题目列表，先排序再分页
         paginatedQuestions() {
-            const start = (this.currentPage - 1) * this.pageSize;
-            const end = start + this.pageSize;
-            return this.questions.slice(start, end);
-        }
+          // 创建 questions 的副本以避免直接修改原数组
+          let sorted = this.questions.slice();
+
+          if (this.sortProp) {
+            sorted.sort((a, b) => {
+              let result = 0;
+              if (this.sortProp === 'uploadTime') {
+                // 将上传时间转换为 Date 对象进行比较
+                const dateA = new Date(a.uploadTime);
+                const dateB = new Date(b.uploadTime);
+                result = dateA - dateB;
+              } else {
+                // 通用字符串或数值排序
+                if (a[this.sortProp] > b[this.sortProp]) result = 1;
+                if (a[this.sortProp] < b[this.sortProp]) result = -1;
+              }
+              return this.sortOrder === 'ascending' ? result : -result;
+            });
+          }
+
+          // 计算当前页的数据
+          const start = (this.currentPage - 1) * this.pageSize;
+          const end = start + this.pageSize;
+          return sorted.slice(start, end);
+        },
     },
     created() {
         this.fetchQuestions(); // 在组件创建时加载题目数据
@@ -114,7 +141,17 @@ export default {
         handlePageChange(page) {
             this.currentPage = page;  // 分页切换时更新当前页
         },
-
+        handleSortChange({ prop, order }) {
+          if (order === 'ascending' || order === 'descending') {
+            this.sortProp = prop;
+            this.sortOrder = order;
+          } else {
+            // 如果没有排序，则恢复默认排序
+            this.sortProp = 'uploadTime';
+            this.sortOrder = 'descending';
+          }
+          this.currentPage = 1; // 重置到第一页
+        },
         viewQuestionDetail(questionId, type) {
             const formattedType = type === '单题' ? 'small' : 'big';
             this.$router.push({
@@ -125,7 +162,6 @@ export default {
                 }
             });
         },
-
         // 根据题目状态给不同的状态添加样式
         statusClass(status) {
             switch (status) {
@@ -154,6 +190,17 @@ export default {
 .main-container {
     display: flex;
     flex: 1;
+}
+
+/* 状态样式 */
+.status-waiting {
+  color: orange;
+}
+.status-approved {
+  color: green;
+}
+.status-rejected {
+  color: red;
 }
 
 .content {
