@@ -107,17 +107,18 @@ export default {
 
 <style scoped>
 .page-container {
-    background-color: #f0f0f0; /* 添加背景色 */
-    background-image: url('../../static/mountains.jpg'); /* 设置背景图像 */
-    background-size: cover; /* 背景图像覆盖整个元素 */
-    background-position: center; /* 背景图像居中 */
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+  background: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)),
+  url('../../static/mountains.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
 }
 
 .main-container {
-    background-color: rgba(255, 255, 255, 0.8); /* 添加半透明背景色 */
     display: flex;
     flex: 1;
 }

@@ -31,7 +31,7 @@
                                         <input
                                                 type="number"
                                                 v-model.number="sub.score"
-                                                min="0"
+                                                min="1"
                                                 placeholder="设置分数"
                                         />
                                     </div>
@@ -73,7 +73,7 @@
                                 <input
                                         type="number"
                                         v-model.number="question.score"
-                                        min="0"
+                                        min="1"
                                         placeholder="设置分数"
                                 />
                             </div>
@@ -93,7 +93,7 @@
                                 <input
                                         type="number"
                                         v-model.number="question.score"
-                                        min="0"
+                                        min="1"
                                         placeholder="设置分数"
                                 />
                             </div>
@@ -217,7 +217,8 @@ const difficultyCoefficient = computed(() => {
     basket.value.forEach(question => {
         if (question.type === 'big') {
             question.subQuestions.forEach(sub => {
-                total += (Number(sub.score) || 0) * (question.difficulty || 0);
+                total += (Number(sub.score) || 0) * (sub.difficulty || 0);
+
             });
         } else {
             total += (Number(question.score) || 0) * (question.difficulty || 0);
@@ -232,12 +233,12 @@ const initializeScores = () => {
         if (question.type === 'big') {
             let totalSubScore = 0;
             question.subQuestions.forEach(sub => {
-                if (sub.score === undefined) sub.score = 0;
+                if (sub.score === undefined) sub.score = 1;
                 totalSubScore += Number(sub.score) || 0;
             });
             question.score = totalSubScore; // 更新大题的分数
         } else {
-            if (question.score === undefined) question.score = 0;
+            if (question.score === undefined) question.score = 1;
         }
     });
 };
@@ -344,7 +345,7 @@ const confirmKnowledgePoints = async () => {
                         showExplanation: false, // 默认不显示解析
                         body: await replaceImageSrc(question.body), // 修改此处，使用 body 处理图片
                         options: question.options || [],
-                        score: 0,
+                        score: 1,
                         subQuestions: question.subQuestions || [],
                         difficulty: question.difficulty || 0,
                         knowledgePoint: question.knowledgePoint || ''
@@ -357,7 +358,7 @@ const confirmKnowledgePoints = async () => {
                         ...essay,
                         showExplanation: false,
                         content: await replaceImageSrc(essay.content),
-                        score: 0,
+                        score: 1,
                         difficulty: essay.difficulty || 0,
                         knowledgePoint: essay.knowledgePoint || ''
                     }))
@@ -380,8 +381,8 @@ const confirmKnowledgePoints = async () => {
                     knowledgePoint: q.knowledgePoint,
                     subQuestions: q.subQuestions.map(sub => ({
                         ...sub,
-                        score: 0, // 初始化分数
-                        difficulty: q.difficulty,
+                        score: 1, // 初始化分数
+                        difficulty: sub.difficulty,
                         knowledgePoint: sub.knowledgePoint
                     }))
                 })),

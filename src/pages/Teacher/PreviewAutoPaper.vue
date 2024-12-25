@@ -31,7 +31,7 @@
                                         <input
                                                 type="number"
                                                 v-model.number="sub.score"
-                                                min="0"
+                                                min="1"
                                                 placeholder="设置分数"
                                         />
                                     </div>
@@ -68,7 +68,7 @@
                                 <input
                                         type="number"
                                         v-model.number="question.score"
-                                        min="0"
+                                        min="1"
                                         placeholder="设置分数"
                                 />
                             </div>
@@ -89,7 +89,7 @@
                                 <input
                                         type="number"
                                         v-model.number="question.score"
-                                        min="0"
+                                        min="1"
                                         placeholder="设置分数"
                                 />
                             </div>
@@ -183,7 +183,7 @@ const difficultyCoefficient = computed(() => {
     basket.value.forEach(question => {
         if (question.type === 'big') {
             question.subQuestions.forEach(sub => {
-                total += (Number(sub.score) || 0) * (question.difficulty || 0);
+                total += (Number(sub.score) || 0) * (sub.difficulty || 0);
             });
         } else {
             total += (Number(question.score) || 0) * (question.difficulty || 0);
@@ -200,10 +200,10 @@ const initializeScores = () => {
     basket.value.forEach(question => {
         if (question.type === 'big') {
             question.subQuestions.forEach(sub => {
-                if (sub.score === undefined) sub.score = 0;
+                if (sub.score === undefined ) sub.score = 1;
             });
         } else {
-            if (question.score === undefined) question.score = 0;
+            if (question.score === undefined ) question.score = 1;
         }
     });
 };
@@ -253,6 +253,7 @@ const generatePaper = async () => {
         });
         return;
     }
+
 
     // 验证分数是否设置
     for (let question of basket.value) {
@@ -355,7 +356,7 @@ const regeneratePaper = async () => {
                                     showExplanation: false, // 默认不显示解析
                                     content: await replaceImageSrc(sub.content),
                                     options: sub.options || [],
-                                    score: 0
+                                    score: 1
                                 }))
                         )
                     }))
@@ -368,7 +369,7 @@ const regeneratePaper = async () => {
                         showExplanation: false, // 默认不显示解析
                         content: await replaceImageSrc(question.content),
                         options: question.options || [],
-                        score: 0
+                        score: 1
                     }))
             );
 
@@ -378,7 +379,7 @@ const regeneratePaper = async () => {
                 showExplanation: false, // 默认不显示解析
                 content: await replaceImageSrc(data.essay.content),
                 options: data.essay.options || [],
-                score: 0
+                score: 1
             } : null;
 
             // 清空现有试题篮
@@ -393,7 +394,7 @@ const regeneratePaper = async () => {
                     answer: q.answer,
                     explanation: q.explanation,
                     options: q.options,
-                    score: 0, // 初始化分数
+                    score: 1, // 初始化分数
                     difficulty: q.difficulty || 0,
                     knowledgePoint: q.knowledgePoint || ''
                 })),
@@ -407,9 +408,9 @@ const regeneratePaper = async () => {
                         answer: sub.answer,
                         explanation: sub.explanation,
                         options: sub.options,
-                        score: 0, // 初始化分数
-                        difficulty: bq.difficulty || 0,
-                        knowledgePoint: sub.knowledgePoint || ''
+                        score: 1, // 初始化分数
+                        knowledgePoint: sub.knowledgePoint || '',
+                        difficulty: sub.difficulty || 0,
                     })),
                     score: 0, // 可以根据子题分数计算
                     difficulty: bq.difficulty || 0,
@@ -521,6 +522,7 @@ onMounted(() => {
     });
 
     regeneratePaper();
+
 });
 </script>
 

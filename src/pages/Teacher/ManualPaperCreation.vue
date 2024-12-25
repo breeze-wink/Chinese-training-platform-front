@@ -440,7 +440,9 @@ const addToBasket = (question, isBigQuestion = false, parentId = null) => {
             type: sub.type,
             answer: sub.answer,             // 添加答案
             explanation: sub.explanation,   // 添加解析
-            options: sub.options || []      // 确保选项也被保存
+            options: sub.options || [] ,    // 确保选项也被保存
+            difficulty: sub.difficulty || 0,
+
         })),
         referencedCount: question.referencedCount,
         difficulty: question.difficulty

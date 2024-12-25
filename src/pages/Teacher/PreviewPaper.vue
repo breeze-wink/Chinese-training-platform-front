@@ -31,7 +31,7 @@
                                         <input
                                                 type="number"
                                                 v-model.number="sub.score"
-                                                min="0"
+                                                min="1"
                                                 placeholder="设置分数"
                                         />
                                     </div>
@@ -73,7 +73,7 @@
                                 <input
                                         type="number"
                                         v-model.number="question.score"
-                                        min="0"
+                                        min="1"
                                         placeholder="设置分数"
                                 />
                             </div>
@@ -150,12 +150,13 @@ const initializeScores = () => {
     basket.value.forEach(question => {
         if (question.type === 'big') {
             question.subQuestions.forEach(sub => {
-                if (sub.score === undefined) sub.score = 0;
+                if (sub.score === undefined) sub.score = 1;
             });
         } else {
-            if (question.score === undefined) question.score = 0;
+            if (question.score === undefined) question.score = 1;
         }
     });
+    console.log(basket.value);
 };
 initializeScores();
 
@@ -205,17 +206,7 @@ const removeQuestion = (id) => {
     store.dispatch('removeQuestionFromBasket', id);
 };
 
-// 删除小题
-const removeSubQuestion = (parentId, subId) => {
-    const parent = basket.value.find(q => q.id === parentId);
-    if (parent) {
-        parent.subQuestions = parent.subQuestions.filter(sub => sub.id !== subId);
-        // 如果所有小题都被删除，移除整个大题
-        if (parent.subQuestions.length === 0) {
-            store.dispatch('removeQuestionFromBasket', parentId);
-        }
-    }
-};
+
 
 // 清空试卷篮
 const clearBasket = () => {
@@ -237,12 +228,26 @@ const toggleExplanations = () => {
 
 const  generatePaper = async () => {
     // 验证试卷名称
-    if (!paperName.value.trim()) {
-        alert('请为试卷命名。');
-        return;
-    }
+  if (!paperName.value.trim()) {
+    ElNotification.error({
+      title: '生成失败',
+      message: '请为试卷命名。',
+      duration: 2000,
+    });
+    return;
+  }
+  if(basket.value.length === 0)
+  {
+    ElNotification.error({
+      title: '生成失败',
+      message: '请添加题目。',
+      duration: 2000,
+    });
+    return ;
+  }
 
-    // 验证分数是否设置
+
+  // 验证分数是否设置
 
     for (let question of basket.value) {
         if (question.type === 'big') {
