@@ -22,7 +22,7 @@
                     <el-table-column prop="classId" label="班级ID" width="180"></el-table-column>
                     <el-table-column prop="name" label="班级名称"></el-table-column>
                     <el-table-column prop="teacherName" label="老师姓名"></el-table-column>
-                    <el-table-column prop="inviteCode" label="邀请码"></el-table-column>
+                    <el-table-column prop="inviteCode" label="邀请码" width="150"></el-table-column>
                     <el-table-column label="操作">
                         <template #default="{ row }">
                             <div class="action-buttons">
@@ -440,5 +440,6 @@ onMounted(() => {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+    padding: 8px 25px;  /* 增加按钮的内边距 */
 }
 </style>

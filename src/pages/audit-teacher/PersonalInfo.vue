@@ -288,9 +288,9 @@ const updatePhoneNumber = async () => {
     });
 
     if (response.status === 200 ) {
-      console.log(response.data.message);
+      ElMessage.success('手机号修改成功');
     } else {
-      console.error(response.data.message);
+      ElMessage.error('手机号修改失败');
     }
   } catch (error) {
     console.error('请求失败' + error.message);
@@ -309,9 +309,11 @@ const updateName = async () => {
 
     if (response.status === 200 && response.data.message === '姓名修改成功') {
 
-      console.log(response.data.message);
+      ElMessage.success('姓名修改成功');
+
     } else {
-      console.error(response.data.message);
+      ElMessage.error('姓名修改失败');
+
     }
   } catch (error) {
     console.error('请求失败' + error.message);
@@ -481,11 +483,11 @@ const sendVerificationCode = async () => {
         'Content-Type': 'application/json'
       }
     });
-    if (response.status !== 200){
+    if (response.status !== 200) {
       ElNotification.error({title: '验证码发送失败', message: response.data.message});
       resetCountdown(); // 发送失败时重置倒计时
     }
-  } catch (error){
+  } catch (error) {
     ElNotification.error({title: '验证码发送失败', message: error.response.data.message});
     resetCountdown(); // 发送失败时重置倒计时
   }
@@ -517,7 +519,7 @@ const handleChangeEmail = async () => {
 // 请求注销账号
 
 const navigateToHome = () => {
-  router.push({ name: 'Home' }); // 使用 router.push 来跳转到首页
+  router.push({name: 'Home'}); // 使用 router.push 来跳转到首页
 };
 </script>
 
@@ -582,6 +584,7 @@ const navigateToHome = () => {
   font-size: 16px;
   color: #333;
 }
+
 .el-icon {
   font-size: 20px;
   cursor: pointer;
@@ -632,6 +635,7 @@ const navigateToHome = () => {
 .delete-button:active {
   transform: scale(0.95);
 }
+
 .error-message,
 .success-message,
 .result-message {
@@ -651,6 +655,7 @@ const navigateToHome = () => {
   color: #67c23a;
   background-color: #f0f9eb;
 }
+
 .result-message {
   color: #909399;
   background-color: #f4f4f5;

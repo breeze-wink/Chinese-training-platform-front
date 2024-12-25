@@ -85,7 +85,7 @@
       <el-table :data="paginatedSubmissions" style="width: 100%">
         <el-table-column prop="studentName" label="学生姓名" width="150"></el-table-column>
         <el-table-column prop="submitTime" label="提交时间" width="180" :formatter="formatDate"></el-table-column>
-        <el-table-column prop="totalScore" label="总分" width="100"></el-table-column>
+        <el-table-column prop="totalScore" label="学生得分" width="100"></el-table-column>
         <el-table-column label="状态" width="120">
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.isSubmitted === 1 ? '已提交' : '未提交')">
