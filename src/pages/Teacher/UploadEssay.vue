@@ -121,7 +121,7 @@ const getAllEssays = async () => {
     const response = await axios.get('/api/teacher/view-essays');
     if (response.status === 200 ) {
       essays.value = response.data.infoData;
-      ElNotification({ title: '作文列表获取成功', type: 'success' });
+
     } else {
       ElNotification({ title: '作文列表获取失败', type: 'error' });
     }
@@ -218,12 +218,7 @@ const deleteEssay = async (item) => {
     });
     if (response.status === 200) {
       ElMessage({ message: '作文删除成功', type: 'success' });
-      essays.value = essays.value.filter(essay => essay.id !== item.id);
-      // 如果当前页没有数据且不是第一页，跳转到前一页
-      const totalPages = Math.ceil(filteredEssays.value.length / pageSize.value);
-      if (currentPage.value > totalPages && currentPage.value > 1) {
-        currentPage.value = totalPages;
-      }
+      await getAllEssays();
     } else {
       ElMessage({ message: '作文删除失败', type: 'error' });
     }

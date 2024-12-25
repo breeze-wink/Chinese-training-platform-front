@@ -63,7 +63,6 @@ const getAllCourseStandards = async () => {
     const response = await axios.get('/api/system-admin/get-all-course-standards');
     if (response.status === 200) {
       courseStandards.value = response.data.courseStandardInfos;
-      ElMessage({ message: '课标获取成功', type: 'success' });
     }
   } catch (error) {
     ElMessage({ message: '课标获取失败', type: 'error' });
