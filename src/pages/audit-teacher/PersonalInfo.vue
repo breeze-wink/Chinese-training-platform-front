@@ -51,7 +51,7 @@
                 v-model="teacherInfo.name"
                 size="small"
                 class="edit-input"
-                @blur="toggleEdit('name'); updateName()"/>
+                @blur="updateName('name')"/>
             <el-icon @click="toggleEdit('name')">
               <Edit/>
             </el-icon>
@@ -145,6 +145,7 @@ import { useRouter } from 'vue-router';
 const store = useStore();
 const teacherId = computed(() => store.state.user.id);
 const originNickname = ref('');
+const originName = ref(''); // 定义原始姓名
 const teacherInfo = ref({
   name: '',
   username: '',
@@ -191,6 +192,7 @@ const getTeacherInfo = async () => {
 
       teacherInfo.value = response.data.data;
       originNickname.value = teacherInfo.value.username;
+      originName.value= teacherInfo.value.name;
     } else {
       errorMessage.value = '获取教师信息失败：' + response.data.message;
       console.error(errorMessage.value);
@@ -216,6 +218,9 @@ function toggleEdit(field) {
     editPhone.value = !editPhone.value;
   } else if (field === 'name') {
     editName.value = !editName.value;
+    if (editName.value) {
+      originName.value = teacherInfo.value.name; // 开始编辑时保存原始姓名
+    }
   }
 }
 
@@ -298,7 +303,18 @@ const updatePhoneNumber = async () => {
 
 }
 
-const updateName = async () => {
+const updateName = async (field) => {
+
+  const namePattern = /^[\u4e00-\u9fa5A-Za-z·]{2,20}$/;
+
+  // 验证姓名格式
+  if (!namePattern.test(teacherInfo.value.name)) {
+    ElMessage.error('姓名格式错误，请输入2到20个字符或“·”符号');
+    // 恢复原始姓名
+    teacherInfo.value.name = originName.value;
+    return; // 阻止后续操作
+  }
+
   try {
     //发送 POST 请求
     const url = `/api/teacher/${teacherId.value}/update-name`;
@@ -310,6 +326,8 @@ const updateName = async () => {
     if (response.status === 200 && response.data.message === '姓名修改成功') {
 
       ElMessage.success('姓名修改成功');
+      originName.value = teacherInfo.value.name; // 更新原始姓名
+      toggleEdit(field); // 验证通过后切换编辑状态
 
     } else {
       ElMessage.error('姓名修改失败');
@@ -317,6 +335,8 @@ const updateName = async () => {
     }
   } catch (error) {
     console.error('请求失败' + error.message);
+    teacherInfo.value.name = originName.value;
+    toggleEdit(field); // 验证通过后切换编辑状态
   }
 }
 

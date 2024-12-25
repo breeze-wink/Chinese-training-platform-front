@@ -38,7 +38,7 @@
                 v-model="name"
                 size="small"
                 class="edit-input"
-                @blur="toggleEdit('name'); updateName()"/>
+                @blur="updateName('name')"/>
             <el-icon @click="toggleEdit('name')" class="edit-icon">
               <Edit/>
             </el-icon>
@@ -218,6 +218,7 @@ const getAdminInfo = async (id) => {
       authorizationCode.value = response.data.data.authorizationCode || ''; // 获取授权码
       createDate.value = response.data.data.createDate || '';
         originNickname.value = adminName.value;
+        originName.value = name.value;
     } else {
       errorMessage.value = '获取管理员信息失败：' + response.data.message;
       console.error(errorMessage.value);
@@ -439,7 +440,19 @@ const updateUsername = async (field) => {
 };
 
 // 更新负责人
-const updateName = async () => {
+const updateName = async (field) => {
+  const namePattern = /^[\u4e00-\u9fa5A-Za-z·]{2,20}$/;
+
+  // 验证姓名格式
+  if (!namePattern.test(name.value)) {
+    ElMessage.error('姓名格式错误，请输入2到20个字符或“·”符号');
+    // 恢复原始姓名
+    name.value = originName.value;
+    return; // 阻止后续操作
+  }
+
+
+
   try {
     const url = `/api/school-admin/${schoolAdminId.value}/update-name`;
 
@@ -451,15 +464,22 @@ const updateName = async () => {
     // 处理响应
     if (response.status === 200) {
       ElMessage({ message: '负责人更新成功', type: 'success' });
+      originName.value = name.value; // 更新原始姓名
+      toggleEdit(field); // 验证通过后切换编辑状态
+
     } else {
       ElMessage({ message: '负责人更新失败', type: 'error' });
+
     }
   } catch (error) {
     // 处理错误
     ElMessage({ message: '请求失败' + error.message, type: 'error' });
+    name.value = originName.value;
+    toggleEdit(field); // 验证通过后切换编辑状态
   }
 };
 const originNickname = ref('');
+const originName = ref('');
 // 切换编辑状态
 const toggleEdit = (field) => {
   if (field === 'adminName') {
@@ -468,6 +488,9 @@ const toggleEdit = (field) => {
 
   } else if (field === 'name') {
     editName.value = !editName.value;
+    if (editName.value) {
+      originName.value = name.value; // 开始编辑时保存原始姓名
+    }
   }
 };
 
