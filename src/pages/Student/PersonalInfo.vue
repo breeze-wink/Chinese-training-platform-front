@@ -374,7 +374,7 @@ export default {
             if (!nameRegex.test(requestBody.name)) {
                 ElNotification.error({
                     title: '姓名格式错误',
-                    message: '姓名只能包含中英文、数字、下划线和点，请重新输入',
+                    message: '姓名只能包含中英文和点，请重新输入',
                 });
                 // location.reload(); // 如果需要刷新页面，可以取消注释
                 this.fetchStudentInfo(); // 刷新学生信息
@@ -614,6 +614,18 @@ export default {
         },
 
         async joinClass() {
+
+            const nameRegex = /^[a-zA-Z\u4e00-\u9fa5·]+$/;
+            if (!nameRegex.test(this.studentInfo.name)) {
+                ElNotification.error({
+                    title: '加入班级失败',
+                    message: '姓名不能为空，请先设置姓名，其只能包含中英文和点',
+                });
+                // location.reload(); // 如果需要刷新页面，可以取消注释
+                this.fetchStudentInfo(); // 刷新学生信息
+                return; // 阻止后续操作
+            }
+
             try {
                 const response = await axios.post(`/api/student/${this.studentInfo.accountId}/join-class`, {
                     inviteCode: this.inviteCode
