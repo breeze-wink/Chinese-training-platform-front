@@ -374,10 +374,9 @@ watch(countdown, (newVal) => {
 const getSystemAdminInfo = async () => {
   try {
     const response = await axios.get(`/api/system-admin/${systemAdminId.value}`);
-    if (response.status === 200 && response.data.message === 'success') {
+    if (response.status === 200) {
       SystemAdminInfo.value = response.data.data;
       originNickname.value= SystemAdminInfo.value.username;
-      originName.value = SystemAdminInfo.value.name;
     } else {
       errorMessage.value = '获取系统管理员信息失败:' + response.data.message;
       console.error(errorMessage.value);
