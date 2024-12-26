@@ -355,7 +355,10 @@ export default {
             requestBody.grade = this.studentInfo.grade;
 
             // 校验 username 格式，只允许字母、数字和下划线
-            const usernameRegex = /^[a-zA-Z0-9_]+$/;
+            // const usernameRegex = /^[a-zA-Z0-9_]+$/;
+            // 允许中文、字母（大小写）、数字和下划线
+            const usernameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9_]+$/;
+
             if (!usernameRegex.test(requestBody.username)) {
                 ElNotification.error({
                     title: '用户名格式错误',
@@ -723,9 +726,6 @@ export default {
 
 .edit-input {
     width: 200px;
-    border: 1px solid #dcdfe6;
-    border-radius: 4px;
-    padding: 0 10px;
 }
 
 .error-message,
