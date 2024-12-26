@@ -359,6 +359,8 @@ const registerForm = ref({
 
 const validateUsername = (rule, value, callback) => {
     const usernameRegex = /^[a-zA-Z0-9_]+$/; // 正则表达式：匹配字母、数字和下划线
+    // 允许中文、字母（大小写）、数字和下划线
+    // const usernameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9_]+$/;
     if (!value) {
         callback(new Error('请输入用户名'));
     } else if (!usernameRegex.test(value)) {
@@ -733,7 +735,7 @@ const sendVerificationCodeFor = async () => {
             type: Identity.value, // 根据身份选择类型
             email: formData.email
         });
-        if (response.data.message === 'success') {
+        if (response.status === 200) {
             // 验证码发送成功后的逻辑
             ElNotification.success({ title: '验证码已发送', message: '验证码已发送，请注意查收' });
         }
@@ -756,6 +758,8 @@ const nextStep = () => {
         next(); // 对于其他步骤直接调用 next 方法
     }
 };
+
+let passwordResetSuccess = false;
 // 重置密码
 const resetPassword = () => {
     formRef.value.validate(async (valid) => {
@@ -767,14 +771,17 @@ const resetPassword = () => {
                     code: formData.verifyCode,
                     password: formData.newPassword
                 });
-                if (response.data.message === 'success') {
+                if (response.status === 200) {
+                    passwordResetSuccess = true;
                     active.value = 3; // 切换到最后一步
                     forgotPasswordDialogVisible.value = false; // 关闭对话框
                     ElNotification.success({ title: '密码重置成功' });
+
                 }
             } catch (error) {
                 console.error('Error occurred while resetting password:', error);
-                ElNotification.error({ title: '密码重置失败', message: '密码重置失败，请稍后再试' });
+                ElNotification.error({ title: '密码重置失败', message: error.response.message });
+                return false
             }
         } else {
             console.log('验证失败');
@@ -783,11 +790,14 @@ const resetPassword = () => {
     });
 };
 const handleClick = () => {
-    if (active.value < 3) {
+    if (active.value < 3 && active.value !== 2) {
         nextStep();
     }
     if (active.value === 2) {
-        resetPassword(); // 当 active === 2 时额外调用 resetPassword
+        resetPassword();
+        if (passwordResetSuccess === true) {
+            nextStep();
+        }
     }
 
 };
