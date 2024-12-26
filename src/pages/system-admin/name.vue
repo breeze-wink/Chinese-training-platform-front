@@ -377,7 +377,7 @@ const getSystemAdminInfo = async () => {
     if (response.status === 200 && response.data.message === 'success') {
       SystemAdminInfo.value = response.data.data;
       originNickname.value= SystemAdminInfo.value.username;
-      originName.value = SystemAdminInfo.value.name;
+      // originName.value = SystemAdminInfo.value.name;
     } else {
       errorMessage.value = '获取系统管理员信息失败:' + response.data.message;
       console.error(errorMessage.value);
